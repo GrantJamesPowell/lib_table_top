@@ -2,4 +2,6 @@
 
 members = [
     "lib_table_top_core",
+    "games/tic_tac_toe",
+    "lttcli",
 ]
