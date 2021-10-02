@@ -1,28 +1,32 @@
+#![allow(dead_code)]
+
 use lib_table_top_core::{Play, Player, View};
 use thiserror::Error;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Board([[Option<Player>; 3]; 3]);
+mod board;
+mod settings;
+
+use board::*;
+use settings::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Col(u8);
+struct TicTacToe {
+    board: Board,
+}
+
+impl From<Board> for TicTacToe {
+    fn from(board: Board) -> Self {
+        Self { board }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Row(u8);
+pub struct Action(pub Position);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Position(Col, Row);
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Action(Position);
-
-pub type Settings = [Player; 2];
-
-#[derive(Error, Clone, Debug, PartialEq, Eq)]
-pub enum SettingsError {
-    /// Returned when both players are the same
-    #[error("Players must be different")]
-    PlayersCantBeTheSame,
+impl From<Position> for Action {
+    fn from(p: Position) -> Self {
+        Self(p)
+    }
 }
 
 #[derive(Error, Clone, Debug, PartialEq, Eq)]
@@ -48,11 +52,6 @@ impl View for SpectatorView {
     fn update(&mut self, action: Self::Update) {}
 }
 
-#[derive(Clone)]
-struct TicTacToe {
-    board: Board,
-}
-
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
@@ -63,12 +62,6 @@ impl Play for TicTacToe {
     type SpectatorView = SpectatorView;
 
     fn action_requests(&self, settings: &Self::Settings) -> Vec<Player> {
-        // self.board
-        //
-        for col in self.board.0 {
-            for row in col {}
-        }
-
         todo!()
     }
 
