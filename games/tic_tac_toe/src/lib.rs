@@ -1,20 +1,26 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::{Play, View};
+use lib_table_top_core::{Play, Player, View};
 use thiserror::Error;
 
 mod board;
 mod settings;
 
 pub use board::{Board, Col, Position, Row};
-pub use lib_table_top_core::player;
-pub use lib_table_top_core::Player;
 pub use settings::{Settings, SettingsError};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct TicTacToe {
+pub struct TicTacToe {
     board: Board,
 }
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum Marker {
+    X,
+    O,
+}
+
+use Marker::*;
 
 impl From<Board> for TicTacToe {
     fn from(board: Board) -> Self {
@@ -39,7 +45,7 @@ pub enum ActionError {
 
     /// Returned when the wrong player tries to take a turn
     #[error("not {:?}'s turn", attempted)]
-    OtherPlayerTurn { attempted: Player },
+    OtherPlayerTurn { attempted: Marker },
 }
 
 pub struct SpectatorView(Board);

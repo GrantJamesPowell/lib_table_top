@@ -1,9 +1,6 @@
-use crate::settings::Settings;
 use crate::ActionError::{self, *};
-use lib_table_top_core::Player;
+use crate::Marker::{self, *};
 use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::num::TryFromIntError;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Col(u8);
@@ -24,24 +21,8 @@ impl Col {
     }
 }
 
-impl TryFrom<usize> for Col {
-    type Error = TryFromIntError;
-
-    fn try_from(c: usize) -> Result<Self, Self::Error> {
-        c.try_into().map(Col)
-    }
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Row(u8);
-
-impl TryFrom<usize> for Row {
-    type Error = TryFromIntError;
-
-    fn try_from(r: usize) -> Result<Self, Self::Error> {
-        r.try_into().map(Row)
-    }
-}
 
 impl Row {
     pub fn new(n: u8) -> Self {
@@ -62,11 +43,18 @@ impl Row {
 pub type Position = (Col, Row);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Board(pub [[Option<Player>; 3]; 3]);
+pub struct Board(pub [[Option<Marker>; 3]; 3]);
 
 impl From<[[u16; 3]; 3]> for Board {
     fn from(board: [[u16; 3]; 3]) -> Self {
-        let b = board.map(|row| row.map(|i| i.try_into().ok()));
+        let b = board.map(|col| {
+            col.map(|n| match n {
+                0 => None,
+                1 => Some(X),
+                2 => Some(O),
+                _ => panic!("foobarbaz"),
+            })
+        });
         Board(b)
     }
 }
@@ -78,7 +66,7 @@ impl Default for Board {
 }
 
 impl Board {
-    pub fn claim_space(&mut self, player: Player, position: Position) -> Result<(), ActionError> {
+    pub fn claim_space(&mut self, marker: Marker, position: Position) -> Result<(), ActionError> {
         if self.at(position).is_some() {
             return Err(SpaceIsTaken {
                 attempted: position,
@@ -86,41 +74,44 @@ impl Board {
         }
 
         let (Col(c), Row(r)) = position;
-        self.0[c as usize][r as usize] = Some(player);
+        self.0[c as usize][r as usize] = Some(marker);
         Ok(())
     }
 
-    pub fn at(&self, (Col(c), Row(r)): Position) -> Option<Player> {
+    pub fn at(&self, (Col(c), Row(r)): Position) -> Option<Marker> {
         self.0[c as usize][r as usize]
     }
 
-    /// Iterate over the spaces on the board and the player in the space (if there is one)
+    /// Iterate over the spaces on the board and the marker in the space (if there is one)
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Player, Position, player::p};
+    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
     ///
     /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
     /// assert_eq!(
     ///   board.spaces().collect::<Vec<_>>(),
     ///   vec![
     ///     ((Col::new(0), Row::new(0)), None),
-    ///     ((Col::new(0), Row::new(1)), Some(p(1))),
-    ///     ((Col::new(0), Row::new(2)), Some(p(2))),
+    ///     ((Col::new(0), Row::new(1)), Some(X)),
+    ///     ((Col::new(0), Row::new(2)), Some(O)),
     ///     ((Col::new(1), Row::new(0)), None),
     ///     ((Col::new(1), Row::new(1)), None),
     ///     ((Col::new(1), Row::new(2)), None),
-    ///     ((Col::new(2), Row::new(0)), Some(p(1))),
-    ///     ((Col::new(2), Row::new(1)), Some(p(2))),
-    ///     ((Col::new(2), Row::new(2)), Some(p(1)))
+    ///     ((Col::new(2), Row::new(0)), Some(X)),
+    ///     ((Col::new(2), Row::new(1)), Some(O)),
+    ///     ((Col::new(2), Row::new(2)), Some(X))
     ///   ]
     /// );
     /// ```
-    pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Player>)> + '_ {
+    pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Marker>)> + '_ {
         self.0.iter().enumerate().flat_map(|(col_num, col)| {
-            col.iter().enumerate().map(move |(row_num, &player)| {
+            col.iter().enumerate().map(move |(row_num, &marker)| {
                 (
-                    (col_num.try_into().unwrap(), row_num.try_into().unwrap()),
-                    player,
+                    (
+                        Col::new(col_num.try_into().unwrap()),
+                        Row::new(row_num.try_into().unwrap()),
+                    ),
+                    marker,
                 )
             })
         })
@@ -129,66 +120,57 @@ impl Board {
     /// Iterate over the spaces on the board that are taken
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Player, Position, player::p};
+    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
     ///
     /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
-    ///     ((Col::new(0), Row::new(1)), p(1)),
-    ///     ((Col::new(0), Row::new(2)), p(2)),
-    ///     ((Col::new(2), Row::new(0)), p(1)),
-    ///     ((Col::new(2), Row::new(1)), p(2)),
-    ///     ((Col::new(2), Row::new(2)), p(1))
+    ///     ((Col::new(0), Row::new(1)), X),
+    ///     ((Col::new(0), Row::new(2)), O),
+    ///     ((Col::new(2), Row::new(0)), X),
+    ///     ((Col::new(2), Row::new(1)), O),
+    ///     ((Col::new(2), Row::new(2)), X)
     ///   ]
     /// );
-    pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Player)> + '_ {
+    pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Marker)> + '_ {
         self.spaces()
-            .filter_map(|(pos, player)| player.map(|p| (pos, p)))
+            .filter_map(|(pos, marker)| marker.map(|p| (pos, p)))
     }
 
-    /// Return the player who's turn it is
+    /// Return the marker who's turn it is
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Settings, player::p};
+    /// use tic_tac_toe::{Board, Marker::*};
     ///
-    /// // Starts with the first player in the settings
+    /// // Starts with X
     /// let board: Board = Default::default();
-
-    /// assert_eq!(p(1), board.whose_turn(&Settings::new([p(1), p(2)])));
-    /// assert_eq!(p(2), board.whose_turn(&Settings::new([p(2), p(1)])));
-
-    /// // The 'starting player' goes first
-    /// let settings = Settings::new([p(1), p(2)]);
-
-    /// assert_eq!(settings.starting_player(), board.whose_turn(&settings));
+    /// assert_eq!(X, board.whose_turn());
 
     /// // Once the first player goes, it's the second player's turn
     /// let board: Board = [[1, 0, 0], [0, 0, 0], [0, 0, 0]].into();
-    /// assert_eq!(p(2), board.whose_turn(&settings));
+    /// assert_eq!(O, board.whose_turn());
 
-    /// // Once the second player goes, it's the first players turn again
-    /// // I. E. if all players have an even number of turns, it's the first players turn
+    /// // Once O goes, it's X's turn again
     /// let board: Board = [[1, 2, 0], [0, 0, 0], [0, 0, 0]].into();
-    /// assert_eq!(p(1), board.whose_turn(&settings));
+    /// assert_eq!(X, board.whose_turn());
 
     /// // The next player to go is always the one with the fewest spaces
     /// let board: Board = [[0, 2, 2], [2, 2, 2], [2, 2, 2]].into();
-    /// assert_eq!(p(1), board.whose_turn(&settings));
+    /// assert_eq!(X, board.whose_turn());
     /// ```
 
-    pub fn whose_turn(&self, settings: &Settings) -> Player {
-        let mut counts: HashMap<Player, usize> = HashMap::new();
+    pub fn whose_turn(&self) -> Marker {
+        let mut counts: HashMap<Marker, usize> = HashMap::new();
 
-        for (_, player) in self.taken_spaces() {
-            *counts.entry(player).or_insert(0) += 1;
+        for (_, marker) in self.taken_spaces() {
+            *counts.entry(marker).or_insert(0) += 1;
         }
 
-        settings
-            .players()
+        [X, O]
             .iter()
-            .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
+            .min_by_key(|marker| counts.get(marker).cloned().unwrap_or(0))
             .copied()
-            .unwrap_or(settings.starting_player())
+            .unwrap_or(X)
     }
 }
