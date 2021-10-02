@@ -9,7 +9,7 @@ mod settings;
 pub use board::{Board, Col, Position, Row};
 pub use lib_table_top_core::player;
 pub use lib_table_top_core::Player;
-use settings::{Settings, SettingsError};
+pub use settings::{Settings, SettingsError};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct TicTacToe {
@@ -40,10 +40,6 @@ pub enum ActionError {
     /// Returned when the wrong player tries to take a turn
     #[error("not {:?}'s turn", attempted)]
     OtherPlayerTurn { attempted: Player },
-
-    /// Returned for an invalid position
-    #[error("Invalid position, rows and cols must be in [0, 1, 2]")]
-    InvalidPosition,
 }
 
 pub struct SpectatorView(Board);
