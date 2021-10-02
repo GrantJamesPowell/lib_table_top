@@ -181,6 +181,7 @@ dependencies = [
  "enum-map",
  "itertools",
  "lib_table_top_core",
+ "rand",
  "thiserror",
 ]
 

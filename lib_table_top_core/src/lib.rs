@@ -6,7 +6,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Player(u16);
 
 pub trait View {
@@ -15,10 +15,10 @@ pub trait View {
     fn update(&mut self, _update: Self::Update) {}
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct NoSecretPlayerInformation {}
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct NoSecretPlayerInformationUpdate {}
 
 impl View for NoSecretPlayerInformation {
@@ -42,9 +42,11 @@ pub trait Play: Sized + Clone {
         rng: &mut impl rand::Rng,
     ) -> Result<<<Self as Play>::SpectatorView as View>::Update, Self::ActionError>;
 
-    fn action_requests(&self) -> Vec<Player>;
+    fn action_requests(&self, settings: &Self::Settings) -> Vec<Player>;
     fn player_view(&self) -> Self::PlayerView;
     fn spectator_view(&self) -> Self::SpectatorView;
+
+    fn initial_state_for_settings(settings: &Self::Settings) -> Self;
 }
 
 struct GameRunner<T>
