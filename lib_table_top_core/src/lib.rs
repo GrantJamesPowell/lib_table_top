@@ -6,8 +6,8 @@ use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Player(u16);
+mod player;
+pub use player::Player;
 
 pub trait View {
     type Update;
