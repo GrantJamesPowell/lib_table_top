@@ -7,11 +7,12 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn p1(&self) -> Player {
-        self.players[0]
+    pub fn players(&self) -> &[Player] {
+        &self.players
     }
-    pub fn p2(&self) -> Player {
-        self.players[1]
+
+    pub fn starting_player(&self) -> Player {
+        self.players[0]
     }
 }
 

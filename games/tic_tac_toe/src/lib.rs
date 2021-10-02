@@ -49,7 +49,7 @@ pub struct SpectatorView(Board);
 impl View for SpectatorView {
     type Update = Action;
 
-    fn update(&mut self, action: Self::Update) {}
+    fn update(&mut self, _action: Self::Update) {}
 }
 
 impl Play for TicTacToe {
@@ -61,7 +61,7 @@ impl Play for TicTacToe {
 
     type SpectatorView = SpectatorView;
 
-    fn action_requests(&self, settings: &Self::Settings) -> Vec<Player> {
+    fn action_requests(&self, _settings: &Self::Settings) -> Vec<Player> {
         todo!()
     }
 
