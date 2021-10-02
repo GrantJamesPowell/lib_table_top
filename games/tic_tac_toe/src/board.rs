@@ -54,6 +54,27 @@ impl Default for Board {
 }
 
 impl Board {
+    /// Iterate over the spaces on the board and the player in the space (if there is one)
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Player, Position, player::p};
+    ///
+    /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
+    /// assert_eq!(
+    ///   board.spaces().collect::<Vec<_>>(),
+    ///   vec![
+    ///     (Position(Col(0), Row(0)), None),
+    ///     (Position(Col(0), Row(1)), Some(p(1))),
+    ///     (Position(Col(0), Row(2)), Some(p(2))),
+    ///     (Position(Col(1), Row(0)), None),
+    ///     (Position(Col(1), Row(1)), None),
+    ///     (Position(Col(1), Row(2)), None),
+    ///     (Position(Col(2), Row(0)), Some(p(1))),
+    ///     (Position(Col(2), Row(1)), Some(p(2))),
+    ///     (Position(Col(2), Row(2)), Some(p(1)))
+    ///   ]
+    /// );
+    /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Player>)> + '_ {
         self.0.iter().enumerate().flat_map(|(col_num, col)| {
             col.iter()
@@ -62,6 +83,22 @@ impl Board {
         })
     }
 
+    /// Iterate over the spaces on the board that are taken
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Player, Position, player::p};
+    ///
+    /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
+    /// assert_eq!(
+    ///   board.taken_spaces().collect::<Vec<_>>(),
+    ///   vec![
+    ///     (Position(Col(0), Row(1)), p(1)),
+    ///     (Position(Col(0), Row(2)), p(2)),
+    ///     (Position(Col(2), Row(0)), p(1)),
+    ///     (Position(Col(2), Row(1)), p(2)),
+    ///     (Position(Col(2), Row(2)), p(1))
+    ///   ]
+    /// );
     pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Player)> + '_ {
         self.spaces()
             .filter_map(|(pos, player)| player.map(|p| (pos, p)))

@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::{Play, Player, View};
+use lib_table_top_core::{Play, View};
 use thiserror::Error;
 
 mod board;
 mod settings;
 
-use board::*;
-use settings::*;
+pub use board::{Board, Col, Position, Row};
+pub use lib_table_top_core::player;
+pub use lib_table_top_core::Player;
+use settings::{Settings, SettingsError};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct TicTacToe {
