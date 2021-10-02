@@ -77,7 +77,7 @@ impl Board {
         settings
             .players()
             .iter()
-            .min_by_key(|player| counts[player])
+            .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
             .copied()
             .unwrap_or(settings.starting_player())
     }
@@ -85,6 +85,8 @@ impl Board {
 
 #[cfg(test)]
 mod tests {
+    use lib_table_top_core::player::p;
+
     use super::*;
 
     #[test]
@@ -95,9 +97,33 @@ mod tests {
     }
 
     #[test]
-    fn test_whose_turn() {}
+    fn test_whose_turn() {
+        // Starts with the first player in the settings
+        let board: Board = Default::default();
+
+        assert_eq!(p(1), board.whose_turn(&Settings::new([p(1), p(2)])));
+        assert_eq!(p(2), board.whose_turn(&Settings::new([p(2), p(1)])));
+
+        // The 'starting player' goes first
+        let settings = Settings::new([p(1), p(2)]);
+
+        assert_eq!(settings.starting_player(), board.whose_turn(&settings));
+
+        // Once the first player goes, it's the second player's turn
+        let board: Board = [[1, 0, 0], [0, 0, 0], [0, 0, 0]].into();
+        assert_eq!(p(2), board.whose_turn(&settings));
+
+        // Once the second player goes, it's the first players turn again
+        // I. E. if all players have an even number of turns, it's the first players turn
+        let board: Board = [[1, 2, 0], [0, 0, 0], [0, 0, 0]].into();
+        assert_eq!(p(1), board.whose_turn(&settings));
+
+        // The next player to go is always the one with the fewest spaces
+        let board: Board = [[0, 2, 2], [2, 2, 2], [2, 2, 2]].into();
+        assert_eq!(p(1), board.whose_turn(&settings));
+    }
 
     fn i2pp(pos: (usize, usize), player: u16) -> (Position, Player) {
-        (pos.try_into().unwrap(), player.try_into().unwrap())
+        (pos.try_into().unwrap(), p(player))
     }
 }

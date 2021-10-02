@@ -10,3 +10,17 @@ impl TryFrom<u16> for Player {
         n.try_into().map(Player)
     }
 }
+
+/// Utility function to create players from integers
+///
+/// # Panics
+///
+/// panics if n == 0 || n > [`u16::MAX`]
+pub fn p<T>(n: T) -> Player
+where
+    T: TryInto<u16>,
+    <T as TryInto<u16>>::Error: std::fmt::Debug,
+{
+    let num: u16 = n.try_into().unwrap();
+    num.try_into().unwrap()
+}

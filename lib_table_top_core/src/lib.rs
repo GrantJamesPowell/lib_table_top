@@ -6,7 +6,7 @@ use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
 use std::sync::Arc;
 
-mod player;
+pub mod player;
 pub use player::Player;
 
 pub trait View {

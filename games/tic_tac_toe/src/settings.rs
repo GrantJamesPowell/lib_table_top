@@ -7,6 +7,10 @@ pub struct Settings {
 }
 
 impl Settings {
+    pub fn new(players: [Player; 2]) -> Self {
+        Self { players }
+    }
+
     pub fn players(&self) -> &[Player] {
         &self.players
     }
