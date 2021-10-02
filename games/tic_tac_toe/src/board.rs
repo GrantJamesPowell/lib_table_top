@@ -26,16 +26,7 @@ impl TryFrom<usize> for Row {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Position(pub Col, pub Row);
-
-impl TryFrom<(usize, usize)> for Position {
-    type Error = TryFromIntError;
-
-    fn try_from((c, r): (usize, usize)) -> Result<Self, Self::Error> {
-        Ok(Position(c.try_into()?, r.try_into()?))
-    }
-}
+pub type Position = (Col, Row);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Board(pub [[Option<Player>; 3]; 3]);
@@ -63,23 +54,26 @@ impl Board {
     /// assert_eq!(
     ///   board.spaces().collect::<Vec<_>>(),
     ///   vec![
-    ///     (Position(Col(0), Row(0)), None),
-    ///     (Position(Col(0), Row(1)), Some(p(1))),
-    ///     (Position(Col(0), Row(2)), Some(p(2))),
-    ///     (Position(Col(1), Row(0)), None),
-    ///     (Position(Col(1), Row(1)), None),
-    ///     (Position(Col(1), Row(2)), None),
-    ///     (Position(Col(2), Row(0)), Some(p(1))),
-    ///     (Position(Col(2), Row(1)), Some(p(2))),
-    ///     (Position(Col(2), Row(2)), Some(p(1)))
+    ///     ((Col(0), Row(0)), None),
+    ///     ((Col(0), Row(1)), Some(p(1))),
+    ///     ((Col(0), Row(2)), Some(p(2))),
+    ///     ((Col(1), Row(0)), None),
+    ///     ((Col(1), Row(1)), None),
+    ///     ((Col(1), Row(2)), None),
+    ///     ((Col(2), Row(0)), Some(p(1))),
+    ///     ((Col(2), Row(1)), Some(p(2))),
+    ///     ((Col(2), Row(2)), Some(p(1)))
     ///   ]
     /// );
     /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Player>)> + '_ {
         self.0.iter().enumerate().flat_map(|(col_num, col)| {
-            col.iter()
-                .enumerate()
-                .map(move |(row_num, &player)| ((col_num, row_num).try_into().unwrap(), player))
+            col.iter().enumerate().map(move |(row_num, &player)| {
+                (
+                    (col_num.try_into().unwrap(), row_num.try_into().unwrap()),
+                    player,
+                )
+            })
         })
     }
 
@@ -92,11 +86,11 @@ impl Board {
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
-    ///     (Position(Col(0), Row(1)), p(1)),
-    ///     (Position(Col(0), Row(2)), p(2)),
-    ///     (Position(Col(2), Row(0)), p(1)),
-    ///     (Position(Col(2), Row(1)), p(2)),
-    ///     (Position(Col(2), Row(2)), p(1))
+    ///     ((Col(0), Row(1)), p(1)),
+    ///     ((Col(0), Row(2)), p(2)),
+    ///     ((Col(2), Row(0)), p(1)),
+    ///     ((Col(2), Row(1)), p(2)),
+    ///     ((Col(2), Row(2)), p(1))
     ///   ]
     /// );
     pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Player)> + '_ {
@@ -160,7 +154,7 @@ mod tests {
         assert_eq!(p(1), board.whose_turn(&settings));
     }
 
-    fn i2pp(pos: (usize, usize), player: u16) -> (Position, Player) {
-        (pos.try_into().unwrap(), p(player))
+    fn i2pp((c, r): (usize, usize), player: u16) -> (Position, Player) {
+        ((c.try_into().unwrap(), r.try_into().unwrap()), p(player))
     }
 }
