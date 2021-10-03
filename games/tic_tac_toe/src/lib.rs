@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::{ActionResponse, Play, Player, View};
+use lib_table_top_core::{play::ActionResponse, Play, Player, View};
 use thiserror::Error;
 
 mod board;
