@@ -52,11 +52,24 @@ impl Default for Board {
 }
 
 impl Board {
+    /// Claims a space for a marker, returns an error if that space is taken
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Marker::*, Col, Row, ActionError::*};
+    ///
+    /// let mut board: Board = Default::default();
+    /// let pos = (Col::new(0), Row::new(0));
+    ///
+    /// assert_eq!(board.at_position(pos), None);
+    /// assert!(board.claim_space(X, pos).is_ok());
+    /// assert_eq!(board.at_position(pos), Some(X));
+    ///
+    /// // Taking an already claimed space returns an error
+    /// assert_eq!(board.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
+    /// ```
     pub fn claim_space(&mut self, marker: Marker, position: Position) -> Result<(), ActionError> {
         if self.at_position(position).is_some() {
-            return Err(SpaceIsTaken {
-                attempted: position,
-            });
+            return Err(SpaceIsTaken { attempted: position });
         }
 
         let (Col(c), Row(r)) = position;
