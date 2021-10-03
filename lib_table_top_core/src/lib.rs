@@ -25,9 +25,15 @@ impl View for NoSecretPlayerInformation {
     type Update = NoSecretPlayerInformationUpdate;
 }
 
+pub enum ActionResponse<T> {
+    Response(T),
+    Resign
+}
+
 pub trait Play: Sized + Clone {
     type Action;
     type ActionError;
+    type ActionRequest;
 
     type Settings;
     type SettingsError;
@@ -38,11 +44,17 @@ pub trait Play: Sized + Clone {
     fn advance(
         &mut self,
         settings: &Self::Settings,
-        actions: &[(Player, Self::Action)],
+        actions: &[(
+            Self::ActionRequest,
+            ActionResponse<Self::Action>
+        )],
         rng: &mut impl rand::Rng,
-    ) -> Result<<<Self as Play>::SpectatorView as View>::Update, Self::ActionError>;
+    ) -> Result<
+        <<Self as Play>::SpectatorView as View>::Update,
+        Self::ActionError
+        >;
 
-    fn action_requests(&self, settings: &Self::Settings) -> Vec<Player>;
+    fn action_requests(&self, settings: &Self::Settings, action_requests: &mut Vec<Self::ActionRequest>);
     fn player_view(&self) -> Self::PlayerView;
     fn spectator_view(&self) -> Self::SpectatorView;
 
@@ -67,8 +79,6 @@ impl<T: Play> GameRunner<T> {
         let mut rng = ChaCha20Rng::from_seed(*self.seed);
         let stream_num = self.history.len().try_into().unwrap();
         rng.set_stream(stream_num);
-
-        let _ = new_state.advance(&self.settings, actions, &mut rng);
 
         todo!()
     }

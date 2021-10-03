@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::{Play, Player, View};
+use lib_table_top_core::{ActionResponse, Play, Player, View};
 use thiserror::Error;
 
 mod board;
@@ -34,6 +34,13 @@ pub enum ActionError {
     OtherPlayerTurn { attempted: Marker },
 }
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub struct ActionRequest {
+    marker: Marker,
+    player: Player,
+}
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct SpectatorView(Board);
 
 impl View for SpectatorView {
@@ -45,14 +52,23 @@ impl View for SpectatorView {
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
+    type ActionRequest = ActionRequest;
 
     type Settings = Settings;
     type SettingsError = SettingsError;
 
     type SpectatorView = SpectatorView;
 
-    fn action_requests(&self, _settings: &Self::Settings) -> Vec<Player> {
-        todo!()
+    fn action_requests(
+        &self,
+        settings: &Self::Settings,
+        action_requests: &mut Vec<Self::ActionRequest>,
+    ) {
+        if self.board.status() == Status::InProgress {
+            let marker = self.board.whose_turn();
+            let player = settings.player_for_marker(marker);
+            action_requests.push(ActionRequest { player, marker })
+        }
     }
 
     fn player_view(&self) -> <Self as Play>::PlayerView {
@@ -71,8 +87,11 @@ impl Play for TicTacToe {
 
     fn advance(
         &mut self,
-        _settings: &Self::Settings,
-        _actions: &[(Player, <Self as Play>::Action)],
+        settings: &Self::Settings,
+        actions: &[(
+            <Self as Play>::ActionRequest,
+            ActionResponse<<Self as Play>::Action>,
+        )],
         _rng: &mut impl rand::Rng,
     ) -> Result<<<Self as Play>::SpectatorView as View>::Update, <Self as Play>::ActionError> {
         todo!()

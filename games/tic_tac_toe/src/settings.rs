@@ -1,3 +1,4 @@
+use crate::Marker::{self, *};
 use lib_table_top_core::Player;
 use thiserror::Error;
 
@@ -11,12 +12,11 @@ impl Settings {
         Self { players }
     }
 
-    pub fn players(&self) -> &[Player] {
-        &self.players
-    }
-
-    pub fn starting_player(&self) -> Player {
-        self.players[0]
+    pub fn player_for_marker(&self, marker: Marker) -> Player {
+        match marker {
+            X => self.players[0],
+            O => self.players[1],
+        }
     }
 }
 
