@@ -6,13 +6,30 @@ use std::collections::HashMap;
 pub struct Col(u8);
 
 impl Col {
-    pub fn new(n: u8) -> Self {
+    /// Construct a new `Col` (see `Col::try_new` for a non panicking version)
+    ///
+    /// # Panics
+    ///
+    /// panics if n is outside of 0..=2
+    ///
+    /// ```should_panic
+    /// use tic_tac_toe::Col;
+    /// Col::new(1000);
+    /// ```
+    pub fn new(n: usize) -> Self {
         Self::try_new(n).expect("Invalid index, n must be within 0..=2")
     }
 
-    pub fn try_new(n: u8) -> Option<Self> {
+    /// Try to construct a `Col`, returning None if n is out of bounds
+    ///
+    /// ```
+    /// use tic_tac_toe::Col;
+    /// assert!(Col::try_new(1).is_some());
+    /// assert!(Col::try_new(1000).is_none());
+    /// ```
+    pub fn try_new(n: usize) -> Option<Self> {
         match n {
-            0 | 1 | 2 => Some(Self(n)),
+            0 | 1 | 2 => Some(Self(n.try_into().unwrap())),
             _ => None,
         }
     }
@@ -22,13 +39,30 @@ impl Col {
 pub struct Row(u8);
 
 impl Row {
-    pub fn new(n: u8) -> Self {
+    /// Construct a new Row (see `Row::try_new` for a non panicking version)
+    ///
+    /// # Panics
+    ///
+    /// panics if n is outside of 0..=2
+    ///
+    /// ```should_panic
+    /// use tic_tac_toe::Row;
+    /// Row::new(1000);
+    /// ```
+    pub fn new(n: usize) -> Self {
         Self::try_new(n).expect("Invalid index, n must be within 0..=2")
     }
 
-    pub fn try_new(n: u8) -> Option<Self> {
+    /// Try to construct a `Row`, returning None if n is out of bounds
+    ///
+    /// ```
+    /// use tic_tac_toe::Row;
+    /// assert!(Row::try_new(1).is_some());
+    /// assert!(Row::try_new(1000).is_none());
+    /// ```
+    pub fn try_new(n: usize) -> Option<Self> {
         match n {
-            0 | 1 | 2 => Some(Self(n)),
+            0 | 1 | 2 => Some(Self(n.try_into().unwrap())),
             _ => None,
         }
     }
