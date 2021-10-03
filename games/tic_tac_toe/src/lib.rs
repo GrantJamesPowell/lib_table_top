@@ -6,7 +6,7 @@ use thiserror::Error;
 mod board;
 mod settings;
 
-pub use board::{Board, Col, Position, Row};
+pub use board::{Board, Col, Position, Row, Status};
 pub use settings::{Settings, SettingsError};
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -20,20 +20,8 @@ pub enum Marker {
     O,
 }
 
-impl From<Board> for TicTacToe {
-    fn from(board: Board) -> Self {
-        Self { board }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct Action(pub Position);
-
-impl From<Position> for Action {
-    fn from(p: Position) -> Self {
-        Self(p)
-    }
-}
 
 #[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ActionError {

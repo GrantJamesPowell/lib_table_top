@@ -7,10 +7,7 @@ pub struct Col(u8);
 
 impl Col {
     pub fn new(n: u8) -> Self {
-        Self::try_new(n).expect(&format!(
-            "Invalid index, n must be within 0..=2, and {:?} was supplied",
-            n
-        ))
+        Self::try_new(n).expect("Invalid index, n must be within 0..=2")
     }
 
     pub fn try_new(n: u8) -> Option<Self> {
@@ -26,10 +23,7 @@ pub struct Row(u8);
 
 impl Row {
     pub fn new(n: u8) -> Self {
-        Self::try_new(n).expect(&format!(
-            "Invalid index, n must be within 0..=2, and {:?} was supplied",
-            n
-        ))
+        Self::try_new(n).expect("Invalid index, n must be within 0..=2")
     }
 
     pub fn try_new(n: u8) -> Option<Self> {
@@ -41,6 +35,36 @@ impl Row {
 }
 
 pub type Position = (Col, Row);
+
+pub const POSSIBLE_WINS: [[(Col, Row); 3]; 8] = [
+    // Fill up a row
+    [(Col(0), Row(0)), (Col(0), Row(1)), (Col(0), Row(2))],
+    [(Col(1), Row(0)), (Col(1), Row(1)), (Col(1), Row(2))],
+    [(Col(2), Row(0)), (Col(2), Row(1)), (Col(2), Row(2))],
+    // Fill up a col
+    [(Col(0), Row(0)), (Col(1), Row(0)), (Col(2), Row(0))],
+    [(Col(0), Row(1)), (Col(1), Row(1)), (Col(2), Row(1))],
+    [(Col(0), Row(2)), (Col(1), Row(2)), (Col(2), Row(2))],
+    // Diagonal
+    [(Col(0), Row(0)), (Col(1), Row(1)), (Col(2), Row(2))],
+    [(Col(2), Row(0)), (Col(1), Row(1)), (Col(0), Row(2))],
+];
+
+/// The three states a game can be in
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Status {
+    /// There are still available positions to be claimed on the board
+    InProgress,
+    /// All positions have been claimed and there is no winner
+    Draw,
+    /// All positions have been claimed and there *is* a winner
+    Win {
+        marker: Marker,
+        positions: [Position; 3],
+    },
+}
+
+use Status::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board(pub [[Option<Marker>; 3]; 3]);
@@ -69,12 +93,65 @@ impl Board {
     /// ```
     pub fn claim_space(&mut self, marker: Marker, position: Position) -> Result<(), ActionError> {
         if self.at_position(position).is_some() {
-            return Err(SpaceIsTaken { attempted: position });
+            return Err(SpaceIsTaken {
+                attempted: position,
+            });
         }
 
         let (Col(c), Row(r)) = position;
         self.0[c as usize][r as usize] = Some(marker);
         Ok(())
+    }
+
+    /// Returns the status of the current game, see [`Status`] for more details
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Status::*, Marker::*};
+    ///
+    /// // In progress
+    /// let board: Board = Default::default();
+    /// assert_eq!(board.status(), InProgress);
+    ///
+    /// // A draw
+    /// let board = Board::from_ints([
+    ///   [1, 2, 1],
+    ///   [1, 1, 2],
+    ///   [2, 1, 2]
+    /// ]);
+    /// assert_eq!(board.status(), Draw);
+    ///
+    /// // With a winning position
+    /// let board = Board::from_ints([
+    ///   [1, 1, 1],
+    ///   [0, 0, 0],
+    ///   [0, 0, 0]
+    /// ]);
+    ///
+    /// assert_eq!(
+    ///   board.status(),
+    ///   Win {
+    ///     marker: X,
+    ///     positions: [
+    ///       (Col::new(0), Row::new(0)),
+    ///       (Col::new(0), Row::new(1)),
+    ///       (Col::new(0), Row::new(2))
+    ///     ]
+    ///   }
+    /// );
+    /// ```
+    pub fn status(&self) -> Status {
+        POSSIBLE_WINS
+            .iter()
+            .filter_map(|&positions| {
+                let [a, b, c] = positions.map(|pos| self.at_position(pos));
+
+                if a == b && b == c {
+                    a.map(|marker| Win { marker, positions })
+                } else {
+                    None
+                }
+            })
+            .next()
+            .unwrap_or_else(|| if self.is_full() { Draw } else { InProgress })
     }
 
     /// Returns the marker at a position, since this requires [`Row`] and [`Col`] structs
@@ -190,7 +267,6 @@ impl Board {
     /// let board = Board::from_ints([[0, 2, 2], [2, 2, 2], [2, 2, 2]]);
     /// assert_eq!(X, board.whose_turn());
     /// ```
-
     pub fn whose_turn(&self) -> Marker {
         let mut counts: HashMap<Marker, usize> = HashMap::new();
 
@@ -268,5 +344,9 @@ impl Board {
             })
         });
         Board(b)
+    }
+
+    fn is_full(&self) -> bool {
+        self.taken_spaces().count() == 9
     }
 }
