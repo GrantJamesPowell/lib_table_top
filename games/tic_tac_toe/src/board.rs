@@ -2,7 +2,7 @@ use crate::ActionError::{self, *};
 use crate::Marker::{self, *};
 use std::collections::HashMap;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Col(u8);
 
 impl Col {
@@ -21,7 +21,7 @@ impl Col {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Row(u8);
 
 impl Row {
@@ -42,22 +42,8 @@ impl Row {
 
 pub type Position = (Col, Row);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Board(pub [[Option<Marker>; 3]; 3]);
-
-impl From<[[u16; 3]; 3]> for Board {
-    fn from(board: [[u16; 3]; 3]) -> Self {
-        let b = board.map(|col| {
-            col.map(|n| match n {
-                0 => None,
-                1 => Some(X),
-                2 => Some(O),
-                _ => panic!("foobarbaz"),
-            })
-        });
-        Board(b)
-    }
-}
 
 impl Default for Board {
     fn default() -> Self {
@@ -87,7 +73,7 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
     ///
-    /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
+    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
     /// assert_eq!(
     ///   board.spaces().collect::<Vec<_>>(),
     ///   vec![
@@ -122,7 +108,7 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
     ///
-    /// let board: Board = [[0, 1, 2], [0, 0, 0], [1, 2, 1]].into();
+    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
@@ -148,15 +134,15 @@ impl Board {
     /// assert_eq!(X, board.whose_turn());
 
     /// // Once the first player goes, it's the second player's turn
-    /// let board: Board = [[1, 0, 0], [0, 0, 0], [0, 0, 0]].into();
+    /// let board = Board::from_ints([[1, 0, 0], [0, 0, 0], [0, 0, 0]]);
     /// assert_eq!(O, board.whose_turn());
 
     /// // Once O goes, it's X's turn again
-    /// let board: Board = [[1, 2, 0], [0, 0, 0], [0, 0, 0]].into();
+    /// let board = Board::from_ints([[1, 2, 0], [0, 0, 0], [0, 0, 0]]);
     /// assert_eq!(X, board.whose_turn());
 
     /// // The next player to go is always the one with the fewest spaces
-    /// let board: Board = [[0, 2, 2], [2, 2, 2], [2, 2, 2]].into();
+    /// let board = Board::from_ints([[0, 2, 2], [2, 2, 2], [2, 2, 2]]);
     /// assert_eq!(X, board.whose_turn());
     /// ```
 
@@ -172,5 +158,70 @@ impl Board {
             .min_by_key(|marker| counts.get(marker).cloned().unwrap_or(0))
             .copied()
             .unwrap_or(X)
+    }
+
+    /// Convenience method to construct a board from arrays of ints, nice for literals in specs
+    /// 0 => None
+    /// 1 => Some(X)
+    /// 2 => Some(O)
+    ///
+    /// ```
+    /// // An empty board
+    /// use tic_tac_toe::{Board, Col, Row, Marker::*};
+    /// let board = Board::from_ints(
+    ///   [
+    ///     [0, 0, 0],
+    ///     [0, 0, 0],
+    ///     [0, 0, 0]
+    ///   ]
+    /// );
+    ///
+    /// assert_eq!(board, Default::default());
+    ///
+    /// // With some things on the board
+    ///
+    /// let board = Board::from_ints(
+    ///   [
+    ///     [1, 0, 0],
+    ///     [2, 1, 0],
+    ///     [0, 0, 0]
+    ///   ]
+    /// );
+    ///
+    /// assert_eq!(
+    ///   board.taken_spaces().collect::<Vec<_>>(),
+    ///   vec![
+    ///     ((Col::new(0), Row::new(0)), X),
+    ///     ((Col::new(1), Row::new(0)), O),
+    ///     ((Col::new(1), Row::new(1)), X)
+    ///   ]
+    /// )
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the number is outside of 0..=2
+    ///
+    /// ```should_panic
+    /// use tic_tac_toe::Board;
+    ///
+    /// Board::from_ints(
+    ///   [
+    ///     [0, 0, 0],
+    ///     [0, 3, 0],
+    ///     [0, 0, 0]
+    ///   ]
+    /// );
+    /// ```
+    pub fn from_ints(board: [[u16; 3]; 3]) -> Self {
+        let b = board.map(|col| {
+            col.map(|n| match n {
+                0 => None,
+                1 => Some(X),
+                2 => Some(O),
+                _ => panic!("Invalid number, must ints must be within 0..=2"),
+            })
+        });
+        Board(b)
     }
 }

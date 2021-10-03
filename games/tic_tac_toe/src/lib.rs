@@ -9,7 +9,7 @@ mod settings;
 pub use board::{Board, Col, Position, Row};
 pub use settings::{Settings, SettingsError};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct TicTacToe {
     board: Board,
 }
@@ -20,15 +20,13 @@ pub enum Marker {
     O,
 }
 
-use Marker::*;
-
 impl From<Board> for TicTacToe {
     fn from(board: Board) -> Self {
         Self { board }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct Action(pub Position);
 
 impl From<Position> for Action {
@@ -37,7 +35,7 @@ impl From<Position> for Action {
     }
 }
 
-#[derive(Error, Clone, Debug, PartialEq, Eq)]
+#[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ActionError {
     /// Returned when trying to claim an already claimed space
     #[error("space ({:?}, {:?}) is taken", attempted.0, attempted.1)]
