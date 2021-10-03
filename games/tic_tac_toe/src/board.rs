@@ -53,7 +53,7 @@ impl Default for Board {
 
 impl Board {
     pub fn claim_space(&mut self, marker: Marker, position: Position) -> Result<(), ActionError> {
-        if self.at(position).is_some() {
+        if self.at_position(position).is_some() {
             return Err(SpaceIsTaken {
                 attempted: position,
             });
@@ -64,8 +64,40 @@ impl Board {
         Ok(())
     }
 
-    pub fn at(&self, (Col(c), Row(r)): Position) -> Option<Marker> {
+    /// Returns the marker at a position, since this requires [`Row`] and [`Col`] structs
+    /// the indexing will always be inbound
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Marker::*};
+    ///
+    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
+    /// assert_eq!(board.at_position((Col::new(2), Row::new(0))), Some(X));
+    /// assert_eq!(board.at_position((Col::new(0), Row::new(2))), Some(O));
+    /// assert_eq!(board.at_position((Col::new(0), Row::new(0))), None);
+    /// ```
+    pub fn at_position(&self, (Col(c), Row(r)): Position) -> Option<Marker> {
         self.0[c as usize][r as usize]
+    }
+
+    /// Returns a marker at a position, if the row or col is greater than 2, this returns None
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Marker::*};
+    ///
+    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
+    /// assert_eq!(board.at((2, 0)), Some(X));
+    /// assert_eq!(board.at((0, 2)), Some(O));
+    /// assert_eq!(board.at((0, 0)), None);
+    ///
+    /// // Out of bounds numbers return None
+    /// assert_eq!(board.at((0, 1000)), None);
+    /// assert_eq!(board.at((1000, 0)), None);
+    /// ```
+    pub fn at(&self, (c, r): (usize, usize)) -> Option<Marker> {
+        let col = Col::try_new(c.try_into().ok()?)?;
+        let row = Row::try_new(r.try_into().ok()?)?;
+
+        self.at_position((col, row))
     }
 
     /// Iterate over the spaces on the board and the marker in the space (if there is one)
