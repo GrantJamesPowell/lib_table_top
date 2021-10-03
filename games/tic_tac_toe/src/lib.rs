@@ -28,10 +28,6 @@ pub enum ActionError {
     /// Returned when trying to claim an already claimed space
     #[error("space ({:?}, {:?}) is taken", attempted.0, attempted.1)]
     SpaceIsTaken { attempted: Position },
-
-    /// Returned when the wrong player tries to take a turn
-    #[error("not {:?}'s turn", attempted)]
-    OtherPlayerTurn { attempted: Marker },
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -94,6 +90,16 @@ impl Play for TicTacToe {
         )],
         _rng: &mut impl rand::Rng,
     ) -> Result<<<Self as Play>::SpectatorView as View>::Update, <Self as Play>::ActionError> {
+        for (ActionRequest { marker, .. }, response) in actions {
+            match response {
+                ActionResponse::Resign => {
+                    todo!()
+                }
+                ActionResponse::Response(Action(position)) => {
+                    self.board.claim_space(*marker, *position)?
+                }
+            }
+        }
         todo!()
     }
 }
