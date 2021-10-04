@@ -1,5 +1,6 @@
 use crate::{view::NoSecretPlayerInformation, Player, View};
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ActionResponse<T> {
@@ -22,14 +23,14 @@ impl<A, B, C, D> GameAdvance<A, B, C, D> {
     }
 }
 
-pub trait Play: Sized + Clone {
-    type Action;
-    type ActionError;
-    type ActionRequest;
+pub trait Play: Sized + Clone + Debug {
+    type Action: Clone + Debug + PartialEq + Eq;
+    type ActionError: Clone + Debug + PartialEq + Eq;
+    type ActionRequest: Clone + Debug + PartialEq + Eq;
     type ActionResponse = ActionResponse<Self::Action>;
 
-    type Settings;
-    type SettingsError;
+    type Settings: Clone + Debug + PartialEq + Eq;
+    type SettingsError: Clone + Debug + PartialEq + Eq;
 
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
@@ -45,6 +46,8 @@ pub trait Play: Sized + Clone {
     fn spectator_view(&self) -> Self::SpectatorView;
 
     fn initial_state_for_settings(settings: &Self::Settings) -> Self;
+
+    fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
 
     fn action_requests(
         &self,

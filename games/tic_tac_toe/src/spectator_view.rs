@@ -1,6 +1,6 @@
-use std::error::Error;
 use crate::{Board, Marker, Position};
 use lib_table_top_core::View;
+use std::error::Error;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct SpectatorView(Board);

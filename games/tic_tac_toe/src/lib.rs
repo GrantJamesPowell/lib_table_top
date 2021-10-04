@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(never_type)]
 
 use lib_table_top_core::{play::ActionResponse, Play, Player};
 use thiserror::Error;
@@ -10,7 +11,7 @@ mod spectator_view;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use marker::*;
-pub use settings::{Settings, SettingsError};
+pub use settings::Settings;
 pub use spectator_view::SpectatorView;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -153,7 +154,7 @@ impl Play for TicTacToe {
     type ActionRequest = ActionRequest;
 
     type Settings = Settings;
-    type SettingsError = SettingsError;
+    type SettingsError = !;
 
     type SpectatorView = SpectatorView;
 
@@ -173,7 +174,7 @@ impl Play for TicTacToe {
         Default::default()
     }
 
-    fn spectator_view(&self) -> <Self as Play>::SpectatorView {
+    fn spectator_view(&self) -> SpectatorView {
         self.board.into()
     }
 
@@ -181,13 +182,14 @@ impl Play for TicTacToe {
         Default::default()
     }
 
+    fn is_valid_for_settings(&self, _settings: &Settings) -> bool {
+        true
+    }
+
     fn advance(
         &mut self,
         _settings: &Self::Settings,
-        actions: &[(
-            <Self as Play>::ActionRequest,
-            <Self as Play>::ActionResponse,
-        )],
+        actions: &[(ActionRequest, <Self as Play>::ActionResponse)],
         _rng: &mut impl rand::Rng,
         game_advance: &mut <Self as Play>::GameAdvance,
     ) {
