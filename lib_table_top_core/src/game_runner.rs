@@ -11,7 +11,6 @@ where
     T: Play,
 {
     settings: Arc<<T as Play>::Settings>,
-
     #[builder(default)]
     initial_state: Option<Arc<T>>,
     #[builder(default = "Arc::new(rand::thread_rng().gen::<[u8; 32]>())")]
