@@ -27,8 +27,8 @@ where
 }
 
 impl<T: Play> GameRunner<T> {
-    fn advance_mut(&mut self, actions: &[(Player, <T as Play>::Action)]) -> ! {
-        let new_state = Arc::make_mut(&mut self.state);
+    fn advance_mut(&mut self, _actions: &[(Player, <T as Play>::Action)]) -> ! {
+        let _new_state = Arc::make_mut(&mut self.state);
 
         let mut rng = ChaCha20Rng::from_seed(*self.seed);
         let stream_num = self.history.len().try_into().unwrap();
