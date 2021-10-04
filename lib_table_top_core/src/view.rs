@@ -1,7 +1,11 @@
+use std::error::Error;
+
 pub trait View {
     type Update;
 
-    fn update(&mut self, _update: Self::Update) {}
+    fn update(&mut self, update: Self::Update) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
