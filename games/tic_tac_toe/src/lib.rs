@@ -6,26 +6,11 @@ use thiserror::Error;
 
 mod board;
 mod settings;
+mod marker;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use settings::{Settings, SettingsError};
-
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum Marker {
-    X,
-    O,
-}
-
-use Marker::*;
-
-impl Marker {
-    pub fn opponent(&self) -> Self {
-        match self {
-            X => O,
-            O => X,
-        }
-    }
-}
+pub use marker::*;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
