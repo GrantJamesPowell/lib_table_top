@@ -7,15 +7,16 @@ pub enum ActionResponse<T> {
     Resign,
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct GameAdvance<ActionRequest, ActionError, PlayerViewUpdate, SpectatorViewUpdate> {
-    spectator_view_update: Option<SpectatorViewUpdate>,
-    player_view_updates: HashMap<Player, PlayerViewUpdate>,
-    action_errors: HashMap<ActionRequest, ActionError>,
+    pub spectator_view_updates: Vec<SpectatorViewUpdate>,
+    pub player_view_updates: HashMap<Player, PlayerViewUpdate>,
+    pub action_errors: HashMap<ActionRequest, ActionError>,
 }
 
 impl<A, B, C, D> GameAdvance<A, B, C, D> {
     pub fn reset(&mut self) {
-        self.spectator_view_update = None;
+        self.spectator_view_updates.clear();
         self.player_view_updates.clear();
         self.action_errors.clear()
     }

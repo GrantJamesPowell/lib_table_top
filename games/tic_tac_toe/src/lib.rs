@@ -7,10 +7,12 @@ use thiserror::Error;
 mod board;
 mod marker;
 mod settings;
+mod spectator_view;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use marker::*;
 pub use settings::{Settings, SettingsError};
+pub use spectator_view::SpectatorView;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -129,7 +131,7 @@ impl TicTacToe {
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct Action(pub Position);
+pub struct Action{ position: Position }
 
 #[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ActionError {
@@ -144,14 +146,6 @@ pub struct ActionRequest {
     player: Player,
 }
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct SpectatorView(Board);
-
-impl View for SpectatorView {
-    type Update = Action;
-
-    fn update(&mut self, _action: Self::Update) {}
-}
 
 impl Play for TicTacToe {
     type Action = Action;
@@ -180,7 +174,7 @@ impl Play for TicTacToe {
     }
 
     fn spectator_view(&self) -> <Self as Play>::SpectatorView {
-        SpectatorView(self.board)
+        self.board.into()
     }
 
     fn initial_state_for_settings(_settings: &<Self as Play>::Settings) -> Self {
@@ -195,23 +189,32 @@ impl Play for TicTacToe {
             ActionResponse<<Self as Play>::Action>,
         )],
         _rng: &mut impl rand::Rng,
-        _game_advance: &mut GameAdvance<
+        game_advance: &mut GameAdvance<
             ActionRequest,
             ActionError,
             NoSecretPlayerInformationUpdate,
-            Action,
+            <SpectatorView as View>::Update,
         >,
     ) {
-        for (ActionRequest { marker, .. }, response) in actions {
+        use ActionResponse::*;
+
+        for &(action_request, response) in actions {
             match response {
-                ActionResponse::Resign => {
-                    todo!()
+                Resign => {
+                    self.resign(action_request.marker);
+                    break;
                 }
-                ActionResponse::Response(Action(position)) => {
-                    let _ = self.board.claim_space(*marker, *position);
+                Response(action) => {
+                    match self.board.claim_space(action_request.marker, action.position) {
+                        Ok(_) => {
+                            game_advance.spectator_view_updates.push((action_request.marker, action.position));
+                        }
+                        Err(err) => {
+                            game_advance.action_errors.insert(action_request, err);
+                        }
+                    }
                 }
             }
         }
-        todo!()
     }
 }
