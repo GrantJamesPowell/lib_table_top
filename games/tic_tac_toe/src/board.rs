@@ -313,6 +313,32 @@ impl Board {
         Board(b)
     }
 
+    /// is the board full?
+    ///
+    /// ```
+    /// use tic_tac_toe::Board;
+    ///
+    /// let board = Board::from_ints(
+    ///   [
+    ///     [1, 1, 1],
+    ///     [1, 0, 1],
+    ///     [1, 1, 1]
+    ///   ]
+    /// );
+    ///
+    /// assert!(!board.is_full());
+    ///
+    /// let board = Board::from_ints(
+    ///   [
+    ///     [1, 1, 1],
+    ///     [1, 1, 1],
+    ///     [1, 1, 1]
+    ///   ]
+    /// );
+    ///
+    /// assert!(board.is_full());
+    ///
+    /// ```
     pub fn is_full(&self) -> bool {
         self.taken_spaces().count() == 9
     }

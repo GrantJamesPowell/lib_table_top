@@ -5,12 +5,12 @@ use lib_table_top_core::{view::NoSecretPlayerInformationUpdate, Play, Player, Vi
 use thiserror::Error;
 
 mod board;
-mod settings;
 mod marker;
+mod settings;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
-pub use settings::{Settings, SettingsError};
 pub use marker::*;
+pub use settings::{Settings, SettingsError};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -55,7 +55,6 @@ impl TicTacToe {
     /// game.resign(X);
     /// assert_eq!(game.status(), WinByResignation { winner: O });
     /// ```
-
     pub fn resign(&mut self, marker: Marker) {
         self.resigned = Some(marker);
     }
