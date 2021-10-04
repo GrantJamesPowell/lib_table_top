@@ -1,6 +1,7 @@
 use crate::{view::NoSecretPlayerInformation, Player, View};
 use std::collections::HashMap;
 use std::fmt::Debug;
+// use std::hash::Hash;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ActionResponse<T> {
@@ -8,11 +9,23 @@ pub enum ActionResponse<T> {
     Resign,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct GameAdvance<ActionRequest, ActionError, PlayerViewUpdate, SpectatorViewUpdate> {
     pub spectator_view_updates: Vec<SpectatorViewUpdate>,
     pub player_view_updates: HashMap<Player, PlayerViewUpdate>,
     pub action_errors: HashMap<ActionRequest, ActionError>,
+}
+
+// This feels like it should be what happens if you derive(Default) on `GameAdvance`
+// Deriving default on Game Advance doesn't currently work though :(
+impl<A, B, C, D> Default for GameAdvance<A, B, C, D> {
+    fn default() -> Self {
+        Self {
+            spectator_view_updates: Vec::new(),
+            player_view_updates: HashMap::new(),
+            action_errors: HashMap::new(),
+        }
+    }
 }
 
 impl<A, B, C, D> GameAdvance<A, B, C, D> {
@@ -35,7 +48,7 @@ pub trait Play: Sized + Clone + Debug {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    type GameAdvance = GameAdvance<
+    type GameAdvance: Clone + Debug + Default = GameAdvance<
         Self::ActionRequest,
         Self::ActionError,
         <Self::PlayerView as View>::Update,
