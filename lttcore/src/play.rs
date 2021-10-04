@@ -16,6 +16,12 @@ pub struct GameAdvance<ActionRequest, ActionError, PlayerViewUpdate, SpectatorVi
     pub action_errors: HashMap<ActionRequest, ActionError>,
 }
 
+pub mod game_advance {
+    pub trait Reset {
+        fn reset(&mut self);
+    }
+}
+
 // This feels like it should be what happens if you derive(Default) on `GameAdvance`
 // Deriving default on Game Advance doesn't currently work though :(
 impl<A, B, C, D> Default for GameAdvance<A, B, C, D> {
@@ -28,8 +34,8 @@ impl<A, B, C, D> Default for GameAdvance<A, B, C, D> {
     }
 }
 
-impl<A, B, C, D> GameAdvance<A, B, C, D> {
-    pub fn reset(&mut self) {
+impl<A, B, C, D> game_advance::Reset for GameAdvance<A, B, C, D> {
+    fn reset(&mut self) {
         self.spectator_view_updates.clear();
         self.player_view_updates.clear();
         self.action_errors.clear()
@@ -48,7 +54,7 @@ pub trait Play: Sized + Clone + Debug {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    type GameAdvance: Clone + Debug + Default = GameAdvance<
+    type GameAdvance: Clone + Debug + Default + game_advance::Reset = GameAdvance<
         Self::ActionRequest,
         Self::ActionError,
         <Self::PlayerView as View>::Update,
@@ -71,7 +77,7 @@ pub trait Play: Sized + Clone + Debug {
     fn advance(
         &mut self,
         settings: &Self::Settings,
-        actions: &[((Player, Self::ActionRequest), ActionResponse<Self::Action>)],
+        actions: &[((Player, Self::ActionRequest), Self::ActionResponse)],
         rng: &mut impl rand::Rng,
         game_advance: &mut Self::GameAdvance,
     );

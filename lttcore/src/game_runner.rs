@@ -1,7 +1,8 @@
 use rand::prelude::*;
-// use rand_chacha::ChaCha20Rng;
+use rand_chacha::ChaCha20Rng;
 use std::sync::Arc;
 
+use crate::play::game_advance::Reset;
 use crate::{Play, Player};
 
 #[derive(Builder, Clone, Debug)]
@@ -20,21 +21,38 @@ where
     #[builder(setter(skip))]
     history: Vec<<T as Play>::Action>,
     #[builder(setter(skip))]
-    action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
+    pending_action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
+
     #[builder(setter(skip))]
     game_advance: <T as Play>::GameAdvance,
 }
 
 impl<T: Play> GameRunner<T> {
-    fn action_requests(&self) -> &[(Player, <T as Play>::ActionRequest)] {
-        &self.action_requests
+    fn pending_action_requests(
+        &self,
+    ) -> impl Iterator<Item = &(Player, <T as Play>::ActionRequest)> + '_ {
+        self.pending_action_requests.iter()
     }
 
-    fn advance_mut(&mut self, _actions: &[(Player, <T as Play>::Action)]) {
-        // let mut rng = ChaCha20Rng::from_seed(*self.seed);
-        // let stream_num = self.history.len().try_into().unwrap();
-        // rng.set_stream(stream_num);
-        // self.state.advance()
+    fn advance_mut(
+        &mut self,
+        actions: &[(
+            (Player, <T as Play>::ActionRequest),
+            <T as Play>::ActionResponse,
+        )],
+    ) {
+        let mut rng = ChaCha20Rng::from_seed(*self.seed);
+        let stream_num = self.history.len().try_into().unwrap();
+        rng.set_stream(stream_num);
+
+        self.game_advance.reset();
+        self.pending_action_requests.clear();
+
+        self.state
+            .advance(&self.settings, actions, &mut rng, &mut self.game_advance);
+
+        self.state
+            .action_requests(&self.settings, &mut self.pending_action_requests);
     }
 }
 

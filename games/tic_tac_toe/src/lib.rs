@@ -143,7 +143,9 @@ pub enum ActionError {
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct ActionRequest { marker: Marker, }
+pub struct ActionRequest {
+    marker: Marker,
+}
 
 impl Play for TicTacToe {
     type Action = Action;
