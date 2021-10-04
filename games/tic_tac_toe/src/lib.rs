@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::{play::ActionResponse, Play, Player, View};
+use lib_table_top_core::play::{ActionResponse, GameAdvance};
+use lib_table_top_core::{view::NoSecretPlayerInformationUpdate, Play, Player, View};
 use thiserror::Error;
 
 mod board;
@@ -89,14 +90,20 @@ impl Play for TicTacToe {
             ActionResponse<<Self as Play>::Action>,
         )],
         _rng: &mut impl rand::Rng,
-    ) -> Result<<<Self as Play>::SpectatorView as View>::Update, <Self as Play>::ActionError> {
+        _game_advance: &mut GameAdvance<
+            ActionRequest,
+            ActionError,
+            NoSecretPlayerInformationUpdate,
+            Action,
+        >,
+    ) {
         for (ActionRequest { marker, .. }, response) in actions {
             match response {
                 ActionResponse::Resign => {
                     todo!()
                 }
                 ActionResponse::Response(Action(position)) => {
-                    self.board.claim_space(*marker, *position)?
+                    let _ = self.board.claim_space(*marker, *position);
                 }
             }
         }

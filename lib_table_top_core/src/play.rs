@@ -1,8 +1,24 @@
-use crate::{view::NoSecretPlayerInformation, View};
+use crate::{view::NoSecretPlayerInformation, Player, View};
+use std::collections::HashMap;
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ActionResponse<T> {
     Response(T),
     Resign,
+}
+
+pub struct GameAdvance<ActionRequest, ActionError, PlayerViewUpdate, SpectatorViewUpdate> {
+    spectator_view_update: Option<SpectatorViewUpdate>,
+    player_view_updates: HashMap<Player, PlayerViewUpdate>,
+    action_errors: HashMap<ActionRequest, ActionError>,
+}
+
+impl<A, B, C, D> GameAdvance<A, B, C, D> {
+    pub fn reset(&mut self) {
+        self.spectator_view_update = None;
+        self.player_view_updates.clear();
+        self.action_errors.clear()
+    }
 }
 
 pub trait Play: Sized + Clone {
@@ -16,20 +32,27 @@ pub trait Play: Sized + Clone {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    fn advance(
-        &mut self,
-        settings: &Self::Settings,
-        actions: &[(Self::ActionRequest, ActionResponse<Self::Action>)],
-        rng: &mut impl rand::Rng,
-    ) -> Result<<<Self as Play>::SpectatorView as View>::Update, Self::ActionError>;
+    fn player_view(&self) -> Self::PlayerView;
+    fn spectator_view(&self) -> Self::SpectatorView;
+
+    fn initial_state_for_settings(settings: &Self::Settings) -> Self;
 
     fn action_requests(
         &self,
         settings: &Self::Settings,
         action_requests: &mut Vec<Self::ActionRequest>,
     );
-    fn player_view(&self) -> Self::PlayerView;
-    fn spectator_view(&self) -> Self::SpectatorView;
 
-    fn initial_state_for_settings(settings: &Self::Settings) -> Self;
+    fn advance(
+        &mut self,
+        settings: &Self::Settings,
+        actions: &[(Self::ActionRequest, ActionResponse<Self::Action>)],
+        rng: &mut impl rand::Rng,
+        game_advance: &mut GameAdvance<
+            Self::ActionRequest,
+            Self::ActionError,
+            <Self::PlayerView as View>::Update,
+            <Self::SpectatorView as View>::Update,
+        >,
+    );
 }
