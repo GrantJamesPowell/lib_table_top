@@ -1,4 +1,4 @@
-use lib_table_top_core::{player::p, GameRunner, GameRunnerBuilder, Player};
+use lttcore::{player::p, GameRunner, GameRunnerBuilder, Player};
 use tic_tac_toe::{Settings, TicTacToe};
 
 #[test]

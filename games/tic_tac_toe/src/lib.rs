@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![feature(never_type)]
 
-use lib_table_top_core::{play::ActionResponse, Play, Player};
+use lttcore::{play::ActionResponse, Play, Player};
 use thiserror::Error;
 
 mod board;

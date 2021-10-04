@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "lib_table_top_core",
+    "lttcore",
     "games/tic_tac_toe",
     "ltti",
 ]

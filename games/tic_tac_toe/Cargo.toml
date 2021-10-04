@@ -3,10 +3,8 @@ name = "tic_tac_toe"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-lib_table_top_core = { path = "../../lib_table_top_core" }
+lttcore = { path = "../../lttcore" }
 thiserror = "1.0.23"
 itertools = "0.10.0"
 enum-map = "0.6.4"

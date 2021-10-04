@@ -1,5 +1,5 @@
 use crate::Marker::{self, *};
-use lib_table_top_core::Player;
+use lttcore::Player;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Settings {

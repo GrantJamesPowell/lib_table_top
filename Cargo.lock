@@ -140,7 +140,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "lib_table_top_core"
+name = "libc"
+version = "0.2.103"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd8f7255a17a627354f321ef0055d63b898c6fb27eff628af4d1b66b7331edf6"
+
+[[package]]
+name = "lttcore"
 version = "0.1.0"
 dependencies = [
  "derive_builder",
@@ -149,13 +155,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "libc"
-version = "0.2.103"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8f7255a17a627354f321ef0055d63b898c6fb27eff628af4d1b66b7331edf6"
-
-[[package]]
-name = "lttcli"
+name = "ltti"
 version = "0.1.0"
 
 [[package]]
@@ -265,7 +265,7 @@ version = "0.1.0"
 dependencies = [
  "enum-map",
  "itertools",
- "lib_table_top_core",
+ "lttcore",
  "rand",
  "thiserror",
 ]
