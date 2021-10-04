@@ -143,10 +143,7 @@ pub enum ActionError {
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct ActionRequest {
-    marker: Marker,
-    player: Player,
-}
+pub struct ActionRequest { marker: Marker, }
 
 impl Play for TicTacToe {
     type Action = Action;
@@ -161,12 +158,12 @@ impl Play for TicTacToe {
     fn action_requests(
         &self,
         settings: &Self::Settings,
-        action_requests: &mut Vec<Self::ActionRequest>,
+        action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     ) {
         if self.status() == Status::InProgress {
             let marker = self.board.whose_turn();
             let player = settings.player_for_marker(marker);
-            action_requests.push(ActionRequest { player, marker })
+            action_requests.push((player, ActionRequest { marker }));
         }
     }
 
@@ -189,13 +186,13 @@ impl Play for TicTacToe {
     fn advance(
         &mut self,
         _settings: &Self::Settings,
-        actions: &[(ActionRequest, <Self as Play>::ActionResponse)],
+        actions: &[((Player, ActionRequest), <Self as Play>::ActionResponse)],
         _rng: &mut impl rand::Rng,
         game_advance: &mut <Self as Play>::GameAdvance,
     ) {
         use ActionResponse::*;
 
-        for &(action_request, response) in actions {
+        for &((_player, action_request), response) in actions {
             match response {
                 Resign => {
                     self.resign(action_request.marker);

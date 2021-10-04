@@ -65,13 +65,13 @@ pub trait Play: Sized + Clone + Debug {
     fn action_requests(
         &self,
         settings: &Self::Settings,
-        action_requests: &mut Vec<Self::ActionRequest>,
+        action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     );
 
     fn advance(
         &mut self,
         settings: &Self::Settings,
-        actions: &[(Self::ActionRequest, ActionResponse<Self::Action>)],
+        actions: &[((Player, Self::ActionRequest), ActionResponse<Self::Action>)],
         rng: &mut impl rand::Rng,
         game_advance: &mut Self::GameAdvance,
     );
