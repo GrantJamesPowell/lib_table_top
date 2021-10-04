@@ -26,12 +26,20 @@ pub trait Play: Sized + Clone {
     type Action;
     type ActionError;
     type ActionRequest;
+    type ActionResponse = ActionResponse<Self::Action>;
 
     type Settings;
     type SettingsError;
 
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
+
+    type GameAdvance = GameAdvance<
+        Self::ActionRequest,
+        Self::ActionError,
+        <Self::PlayerView as View>::Update,
+        <Self::SpectatorView as View>::Update,
+    >;
 
     fn player_view(&self) -> Self::PlayerView;
     fn spectator_view(&self) -> Self::SpectatorView;
@@ -49,11 +57,6 @@ pub trait Play: Sized + Clone {
         settings: &Self::Settings,
         actions: &[(Self::ActionRequest, ActionResponse<Self::Action>)],
         rng: &mut impl rand::Rng,
-        game_advance: &mut GameAdvance<
-            Self::ActionRequest,
-            Self::ActionError,
-            <Self::PlayerView as View>::Update,
-            <Self::SpectatorView as View>::Update,
-        >,
+        game_advance: &mut Self::GameAdvance,
     );
 }

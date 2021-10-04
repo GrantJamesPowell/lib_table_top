@@ -1,5 +1,5 @@
-use lib_table_top_core::View;
 use crate::{Board, Marker, Position};
+use lib_table_top_core::View;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct SpectatorView(Board);

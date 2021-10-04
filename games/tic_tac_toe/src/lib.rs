@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
-use lib_table_top_core::play::{ActionResponse, GameAdvance};
-use lib_table_top_core::{view::NoSecretPlayerInformationUpdate, Play, Player, View};
+use lib_table_top_core::{play::ActionResponse, Play, Player};
 use thiserror::Error;
 
 mod board;
@@ -131,7 +130,9 @@ impl TicTacToe {
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub struct Action{ position: Position }
+pub struct Action {
+    position: Position,
+}
 
 #[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]
 pub enum ActionError {
@@ -145,7 +146,6 @@ pub struct ActionRequest {
     marker: Marker,
     player: Player,
 }
-
 
 impl Play for TicTacToe {
     type Action = Action;
@@ -186,15 +186,10 @@ impl Play for TicTacToe {
         _settings: &Self::Settings,
         actions: &[(
             <Self as Play>::ActionRequest,
-            ActionResponse<<Self as Play>::Action>,
+            <Self as Play>::ActionResponse,
         )],
         _rng: &mut impl rand::Rng,
-        game_advance: &mut GameAdvance<
-            ActionRequest,
-            ActionError,
-            NoSecretPlayerInformationUpdate,
-            <SpectatorView as View>::Update,
-        >,
+        game_advance: &mut <Self as Play>::GameAdvance,
     ) {
         use ActionResponse::*;
 
@@ -205,9 +200,14 @@ impl Play for TicTacToe {
                     break;
                 }
                 Response(action) => {
-                    match self.board.claim_space(action_request.marker, action.position) {
+                    match self
+                        .board
+                        .claim_space(action_request.marker, action.position)
+                    {
                         Ok(_) => {
-                            game_advance.spectator_view_updates.push((action_request.marker, action.position));
+                            game_advance
+                                .spectator_view_updates
+                                .push((action_request.marker, action.position));
                         }
                         Err(err) => {
                             game_advance.action_errors.insert(action_request, err);
