@@ -73,13 +73,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             match events_reciever.recv().expect("foobar") {
                 Tick => {
-                    println!("gotta tick!")
                 }
                 Resize => {
-                    println!("gotta resize")
                 }
                 Input(event) => {
-                    println!("gotta keyboard event {:?}", event)
                 }
             }
         })?;
