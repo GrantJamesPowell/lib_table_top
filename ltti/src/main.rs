@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![allow(dead_code)]
 
 use tui::backend::CrosstermBackend;
 use tui::{Frame, Terminal};
@@ -14,6 +15,7 @@ use std::{io, sync::mpsc, thread, time::Duration};
 mod gui;
 
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
+use gui::common::footer;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdout = io::stdout();
@@ -70,14 +72,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             rect.render_widget(tabs, chunks[0]);
             rect.render_widget(list, chunks[1]);
+            rect.render_widget(footer(), chunks[2]);
 
             match events_reciever.recv().expect("foobar") {
-                Tick => {
-                }
-                Resize => {
-                }
-                Input(event) => {
-                }
+                Tick => {}
+                Resize => {}
+                Input(_event) => {}
             }
         })?;
     }
