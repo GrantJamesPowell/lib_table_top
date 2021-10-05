@@ -1,39 +1,62 @@
-extern crate clap;
+use std::io;
+use tui::backend::CrosstermBackend;
+use tui::{Frame, Terminal};
 
-use clap::{crate_authors, crate_version, App, SubCommand};
+use tui::layout::{Alignment, Constraint, Direction, Layout};
+use tui::style::{Color, Modifier, Style};
+use tui::symbols::DOT;
+use tui::text::{Span, Spans};
+use tui::widgets::{Block, Borders, List, ListItem, Tabs};
 
-fn main() {
-    let matches = App::new("Lib Table Top Interactive (ltti)")
-        .version(crate_version!())
-        .author(crate_authors!())
-        .about("Does awesome things")
-        .args_from_usage(
-            "-c, --config=[FILE] 'Sets a custom config file'
-                                         <output> 'Sets an optional output file'
-                                         -d... 'Turn debugging information on'",
-        )
-        .subcommand(
-            SubCommand::with_name("tic_tac_toe")
-                .about("Play tic-tac-toe in your terminal")
-                .arg_from_usage("-l, --list 'lists test values'"),
-        )
-        .get_matches();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
 
-    // You can check the value provided by positional arguments, or option arguments
-    if let Some(o) = matches.value_of("output") {
-        println!("Value for output: {}", o);
+    loop {
+        terminal.draw(|rect| {
+            let size = rect.size();
+
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .margin(2)
+                .constraints(
+                    [
+                        Constraint::Length(3),
+                        Constraint::Min(2),
+                        Constraint::Length(3),
+                    ]
+                    .as_ref(),
+                )
+                .split(size);
+
+            let items = [
+                ListItem::new("Item 1"),
+                ListItem::new("Item 2"),
+                ListItem::new("Item 3"),
+            ];
+            let list: List = List::new(items)
+                .block(Block::default().title("List").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
+                .highlight_symbol(">>");
+
+            let titles = ["Tab1", "Tab2", "Tab3", "Tab4"]
+                .iter()
+                .cloned()
+                .map(Spans::from)
+                .collect();
+            let tabs = Tabs::new(titles)
+                .block(Block::default().title("Tabs").borders(Borders::ALL))
+                .style(Style::default().fg(Color::White))
+                .highlight_style(Style::default().fg(Color::Yellow))
+                .divider(DOT);
+
+            rect.render_widget(tabs, chunks[0]);
+            rect.render_widget(list, chunks[1]);
+        });
     }
 
-    if let Some(c) = matches.value_of("config") {
-        println!("Value for config: {}", c);
-    }
-
-    // You can see how many times a particular flag or argument occurred
-    // Note, only flags can have multiple occurrences
-    match matches.occurrences_of("d") {
-        0 => println!("Debug mode is off"),
-        1 => println!("Debug mode is kind of on"),
-        2 => println!("Debug mode is on"),
-        3 | _ => println!("Don't be crazy"),
-    }
+    Ok(())
 }
