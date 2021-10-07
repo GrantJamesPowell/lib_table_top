@@ -35,30 +35,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         terminal.draw(|rect| {
             let chunks = layout().split(rect.size());
 
-            let items = [
-                ListItem::new("Item 1"),
-                ListItem::new("Item 2"),
-                ListItem::new("Item 3"),
-            ];
-            let list: List = List::new(items)
-                .block(Block::default().title("List").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White))
-                .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
-                .highlight_symbol(">>");
-
-            let titles = ["Tab1", "Tab2", "Tab3", "Tab4"]
-                .iter()
-                .cloned()
-                .map(Spans::from)
-                .collect();
-            let tabs = Tabs::new(titles)
-                .block(Block::default().title("Tabs").borders(Borders::ALL))
-                .style(Style::default().fg(Color::White))
-                .highlight_style(Style::default().fg(Color::Yellow))
-                .divider(DOT);
-
-            rect.render_widget(tabs, chunks[0]);
-            rect.render_widget(list, chunks[1]);
             rect.render_widget(footer(), chunks[2]);
 
             match events_reciever.recv().expect("foobar") {
