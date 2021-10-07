@@ -14,8 +14,8 @@ use std::{io, sync::mpsc, thread, time::Duration};
 
 mod gui;
 
+use gui::common::{footer, layout};
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
-use gui::common::footer;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdout = io::stdout();
@@ -33,20 +33,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         terminal.draw(|rect| {
-            let size = rect.size();
-
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .margin(2)
-                .constraints(
-                    [
-                        Constraint::Length(3),
-                        Constraint::Min(2),
-                        Constraint::Length(3),
-                    ]
-                    .as_ref(),
-                )
-                .split(size);
+            let chunks = layout().split(rect.size());
 
             let items = [
                 ListItem::new("Item 1"),
