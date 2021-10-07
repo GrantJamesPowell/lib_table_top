@@ -17,7 +17,7 @@ pub use spectator_view::SpectatorView;
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     /// There are still available positions to be claimed on the board
-    InProgress,
+    InProgress { next_up: Marker },
     /// All positions have been claimed and there is no winner
     Draw,
     /// Win by resignation
@@ -53,7 +53,7 @@ impl TicTacToe {
     /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*};
     ///
     /// let mut game: TicTacToe = Default::default();
-    /// assert_eq!(game.status(), InProgress);
+    /// assert_eq!(game.status(), InProgress{ next_up: X });
     /// game.resign(X);
     /// assert_eq!(game.status(), WinByResignation { winner: O });
     /// ```
@@ -67,7 +67,7 @@ impl TicTacToe {
     ///
     /// // In progress
     /// let game: TicTacToe = Default::default();
-    /// assert_eq!(game.status(), InProgress);
+    /// assert_eq!(game.status(), InProgress{ next_up: X });
     ///
     /// // A draw
     /// let game: TicTacToe = Board::from_ints([
@@ -124,7 +124,9 @@ impl TicTacToe {
                 if self.board.is_full() {
                     Draw
                 } else {
-                    InProgress
+                    InProgress {
+                        next_up: self.board.whose_turn(),
+                    }
                 }
             })
     }
@@ -162,8 +164,7 @@ impl Play for TicTacToe {
         settings: &Self::Settings,
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     ) {
-        if self.status() == Status::InProgress {
-            let marker = self.board.whose_turn();
+        if let Status::InProgress { next_up: marker } = self.status() {
             let player = settings.player_for_marker(marker);
             action_requests.push((player, ActionRequest { marker }));
         }
