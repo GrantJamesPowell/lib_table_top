@@ -4,6 +4,8 @@ pub enum Marker {
     O,
 }
 
+use Marker::*;
+
 impl Marker {
     /// Returns the opponent of a Marker
     ///
@@ -14,11 +16,24 @@ impl Marker {
     /// assert_eq!(O.opponent(), X);
     /// ```
     pub fn opponent(&self) -> Self {
-        use Marker::*;
-
         match self {
             X => O,
             O => X,
         }
+    }
+}
+
+use std::fmt;
+
+impl fmt::Display for Marker {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(
+            f,
+            "{}",
+            match self {
+                X => "X",
+                O => "O",
+            }
+        )
     }
 }
