@@ -159,7 +159,7 @@ impl Play for TicTacToe {
 
     type SpectatorView = SpectatorView;
 
-    fn action_requests(
+    fn action_requests_into(
         &self,
         settings: &Self::Settings,
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,

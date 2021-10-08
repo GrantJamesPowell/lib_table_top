@@ -68,11 +68,18 @@ pub trait Play: Sized + Clone + Debug {
 
     fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
 
-    fn action_requests(
+    fn action_requests_into(
         &self,
         settings: &Self::Settings,
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     );
+
+    fn action_requests(&self, settings: &Self::Settings) -> Vec<(Player, Self::ActionRequest)> {
+        let mut vec = Vec::new();
+        self.action_requests_into(settings, &mut vec);
+
+        vec
+    }
 
     fn advance(
         &mut self,

@@ -52,7 +52,7 @@ impl<T: Play> GameRunner<T> {
             .advance(&self.settings, actions, &mut rng, &mut self.game_advance);
 
         self.state
-            .action_requests(&self.settings, &mut self.pending_action_requests);
+            .action_requests_into(&self.settings, &mut self.pending_action_requests);
     }
 }
 
