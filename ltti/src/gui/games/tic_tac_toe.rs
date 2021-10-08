@@ -1,4 +1,3 @@
-use crate::gui::game_user_interface::Arrow;
 use crate::gui::{GameUserInterface, UserInterfaceState};
 
 use lttcore::Play;
@@ -7,6 +6,7 @@ use tic_tac_toe::{
     TicTacToe,
 };
 
+use crossterm::event::{KeyCode, KeyEvent};
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint::*, Direction::*, Layout, Margin, Rect};
 use tui::style::{Color::*, Style};
@@ -46,12 +46,13 @@ fn increment(n: usize) -> usize {
 }
 
 impl UserInterfaceState for UIState {
-    fn on_arrow(&mut self, arrow: Arrow) {
-        match arrow {
-            Arrow::Up => self.selected_row = increment(self.selected_row),
-            Arrow::Right => self.selected_col = increment(self.selected_col),
-            Arrow::Left => self.selected_col = decrement(self.selected_col),
-            Arrow::Down => self.selected_row = decrement(self.selected_row),
+    fn on_input(&mut self, event: KeyEvent) {
+        match event.code {
+            KeyCode::Up => self.selected_row = increment(self.selected_row),
+            KeyCode::Right => self.selected_col = increment(self.selected_col),
+            KeyCode::Left => self.selected_col = decrement(self.selected_col),
+            KeyCode::Down => self.selected_row = decrement(self.selected_row),
+            _ => {}
         }
     }
 }

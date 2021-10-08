@@ -15,40 +15,49 @@ use std::{io, sync::mpsc, thread, time::Duration};
 mod gui;
 
 use gui::common::{footer, layout};
+use gui::game_user_interface::{GameUserInterface, UserInterfaceState};
 use gui::games::tic_tac_toe;
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
-use gui::GameUserInterface;
+
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
 
 use lttcore::Play;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let stdout = io::stdout();
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    terminal.clear()?;
 
     let (events_sender, events_reciever) = mpsc::channel();
-    let tick_rate = Duration::from_millis(200);
+    let tick_rate = Duration::from_millis(100);
 
     thread::spawn(background_terminal_events_and_ticks(
         tick_rate,
         events_sender,
     ));
 
+    let game: ::tic_tac_toe::TicTacToe =
+        ::tic_tac_toe::Board::from_ints([[1, 0, 2], [0, 0, 0], [2, 2, 0]]).into();
+
+    use lttcore::player::p;
+    let settings = ::tic_tac_toe::Settings::new([p(1), p(2)]);
+
+    let mut ui_state = Default::default();
+
     loop {
         terminal.draw(|frame| {
             let chunks = layout().split(frame.size());
 
-            let game: ::tic_tac_toe::TicTacToe =
-                ::tic_tac_toe::Board::from_ints([[1, 0, 2], [0, 0, 0], [2, 2, 0]]).into();
-
-            use lttcore::player::p;
-            let settings = ::tic_tac_toe::Settings::new([p(1), p(2)]);
-
             ::tic_tac_toe::TicTacToe::render_action_request(
                 frame,
                 chunks[1],
-                &Default::default(),
+                &ui_state,
                 &settings,
                 &game.player_view(),
                 &game.spectator_view(),
@@ -56,12 +65,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
 
             frame.render_widget(footer(), chunks[2]);
-
-            match events_reciever.recv().expect("foobar") {
-                Tick => {}
-                Resize => {}
-                Input(_event) => {}
-            }
         })?;
+
+        match events_reciever.recv().expect("foobar") {
+            Tick => {}
+            Resize => {}
+            Input(event) => match event.code {
+                KeyCode::Char('q') | KeyCode::Esc => {
+                    disable_raw_mode()?;
+                    execute!(
+                        terminal.backend_mut(),
+                        LeaveAlternateScreen,
+                        DisableMouseCapture
+                    )?;
+                    terminal.show_cursor()?;
+                    break;
+                }
+                _ => ui_state.on_input(event),
+            },
+        };
     }
+
+    Ok(())
 }
