@@ -4,13 +4,14 @@
 use tui::backend::CrosstermBackend;
 use tui::{Frame, Terminal};
 
+use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
 use tui::style::{Color, Modifier, Style};
 use tui::symbols::DOT;
 use tui::text::{Span, Spans};
 use tui::widgets::{Block, Borders, List, ListItem, Tabs};
 
-use std::{io, sync::mpsc, thread, time::Duration};
+use std::{error::Error, io, sync::mpsc, thread, time::Duration};
 
 mod gui;
 

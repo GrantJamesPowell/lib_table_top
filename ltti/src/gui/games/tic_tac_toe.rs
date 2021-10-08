@@ -83,13 +83,13 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
 
         let cols = Layout::default()
             .direction(Horizontal)
-            .constraints([Percentage(33), Percentage(33), Percentage(33)])
+            .constraints([Ratio(1, 3), Ratio(1, 3), Ratio(1, 3)])
             .split(inner_rect);
 
         let squares = cols.iter().map(|&column_rect| {
             Layout::default()
                 .direction(Vertical)
-                .constraints([Percentage(33), Percentage(33), Percentage(33)])
+                .constraints([Ratio(1, 3), Ratio(1, 3), Ratio(1, 3)])
                 .split(column_rect)
         });
 
@@ -123,10 +123,16 @@ fn draw_square<B: Backend>(
     };
 
     let block = Block::default()
-        .title(format!("{}, {}", col, row))
+        // .title(format!("{}, {}", col, row))
         .borders(Borders::ALL)
         .border_type(if selected { Thick } else { Plain })
         .border_style(Style::default().fg(if selected { Yellow } else { White }));
+
+    let block = if selected {
+        block.title(format!("{}, {}", col, row))
+    } else {
+        block
+    };
 
     let inner_rect = block.inner(square).inner(&Margin {
         horizontal: 1,
