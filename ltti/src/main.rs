@@ -17,6 +17,9 @@ mod gui;
 use gui::common::{footer, layout};
 use gui::games::tic_tac_toe;
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
+use gui::GameUserInterface;
+
+use lttcore::Play;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let stdout = io::stdout();
@@ -33,16 +36,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ));
 
     loop {
-        terminal.draw(|rect| {
-            let chunks = layout().split(rect.size());
+        terminal.draw(|frame| {
+            let chunks = layout().split(frame.size());
 
-            let board = ::tic_tac_toe::Board::from_ints([[0, 1, 2], [1, 0, 1], [2, 2, 0]]);
+            let game: ::tic_tac_toe::TicTacToe =
+                ::tic_tac_toe::Board::from_ints([[0, 1, 2], [1, 0, 1], [2, 2, 0]]).into();
 
             use lttcore::player::p;
             let settings = ::tic_tac_toe::Settings::new([p(1), p(2)]);
 
-            rect.render_widget(tic_tac_toe::render(&settings, &board), chunks[1]);
-            rect.render_widget(footer(), chunks[2]);
+            ::tic_tac_toe::TicTacToe::render_action_request(
+                frame,
+                chunks[1],
+                &Default::default(),
+                &settings,
+                &game.player_view(),
+                &game.spectator_view(),
+                &game.action_requests(&settings)[0].1,
+                |x| {
+                    println!("{:?}", x);
+                },
+            );
+
+            frame.render_widget(footer(), chunks[2]);
 
             match events_reciever.recv().expect("foobar") {
                 Tick => {}

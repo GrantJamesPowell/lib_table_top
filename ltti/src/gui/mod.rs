@@ -1,5 +1,5 @@
 pub mod common;
+mod game_user_interface;
 pub mod games;
 pub mod tick;
-mod game_ui;
-pub use game_ui::GameUserInterface;
+pub use game_user_interface::{GameUserInterface, UserInterfaceState};
