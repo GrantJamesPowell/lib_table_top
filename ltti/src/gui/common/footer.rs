@@ -10,7 +10,6 @@ pub fn footer() -> impl Widget {
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
-                .title("Copyright")
-                .border_type(BorderType::Plain),
+                .border_type(BorderType::Rounded),
         )
 }

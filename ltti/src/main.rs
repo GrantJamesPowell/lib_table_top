@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let chunks = layout().split(frame.size());
 
             let game: ::tic_tac_toe::TicTacToe =
-                ::tic_tac_toe::Board::from_ints([[0, 1, 2], [1, 0, 1], [2, 2, 0]]).into();
+                ::tic_tac_toe::Board::from_ints([[1, 0, 2], [0, 0, 0], [2, 2, 0]]).into();
 
             use lttcore::player::p;
             let settings = ::tic_tac_toe::Settings::new([p(1), p(2)]);

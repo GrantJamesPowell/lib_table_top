@@ -6,7 +6,7 @@ use std::error::Error;
 pub struct SpectatorView(Board);
 
 impl SpectatorView {
-    fn board(&self) -> &Board {
+    pub fn board(&self) -> &Board {
         &self.0
     }
 }

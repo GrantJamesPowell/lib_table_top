@@ -1,19 +1,14 @@
-// use tic_tac_toe::Marker::{self, *};
-// use tic_tac_toe::{Board, Col, Row, Settings, Status};
-// use tui::backend::Backend;
-// use tui::layout::Constraint;
-// use tui::terminal::Frame;
-// use tui::text::Span;
-// use tui::widgets::{self, Block, BorderType, Borders, Cell, Table, Widget};
-
 use crate::gui::{GameUserInterface, UserInterfaceState};
 use lttcore::Play;
-use tic_tac_toe::TicTacToe;
+use tic_tac_toe::{
+    Marker::{self, *},
+    TicTacToe,
+};
 
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint::*, Direction::*, Layout, Margin, Rect};
 use tui::style::{Color::*, Style};
-use tui::widgets::{Block, BorderType::*, Borders};
+use tui::widgets::{Block, BorderType::*, Borders, Widget};
 use tui::Frame;
 
 #[derive(Default)]
@@ -37,7 +32,7 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
         let board = Block::default()
             .title("Tic Tac Toe")
             .borders(Borders::ALL)
-            .border_type(Thick);
+            .border_type(Rounded);
 
         let inner_rect = board.inner(rect).inner(&Margin {
             horizontal: 2,
@@ -59,17 +54,40 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
         });
 
         for (col_num, col) in squares.into_iter().enumerate() {
-            for (row_num, square) in col.into_iter().rev().enumerate() {
-                let x = format!("({},{})", col_num, row_num);
-
-                let block = Block::default()
-                    .title(x)
-                    .borders(Borders::ALL)
-                    .border_style(Style::default().fg(White))
-                    .style(Style::default().bg(Black));
-
-                frame.render_widget(block, square);
+            for (row_num, square) in col.into_iter().enumerate().rev() {
+                let pos = (col_num, row_num);
+                draw_square(frame, square, spectator_view.board().at(pos), pos);
             }
         }
     }
+}
+
+fn draw_square<B: Backend>(
+    frame: &mut Frame<B>,
+    square: Rect,
+    marker: Option<Marker>,
+    (col, row): (usize, usize),
+) {
+    let background_color = match marker {
+        Some(X) => Red,
+        Some(O) => Blue,
+        None => Black,
+    };
+
+    let block = Block::default()
+        .title(format!("{}, {}", col, row))
+        .borders(Borders::ALL)
+        .border_type(Plain)
+        .border_style(Style::default().fg(White));
+
+    let inner_rect = block.inner(square).inner(&Margin {
+        horizontal: 1,
+        vertical: 0,
+    });
+
+    frame.render_widget(block, square);
+
+    let block = Block::default().style(Style::default().fg(White).bg(background_color));
+
+    frame.render_widget(block, inner_rect);
 }
