@@ -15,7 +15,7 @@ use std::{error::Error, io, sync::mpsc, thread, time::Duration};
 
 mod gui;
 
-use gui::common::{footer, layout};
+use gui::common::layout;
 use gui::game_user_interface::{GameUserInterface, UserInterfaceState};
 use gui::games::tic_tac_toe;
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
@@ -64,8 +64,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &game.spectator_view(),
                 &game.action_requests(&settings)[0].1,
             );
-
-            frame.render_widget(footer(), chunks[2]);
         })?;
 
         match events_reciever.recv().expect("foobar") {

@@ -123,7 +123,6 @@ fn draw_square<B: Backend>(
     };
 
     let block = Block::default()
-        // .title(format!("{}, {}", col, row))
         .borders(Borders::ALL)
         .border_type(if selected { Thick } else { Plain })
         .border_style(Style::default().fg(if selected { Yellow } else { White }));
