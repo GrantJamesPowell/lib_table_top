@@ -1,4 +1,6 @@
+use crate::gui::game_user_interface::Arrow;
 use crate::gui::{GameUserInterface, UserInterfaceState};
+
 use lttcore::Play;
 use tic_tac_toe::{
     Marker::{self, *},
@@ -11,10 +13,48 @@ use tui::style::{Color::*, Style};
 use tui::widgets::{Block, BorderType::*, Borders, Widget};
 use tui::Frame;
 
-#[derive(Default)]
-pub struct UIState {}
+pub struct UIState {
+    selected_row: usize,
+    selected_col: usize,
+}
 
-impl UserInterfaceState for UIState {}
+impl Default for UIState {
+    fn default() -> Self {
+        Self {
+            selected_row: 2,
+            selected_col: 0,
+        }
+    }
+}
+
+fn decrement(n: usize) -> usize {
+    match n {
+        2 => 1,
+        1 => 0,
+        0 => 2,
+        _ => panic!("Selected outside of board"),
+    }
+}
+
+fn increment(n: usize) -> usize {
+    match n {
+        0 => 1,
+        1 => 2,
+        2 => 0,
+        _ => panic!("Selected outside of board"),
+    }
+}
+
+impl UserInterfaceState for UIState {
+    fn on_arrow(&mut self, arrow: Arrow) {
+        match arrow {
+            Arrow::Up => self.selected_row = increment(self.selected_row),
+            Arrow::Right => self.selected_col = increment(self.selected_col),
+            Arrow::Left => self.selected_col = decrement(self.selected_col),
+            Arrow::Down => self.selected_row = decrement(self.selected_row),
+        }
+    }
+}
 
 impl<B: Backend> GameUserInterface<B> for TicTacToe {
     type UIState = UIState;
@@ -27,7 +67,6 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
         player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
         action_request: &<Self as Play>::ActionRequest,
-        submit: impl FnOnce(<Self as Play>::Action),
     ) {
         let board = Block::default()
             .title("Tic Tac Toe")
@@ -54,9 +93,16 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
         });
 
         for (col_num, col) in squares.into_iter().enumerate() {
-            for (row_num, square) in col.into_iter().enumerate().rev() {
+            for (row_num, square) in col.into_iter().rev().enumerate() {
                 let pos = (col_num, row_num);
-                draw_square(frame, square, spectator_view.board().at(pos), pos);
+                let is_selected = pos == (ui_state.selected_col, ui_state.selected_row);
+                draw_square(
+                    frame,
+                    square,
+                    spectator_view.board().at(pos),
+                    pos,
+                    is_selected,
+                );
             }
         }
     }
@@ -67,6 +113,7 @@ fn draw_square<B: Backend>(
     square: Rect,
     marker: Option<Marker>,
     (col, row): (usize, usize),
+    selected: bool,
 ) {
     let background_color = match marker {
         Some(X) => Red,
@@ -77,8 +124,8 @@ fn draw_square<B: Backend>(
     let block = Block::default()
         .title(format!("{}, {}", col, row))
         .borders(Borders::ALL)
-        .border_type(Plain)
-        .border_style(Style::default().fg(White));
+        .border_type(if selected { Thick } else { Plain })
+        .border_style(Style::default().fg(if selected { Yellow } else { White }));
 
     let inner_rect = block.inner(square).inner(&Margin {
         horizontal: 1,

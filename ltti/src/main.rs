@@ -53,9 +53,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &game.player_view(),
                 &game.spectator_view(),
                 &game.action_requests(&settings)[0].1,
-                |x| {
-                    println!("{:?}", x);
-                },
             );
 
             frame.render_widget(footer(), chunks[2]);

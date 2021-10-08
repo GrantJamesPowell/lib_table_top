@@ -4,8 +4,16 @@ use tui::backend::Backend;
 use tui::layout::Rect;
 use tui::terminal::Frame;
 
+pub enum Arrow {
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
 pub trait UserInterfaceState {
-    fn update(&mut self, event: KeyEvent) {}
+    fn on_arrow(&mut self, arrow: Arrow) {}
+    fn on_enter(&mut self) {}
 }
 
 pub trait GameUserInterface<B: Backend>: Play {
@@ -19,6 +27,5 @@ pub trait GameUserInterface<B: Backend>: Play {
         player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
         action_request: &<Self as Play>::ActionRequest,
-        submit: impl FnOnce(<Self as Play>::Action),
     );
 }
