@@ -2,8 +2,9 @@ use crate::gui::{GameUserInterface, UserInterfaceState};
 
 use lttcore::Play;
 use tic_tac_toe::{
+    Col,
     Marker::{self, *},
-    TicTacToe,
+    Row, TicTacToe,
 };
 
 use crossterm::event::{KeyCode, KeyEvent};
@@ -13,45 +14,19 @@ use tui::style::{Color::*, Style};
 use tui::widgets::{Block, BorderType::*, Borders, Widget};
 use tui::Frame;
 
+#[derive(Default, Debug, PartialEq, Eq)]
 pub struct UIState {
-    selected_row: usize,
-    selected_col: usize,
-}
-
-impl Default for UIState {
-    fn default() -> Self {
-        Self {
-            selected_row: 2,
-            selected_col: 0,
-        }
-    }
-}
-
-fn decrement(n: usize) -> usize {
-    match n {
-        2 => 1,
-        1 => 0,
-        0 => 2,
-        _ => panic!("Selected outside of board"),
-    }
-}
-
-fn increment(n: usize) -> usize {
-    match n {
-        0 => 1,
-        1 => 2,
-        2 => 0,
-        _ => panic!("Selected outside of board"),
-    }
+    selected_row: Row,
+    selected_col: Col,
 }
 
 impl UserInterfaceState for UIState {
     fn on_input(&mut self, event: KeyEvent) {
         match event.code {
-            KeyCode::Up => self.selected_row = increment(self.selected_row),
-            KeyCode::Right => self.selected_col = increment(self.selected_col),
-            KeyCode::Left => self.selected_col = decrement(self.selected_col),
-            KeyCode::Down => self.selected_row = decrement(self.selected_row),
+            KeyCode::Up => self.selected_row = self.selected_row.next(),
+            KeyCode::Right => self.selected_col = self.selected_col.next(),
+            KeyCode::Left => self.selected_col = self.selected_col.previous(),
+            KeyCode::Down => self.selected_row = self.selected_row.previous(),
             _ => {}
         }
     }
@@ -96,7 +71,8 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
         for (col_num, col) in squares.into_iter().enumerate() {
             for (row_num, square) in col.into_iter().rev().enumerate() {
                 let pos = (col_num, row_num);
-                let is_selected = pos == (ui_state.selected_col, ui_state.selected_row);
+                let is_selected =
+                    pos == (ui_state.selected_col.into(), ui_state.selected_row.into());
                 draw_square(
                     frame,
                     square,

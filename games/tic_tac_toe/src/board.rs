@@ -17,6 +17,12 @@ impl Into<u8> for Col {
     }
 }
 
+impl Into<usize> for Col {
+    fn into(self) -> usize {
+        self.0 as usize
+    }
+}
+
 impl Col {
     /// Returns the next column, wrapping back to 0 after 2
     ///
@@ -68,7 +74,6 @@ impl Col {
         Self::try_new(n).expect("Invalid index, n must be within 0..=2")
     }
 
-
     /// Try to construct a `Col`, returning None if n is out of bounds
     ///
     /// ```
@@ -96,6 +101,12 @@ impl Default for Row {
 impl Into<u8> for Row {
     fn into(self) -> u8 {
         self.0
+    }
+}
+
+impl Into<usize> for Row {
+    fn into(self) -> usize {
+        self.0 as usize
     }
 }
 
