@@ -22,37 +22,27 @@ where
     history: Vec<<T as Play>::Action>,
     #[builder(setter(skip))]
     pending_action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
-
     #[builder(setter(skip))]
     game_advance: <T as Play>::GameAdvance,
 }
 
 impl<T: Play> GameRunner<T> {
+    pub fn game(&self) -> &T {
+        &self.state
+    }
+
+    pub fn settings(&self) -> &<T as Play>::Settings {
+        &self.settings
+    }
+
+    pub fn action_request(&self) -> Option<&(Player, <T as Play>::ActionRequest)> {
+        self.pending_action_requests.first()
+    }
+
     fn pending_action_requests(
         &self,
     ) -> impl Iterator<Item = &(Player, <T as Play>::ActionRequest)> + '_ {
         self.pending_action_requests.iter()
-    }
-
-    fn advance_mut(
-        &mut self,
-        actions: &[(
-            (Player, <T as Play>::ActionRequest),
-            <T as Play>::ActionResponse,
-        )],
-    ) {
-        let mut rng = ChaCha20Rng::from_seed(*self.seed);
-        let stream_num = self.history.len().try_into().unwrap();
-        rng.set_stream(stream_num);
-
-        self.game_advance.reset();
-        self.pending_action_requests.clear();
-
-        self.state
-            .advance(&self.settings, actions, &mut rng, &mut self.game_advance);
-
-        self.state
-            .action_requests_into(&self.settings, &mut self.pending_action_requests);
     }
 }
 
