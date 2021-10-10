@@ -1,13 +1,15 @@
-use crate::gui::{GameUserInterface, UserInterfaceState};
+use crate::gui::game_ui::action_request::{
+    ActionRequestContext, ActionRequestInterface, ActionRequestState,
+};
 
+use crossterm::event::{KeyCode, KeyEvent};
 use lttcore::Play;
 use tic_tac_toe::{
-    Col,
+    Action, Col,
     Marker::{self, *},
     Row, TicTacToe,
 };
 
-use crossterm::event::{KeyCode, KeyEvent};
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint::*, Direction::*, Layout, Margin, Rect};
 use tui::style::{Color::*, Style};
@@ -20,29 +22,38 @@ pub struct UIState {
     selected_col: Col,
 }
 
-impl UserInterfaceState for UIState {
-    fn on_input(&mut self, event: KeyEvent) {
+impl ActionRequestState<TicTacToe> for UIState {
+    fn on_input(
+        &mut self,
+        event: KeyEvent,
+        _context: &ActionRequestContext<TicTacToe>,
+        _settings: &<TicTacToe as Play>::Settings,
+        submit_action: impl FnOnce(<TicTacToe as Play>::Action) -> (),
+    ) {
         match event.code {
             KeyCode::Up => self.selected_row = self.selected_row.next(),
             KeyCode::Right => self.selected_col = self.selected_col.next(),
             KeyCode::Left => self.selected_col = self.selected_col.previous(),
             KeyCode::Down => self.selected_row = self.selected_row.previous(),
+            KeyCode::Enter => {
+                submit_action(Action {
+                    position: (self.selected_col, self.selected_row),
+                });
+            }
             _ => {}
         }
     }
 }
 
-impl<B: Backend> GameUserInterface<B> for TicTacToe {
+impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
     type UIState = UIState;
 
     fn render_action_request(
         frame: &mut Frame<B>,
         rect: Rect,
-        ui_state: &UIState,
-        settings: &<Self as Play>::Settings,
-        player_view: &<Self as Play>::PlayerView,
-        spectator_view: &<Self as Play>::SpectatorView,
-        action_request: &<Self as Play>::ActionRequest,
+        context: &ActionRequestContext<Self>,
+        _settings: &<Self as Play>::Settings,
+        ui_state: &Self::UIState,
     ) {
         let board = Block::default()
             .title("Tic Tac Toe")
@@ -76,7 +87,7 @@ impl<B: Backend> GameUserInterface<B> for TicTacToe {
                 draw_square(
                     frame,
                     square,
-                    spectator_view.board().at(pos),
+                    context.spectator_view.board().at(pos),
                     pos,
                     is_selected,
                 );

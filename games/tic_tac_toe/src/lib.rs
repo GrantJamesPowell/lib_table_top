@@ -134,7 +134,7 @@ impl TicTacToe {
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct Action {
-    position: Position,
+    pub position: Position,
 }
 
 #[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]

@@ -16,9 +16,12 @@ use std::{error::Error, io, sync::mpsc, thread, time::Duration};
 mod gui;
 
 use gui::common::layout;
-use gui::game_user_interface::{GameUserInterface, UserInterfaceState};
 use gui::games::tic_tac_toe;
 use gui::tick::{background_terminal_events_and_ticks, Event::*};
+
+use gui::game_ui::action_request::{
+    ActionRequestContext, ActionRequestInterface, ActionRequestState,
+};
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode},
@@ -50,19 +53,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = ::tic_tac_toe::Settings::new([p(1), p(2)]);
 
     let mut ui_state = Default::default();
+    let action_requests = game.action_requests(&settings);
+
+    let context: ActionRequestContext<::tic_tac_toe::TicTacToe> = ActionRequestContext {
+        player: action_requests[0].0,
+        action_request: action_requests[0].1,
+        player_view: game.player_view(),
+        spectator_view: game.spectator_view(),
+    };
 
     loop {
         terminal.draw(|frame| {
             let chunks = layout().split(frame.size());
 
             ::tic_tac_toe::TicTacToe::render_action_request(
-                frame,
-                chunks[1],
-                &ui_state,
-                &settings,
-                &game.player_view(),
-                &game.spectator_view(),
-                &game.action_requests(&settings)[0].1,
+                frame, chunks[1], &context, &settings, &ui_state,
             );
         })?;
 
@@ -80,7 +85,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     terminal.show_cursor()?;
                     break;
                 }
-                _ => ui_state.on_input(event),
+                _ => ui_state.on_input(event, &context, &settings, |action| {
+                    println!("{:?}", action);
+                }),
             },
         };
     }
