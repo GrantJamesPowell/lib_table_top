@@ -1,9 +1,8 @@
-use crate::gui::game_ui::action_request::{
-    ActionRequestContext, ActionRequestInterface, ActionRequestState,
-};
+use crate::gui::game_ui::action_request::{ActionRequestInterface, ActionRequestState};
+use std::sync::mpsc::Sender;
 
 use crossterm::event::{KeyCode, KeyEvent};
-use lttcore::Play;
+use lttcore::{Play, Player};
 use tic_tac_toe::{
     Action, Col,
     Marker::{self, *},
@@ -26,20 +25,21 @@ impl ActionRequestState<TicTacToe> for UIState {
     fn on_input(
         &mut self,
         event: KeyEvent,
-        _context: &ActionRequestContext<TicTacToe>,
+        _player: &Player,
+        _player_view: &<TicTacToe as Play>::PlayerView,
+        _spectator_view: &<TicTacToe as Play>::SpectatorView,
+        _action_request: &<TicTacToe as Play>::ActionRequest,
         _settings: &<TicTacToe as Play>::Settings,
-        submit_action: impl FnOnce(<TicTacToe as Play>::Action) -> (),
+        send_action: impl FnOnce(<TicTacToe as Play>::Action),
     ) {
         match event.code {
             KeyCode::Up => self.selected_row = self.selected_row.next(),
             KeyCode::Right => self.selected_col = self.selected_col.next(),
             KeyCode::Left => self.selected_col = self.selected_col.previous(),
             KeyCode::Down => self.selected_row = self.selected_row.previous(),
-            KeyCode::Enter => {
-                submit_action(Action {
-                    position: (self.selected_col, self.selected_row),
-                });
-            }
+            KeyCode::Enter => send_action(Action {
+                position: (self.selected_col, self.selected_row),
+            }),
             _ => {}
         }
     }
@@ -51,7 +51,10 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
     fn render_action_request(
         frame: &mut Frame<B>,
         rect: Rect,
-        context: &ActionRequestContext<Self>,
+        _player: &Player,
+        _player_view: &<Self as Play>::PlayerView,
+        spectator_view: &<Self as Play>::SpectatorView,
+        _action_request: &<Self as Play>::ActionRequest,
         _settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     ) {
@@ -87,7 +90,7 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
                 draw_square(
                     frame,
                     square,
-                    context.spectator_view.board().at(pos),
+                    spectator_view.board().at(pos),
                     pos,
                     is_selected,
                 );

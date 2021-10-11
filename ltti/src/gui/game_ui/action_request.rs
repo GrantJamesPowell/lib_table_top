@@ -1,26 +1,20 @@
 use crossterm::event::KeyEvent;
 use lttcore::{Play, Player};
+use std::sync::mpsc::Sender;
 use tui::backend::Backend;
 use tui::layout::Rect;
 use tui::terminal::Frame;
-
-pub struct ActionRequestContext<T>
-where
-    T: Play,
-{
-    pub player: Player,
-    pub player_view: <T as Play>::PlayerView,
-    pub spectator_view: <T as Play>::SpectatorView,
-    pub action_request: <T as Play>::ActionRequest,
-}
 
 pub trait ActionRequestState<T: Play> {
     fn on_input(
         &mut self,
         event: KeyEvent,
-        context: &ActionRequestContext<T>,
+        player: &Player,
+        player_view: &<T as Play>::PlayerView,
+        spectator_view: &<T as Play>::SpectatorView,
+        action_request: &<T as Play>::ActionRequest,
         settings: &<T as Play>::Settings,
-        submit_action: impl FnOnce(<T as Play>::Action) -> (),
+        send_action: impl FnOnce(<T as Play>::Action),
     );
 }
 
@@ -30,7 +24,10 @@ pub trait ActionRequestInterface<B: Backend>: Play {
     fn render_action_request(
         frame: &mut Frame<B>,
         rect: Rect,
-        context: &ActionRequestContext<Self>,
+        player: &Player,
+        player_view: &<Self as Play>::PlayerView,
+        spectator_view: &<Self as Play>::SpectatorView,
+        action_request: &<Self as Play>::ActionRequest,
         settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     );

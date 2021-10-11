@@ -20,7 +20,7 @@ impl From<Board> for SpectatorView {
 impl View for SpectatorView {
     type Update = (Marker, Position);
 
-    fn update(&mut self, (marker, position): Self::Update) -> Result<(), Box<dyn Error>> {
+    fn update(&mut self, &(marker, position): &Self::Update) -> Result<(), Box<dyn Error>> {
         self.0.claim_space(marker, position)?;
         Ok(())
     }

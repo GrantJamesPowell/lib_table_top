@@ -31,19 +31,20 @@ pub struct Turn<'a, T: Play> {
 }
 
 impl<'a, T: Play> Turn<'a, T> {
-    fn action_request(&self) -> Option<(usize, &(Player, <T as Play>::ActionRequest))> {
-        self.pending_action_requests()
-            .filter(|(id, _)| self.returned_actions[*id].is_none())
-            .next()
+    pub fn action_request(&self) -> Option<(usize, &(Player, <T as Play>::ActionRequest))> {
+        self.pending_action_requests().next()
     }
 
-    fn pending_action_requests(
+    pub fn pending_action_requests(
         &self,
     ) -> impl Iterator<Item = (usize, &(Player, <T as Play>::ActionRequest))> + '_ {
-        self.action_requests.iter().enumerate()
+        self.action_requests
+            .iter()
+            .enumerate()
+            .filter(|(id, _)| self.returned_actions[*id].is_none())
     }
 
-    fn submit_action(
+    pub fn submit_action(
         &mut self,
         action_id: usize,
         action_response: <T as Play>::ActionResponse,
@@ -51,11 +52,12 @@ impl<'a, T: Play> Turn<'a, T> {
         std::mem::replace(&mut self.returned_actions[action_id], Some(action_response))
     }
 
-    fn is_ready_to_submit(&self) -> bool {
+    pub fn is_ready_to_submit(&self) -> bool {
         self.returned_actions.iter().all(|action| action.is_some())
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum SubmitError {
     InvalidTurn,
 }

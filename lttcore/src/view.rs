@@ -4,7 +4,7 @@ use std::fmt::Debug;
 pub trait View: Clone + Debug {
     type Update: Clone + Debug;
 
-    fn update(&mut self, _update: Self::Update) -> Result<(), Box<dyn Error>> {
+    fn update(&mut self, _update: &Self::Update) -> Result<(), Box<dyn Error>> {
         Ok(())
     }
 }
