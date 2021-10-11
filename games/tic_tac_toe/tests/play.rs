@@ -1,12 +1,11 @@
-use lttcore::{player::p, GameRunner, GameRunnerBuilder, Player};
-use tic_tac_toe::{Settings, TicTacToe};
+use lttcore::{play::NoCustomSettings, GameRunnerBuilder};
+use tic_tac_toe::TicTacToe;
 
 #[test]
 fn test_you_can_build_one() {
-    let settings = Settings::new([p(1), p(2)]);
-
     let game_runner = GameRunnerBuilder::<TicTacToe>::default()
-        .settings(settings)
-        .build()
-        .unwrap();
+        .settings(NoCustomSettings {})
+        .build();
+
+    assert!(game_runner.is_ok());
 }

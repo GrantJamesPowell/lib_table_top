@@ -81,8 +81,8 @@ impl<T: Play> GameRunner<T> {
         self.state.player_views(&self.settings)
     }
 
-    pub fn player_view(&self, player: Player) -> <T as Play>::PlayerView {
-        self.state.player_view(player, &self.settings)
+    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
+        (0..<T as Play>::number_of_players_for_settings(&self.settings)).map(|p| Player::new(p))
     }
 
     pub fn spectator_view(&self) -> <T as Play>::SpectatorView {

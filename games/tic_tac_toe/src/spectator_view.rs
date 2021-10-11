@@ -44,9 +44,9 @@ impl SpectatorView {
 
     /// Returns the status of the current game
     /// ```
-    /// use lttcore::{Play, player::p};
-    /// use tic_tac_toe::{TicTacToe, Board, Row, Col, Status::*, Marker::*, Settings};
-    /// let settings = Settings::new([p(1), p(2)]);
+    /// use lttcore::Play;
+    /// use tic_tac_toe::{TicTacToe, Board, Row, Col, Status::*, Marker::*};
+    /// let settings = Default::default();
     ///
     /// // In progress
     /// let game: TicTacToe = Default::default();

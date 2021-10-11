@@ -21,7 +21,7 @@ use gui::tick::{background_terminal_events_and_ticks, Event::*};
 
 use gui::game_ui::action_request::{ActionRequestInterface, ActionRequestState};
 
-use ::tic_tac_toe::{Settings, TicTacToe};
+use ::tic_tac_toe::TicTacToe;
 
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode},
@@ -29,7 +29,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use lttcore::{play::ActionResponse, player::p, GameRunner, GameRunnerBuilder, Play, Player, View};
+use lttcore::{play::{ActionResponse, NoCustomSettings}, GameRunner, GameRunnerBuilder, Play, Player, View};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = setup_terminal()?;
@@ -42,10 +42,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         events_sender,
     ));
 
-    let mut game_runner: GameRunner<TicTacToe> = GameRunnerBuilder::default()
-        .settings(Settings::new([p(1), p(2)]))
-        .build()
-        .unwrap();
+    let mut game_runner: GameRunner<TicTacToe> = 
+        GameRunnerBuilder::default().settings(NoCustomSettings {}).build().unwrap();
 
     let mut ui_state = Default::default();
     let mut turn = game_runner.turn();

@@ -9,13 +9,14 @@ use thiserror::Error;
 
 mod board;
 mod marker;
-mod settings;
 mod spectator_view;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use marker::*;
-pub use settings::Settings;
 pub use spectator_view::{SpectatorView, Status};
+
+use std::collections::HashMap;
+use Marker::*;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TicTacToe {
@@ -36,10 +37,10 @@ impl TicTacToe {
     /// Resigns a player, ending the game
     ///
     /// ```
-    /// use lttcore::{Play, player::p};
-    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, Settings};
+    /// use lttcore::Play;
+    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*};
     ///
-    /// let settings = Settings::new([p(1), p(2)]);
+    /// let settings = Default::default();
     /// let mut game: TicTacToe = Default::default();
     /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X });
     /// game.resign(X);
@@ -71,10 +72,6 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type ActionRequest = ActionRequest;
-
-    type Settings = Settings;
-    type SettingsError = !;
-
     type SpectatorView = SpectatorView;
 
     fn action_requests_into(
@@ -83,17 +80,8 @@ impl Play for TicTacToe {
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     ) {
         if let Status::InProgress { next_up: marker } = self.spectator_view(settings).status() {
-            let player = settings.player_for_marker(marker);
-            action_requests.push((player, ActionRequest { marker }));
+            action_requests.push((marker.player(), ActionRequest { marker }));
         }
-    }
-
-    fn player_view(
-        &self,
-        _player: Player,
-        _settings: &Self::Settings,
-    ) -> <Self as Play>::PlayerView {
-        Default::default()
     }
 
     fn spectator_view(&self, _settings: &Self::Settings) -> SpectatorView {
@@ -104,12 +92,23 @@ impl Play for TicTacToe {
         Default::default()
     }
 
-    fn is_valid_for_settings(&self, _settings: &Settings) -> bool {
+    fn is_valid_for_settings(&self, _settings: &<Self as Play>::Settings) -> bool {
         true
     }
 
-    fn players(settings: &<Self as Play>::Settings) -> &[Player] {
-        settings.players()
+    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> u8 {
+        2
+    }
+
+    fn player_views_into(
+        &self,
+        _settings: &<Self as Play>::Settings,
+        views: &mut HashMap<Player, <Self as Play>::PlayerView>,
+    ) {
+        // This is pretty much a no-op since tic tac toe has no secret info
+        for marker in [X, O] {
+            views.insert(marker.player(), Default::default());
+        }
     }
 
     fn advance(

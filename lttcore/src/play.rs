@@ -2,6 +2,12 @@ use crate::{view::NoSecretPlayerInformation, Player, View};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub struct NoCustomSettings {}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NoCustomSettingsError {}
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ActionResponse<T> {
     Response(T),
@@ -42,15 +48,13 @@ pub trait Play: Sized + Clone + Debug {
     type ActionRequest: Clone + Debug + PartialEq + Eq;
     type ActionResponse: Clone + Debug = ActionResponse<Self::Action>;
 
-    type Settings: Clone + Debug + PartialEq + Eq;
-    type SettingsError: Clone + Debug + PartialEq + Eq;
+    type Settings: Clone + Debug + PartialEq + Eq = NoCustomSettings;
+    type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;
 
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    fn players(settings: &Self::Settings) -> &[Player];
-
-    fn player_view(&self, player: Player, settings: &Self::Settings) -> Self::PlayerView;
+    fn number_of_players_for_settings(settings: &Self::Settings) -> u8;
 
     fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView> {
         let mut map = HashMap::new();
@@ -62,11 +66,7 @@ pub trait Play: Sized + Clone + Debug {
         &self,
         settings: &Self::Settings,
         map: &mut HashMap<Player, Self::PlayerView>,
-    ) {
-        for player in Self::players(settings) {
-            map.insert(*player, self.player_view(*player, settings));
-        }
-    }
+    );
 
     fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView;
 

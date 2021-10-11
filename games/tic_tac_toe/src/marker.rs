@@ -1,3 +1,5 @@
+use lttcore::Player;
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Marker {
     X,
@@ -19,6 +21,22 @@ impl Marker {
         match self {
             X => O,
             O => X,
+        }
+    }
+
+    /// Returns the [`lttcore::Player`] for a Marker
+    ///
+    /// ```
+    /// use tic_tac_toe::Marker::*;
+    /// use lttcore::Player;
+    ///
+    /// assert_eq!(X.player(), Player::new(0));
+    /// assert_eq!(O.player(), Player::new(1));
+    /// ```
+    pub fn player(&self) -> Player {
+        match self {
+            X => 0.into(),
+            O => 1.into(),
         }
     }
 }
