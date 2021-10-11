@@ -3,7 +3,7 @@ use rand::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::play::GameAdvance;
+use crate::play::{ActionResponse, GameAdvance};
 use crate::{Play, Player};
 
 use thiserror::Error;
@@ -30,7 +30,7 @@ where
 #[derive(Debug)]
 pub struct Turn<T: Play> {
     action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
-    returned_actions: Vec<Option<<T as Play>::ActionResponse>>,
+    returned_actions: Vec<Option<ActionResponse<<T as Play>::Action>>>,
 }
 
 impl<T: Play> Turn<T> {
@@ -52,8 +52,8 @@ impl<T: Play> Turn<T> {
     pub fn submit_action(
         &mut self,
         action_id: usize,
-        action_response: <T as Play>::ActionResponse,
-    ) -> Option<<T as Play>::ActionResponse> {
+        action_response: ActionResponse<<T as Play>::Action>,
+    ) -> Option<ActionResponse<<T as Play>::Action>> {
         std::mem::replace(&mut self.returned_actions[action_id], Some(action_response))
     }
 

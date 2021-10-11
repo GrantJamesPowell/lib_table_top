@@ -117,7 +117,7 @@ impl Play for TicTacToe {
         actions: impl Iterator<
             Item = (
                 (Player, <Self as Play>::ActionRequest),
-                <Self as Play>::ActionResponse,
+                ActionResponse<<Self as Play>::Action>,
             ),
         >,
         _rng: &mut impl rand::Rng,

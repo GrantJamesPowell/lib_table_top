@@ -29,7 +29,10 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use lttcore::{play::{ActionResponse, NoCustomSettings}, GameRunner, GameRunnerBuilder, Play, Player, View};
+use lttcore::{
+    play::{ActionResponse, NoCustomSettings},
+    GameRunner, GameRunnerBuilder, Play, Player, View,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = setup_terminal()?;
@@ -42,8 +45,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         events_sender,
     ));
 
-    let mut game_runner: GameRunner<TicTacToe> = 
-        GameRunnerBuilder::default().settings(NoCustomSettings {}).build().unwrap();
+    let mut game_runner: GameRunner<TicTacToe> = GameRunnerBuilder::default()
+        .settings(NoCustomSettings {})
+        .build()
+        .unwrap();
 
     let mut ui_state = Default::default();
     let mut turn = game_runner.turn();

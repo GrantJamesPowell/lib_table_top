@@ -46,7 +46,6 @@ pub trait Play: Sized + Clone + Debug {
     type Action: Clone + Debug + PartialEq + Eq;
     type ActionError: Clone + Debug + PartialEq + Eq;
     type ActionRequest: Clone + Debug + PartialEq + Eq;
-    type ActionResponse: Clone + Debug = ActionResponse<Self::Action>;
 
     type Settings: Clone + Debug + PartialEq + Eq = NoCustomSettings;
     type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;
@@ -90,7 +89,7 @@ pub trait Play: Sized + Clone + Debug {
     fn advance(
         &mut self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = ((Player, Self::ActionRequest), Self::ActionResponse)>,
+        actions: impl Iterator<Item = ((Player, Self::ActionRequest), ActionResponse<Self::Action>)>,
         rng: &mut impl rand::Rng,
         game_advance: &mut GameAdvance<Self>,
     );
