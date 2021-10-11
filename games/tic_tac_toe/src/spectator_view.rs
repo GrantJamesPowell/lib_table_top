@@ -1,7 +1,7 @@
+use crate::board::POSSIBLE_WINS;
 use crate::{Board, Marker, Position};
 use lttcore::View;
 use std::error::Error;
-use crate::board::POSSIBLE_WINS;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -23,7 +23,7 @@ use Status::*;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct SpectatorView {
     board: Board,
-    resigned: Option<Marker>
+    resigned: Option<Marker>,
 }
 
 impl SpectatorView {

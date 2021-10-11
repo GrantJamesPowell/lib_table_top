@@ -13,7 +13,8 @@ use tic_tac_toe::{
 
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint::*, Direction::*, Layout, Margin, Rect};
-use tui::style::{Color::*, Style};
+use tui::style::{Color::*, Modifier, Style};
+use tui::text::{Span, Spans};
 use tui::widgets::{Block, BorderType::*, Borders, Paragraph, Widget};
 use tui::Frame;
 
@@ -70,12 +71,18 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
             vertical: 1,
         });
 
+        let layout = Layout::default()
+            .direction(Vertical)
+            .constraints([Min(20), Length(1)])
+            .split(inner_rect);
+
         frame.render_widget(board, rect);
+        frame.render_widget(status(spectator_view.status()), layout[1]);
 
         let cols = Layout::default()
             .direction(Horizontal)
             .constraints([Ratio(1, 3), Ratio(1, 3), Ratio(1, 3)])
-            .split(inner_rect);
+            .split(layout[0]);
 
         let squares = cols.iter().map(|&column_rect| {
             Layout::default()
@@ -103,14 +110,43 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
 
 fn status(status: Status) -> impl Widget {
     match status {
-        InProgress { next_up: _next_up } => Paragraph::new("foo"),
-        Draw => Paragraph::new("foo"),
-        WinByResignation { winner: _winner } => Paragraph::new("foo"),
-        Win {
-            winner: _winner,
-            positions: _positions,
-        } => Paragraph::new("foo"),
+        InProgress { next_up } => Paragraph::new(Spans::from(vec![
+            styled_marker_span(next_up),
+            Span::styled("'s turn", Style::default()),
+        ])),
+        Draw => Paragraph::new("Draw").style(Style::default()),
+        WinByResignation { winner } => Paragraph::new(Spans::from(vec![
+            styled_marker_span(winner),
+            Span::raw(" wins because "),
+            styled_marker_span(winner.opponent()),
+            Span::raw(" resigned"),
+        ])),
+        Win { winner, positions } => Paragraph::new(Spans::from(vec![
+            styled_marker_span(winner),
+            Span::raw(" wins with positions "),
+            Span::raw(format!(
+                "{:?}",
+                positions.map(|(c, r)| -> (u8, u8) { (c.into(), r.into()) })
+            )),
+        ])),
     }
+}
+
+fn styled_marker_span(marker: Marker) -> Span<'static> {
+    let color = match marker {
+        X => Red,
+        O => Blue,
+    };
+
+    let text = match marker {
+        X => "X",
+        O => "O",
+    };
+
+    Span::styled(
+        text,
+        Style::default().fg(color).add_modifier(Modifier::BOLD),
+    )
 }
 
 fn draw_square<B: Backend>(
