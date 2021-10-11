@@ -1,4 +1,5 @@
 use crate::{view::NoSecretPlayerInformation, Player, View};
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -47,14 +48,31 @@ pub trait Play: Sized + Clone + Debug {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    fn player_view(&self, player: Player) -> Option<Self::PlayerView>;
-    fn spectator_view(&self) -> Self::SpectatorView;
+    fn players(settings: &Self::Settings) -> &[Player];
+
+    fn player_view(&self, player: Player, settings: &Self::Settings) -> Self::PlayerView;
+
+    fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView> {
+        let mut map = HashMap::new();
+        self.player_views_into(settings, &mut map);
+        map
+    }
+
+    fn player_views_into(
+        &self,
+        settings: &Self::Settings,
+        map: &mut HashMap<Player, Self::PlayerView>,
+    ) {
+        for player in Self::players(settings) {
+            map.insert(*player, self.player_view(*player, settings));
+        }
+    }
+
+    fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView;
 
     fn initial_state_for_settings(settings: &Self::Settings) -> Self;
 
     fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
-
-    fn players(settings: &Self::Settings) -> &[Player];
 
     fn action_requests_into(
         &self,

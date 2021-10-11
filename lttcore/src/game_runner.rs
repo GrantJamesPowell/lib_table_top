@@ -1,5 +1,6 @@
 use rand::prelude::*;
 // use rand_chacha::ChaCha20Rng;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::GameAdvance;
@@ -74,6 +75,18 @@ impl<T: Play> GameRunner<T> {
 
     pub fn settings(&self) -> &<T as Play>::Settings {
         &self.settings
+    }
+
+    pub fn player_views(&self) -> HashMap<Player, <T as Play>::PlayerView> {
+        self.state.player_views(&self.settings)
+    }
+
+    pub fn player_view(&self, player: Player) -> <T as Play>::PlayerView {
+        self.state.player_view(player, &self.settings)
+    }
+
+    pub fn spectator_view(&self) -> <T as Play>::SpectatorView {
+        self.state.spectator_view(&self.settings)
     }
 
     pub fn turn(&self) -> Option<Turn<T>> {

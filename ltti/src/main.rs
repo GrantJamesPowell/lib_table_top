@@ -29,7 +29,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
-use lttcore::{play::ActionResponse, player::p, GameRunner, GameRunnerBuilder, Play, View, Player};
+use lttcore::{play::ActionResponse, player::p, GameRunner, GameRunnerBuilder, Play, Player, View};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = setup_terminal()?;
@@ -55,12 +55,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .flatten()
         .expect("New game has a first turn");
 
-    let player_views: HashMap<Player, <TicTacToe as Play>::PlayerView> =
-        game_runner.game().players().iter().map(|player| {
-            (player, game_runner.game().player_view(player))
-        }).collect();
-
-    let mut spectator_view = game_runner.game().spectator_view();
+    let mut player_views = game_runner.player_views();
+    let mut spectator_view = game_runner.spectator_view();
 
     let (action_sender, action_receiver) = mpsc::channel();
 
@@ -77,7 +73,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
 
                     for (player, player_update) in &game_advance.player_view_updates {
-                        player_views.get_mut(player).map(|view| view.update(player_update)?)
+                        let view = player_views.get_mut(player).unwrap();
+                        view.update(player_update)?;
                     }
 
                     turn = game_runner.turn();
@@ -91,7 +88,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 frame,
                 chunks[1],
                 player,
-                &player_views.get(player).unwrap(),
+                &player_views.get(&player).unwrap(),
                 &spectator_view,
                 &action_request,
                 game_runner.settings(),
@@ -115,9 +112,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     ui_state.on_input(
                         event,
                         player,
-                        player_views
-                            .entry(player)
-                            .or_insert_with(|| game_runner.game().player_view(player).unwrap()),
+                        player_views.get(&player).unwrap(),
                         &spectator_view,
                         &action_request,
                         game_runner.settings(),

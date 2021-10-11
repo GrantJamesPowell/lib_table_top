@@ -173,11 +173,15 @@ impl Play for TicTacToe {
         }
     }
 
-    fn player_view(&self, _player: Player) -> Option<<Self as Play>::PlayerView> {
-        Some(Default::default())
+    fn player_view(
+        &self,
+        _player: Player,
+        _settings: &Self::Settings,
+    ) -> <Self as Play>::PlayerView {
+        Default::default()
     }
 
-    fn spectator_view(&self) -> SpectatorView {
+    fn spectator_view(&self, _settings: &Self::Settings) -> SpectatorView {
         self.board.into()
     }
 
