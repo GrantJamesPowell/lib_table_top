@@ -11,6 +11,10 @@ impl Settings {
         Self { players }
     }
 
+    pub fn players(&self) -> &[Player] {
+        &self.players
+    }
+
     pub fn player_for_marker(&self, marker: Marker) -> Player {
         match marker {
             X => self.players[0],

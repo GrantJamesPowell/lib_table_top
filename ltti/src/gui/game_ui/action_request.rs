@@ -9,7 +9,7 @@ pub trait ActionRequestState<T: Play> {
     fn on_input(
         &mut self,
         event: KeyEvent,
-        player: &Player,
+        player: Player,
         player_view: &<T as Play>::PlayerView,
         spectator_view: &<T as Play>::SpectatorView,
         action_request: &<T as Play>::ActionRequest,
@@ -24,7 +24,7 @@ pub trait ActionRequestInterface<B: Backend>: Play {
     fn render_action_request(
         frame: &mut Frame<B>,
         rect: Rect,
-        player: &Player,
+        player: Player,
         player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
         action_request: &<Self as Play>::ActionRequest,

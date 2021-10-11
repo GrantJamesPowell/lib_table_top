@@ -1,12 +1,12 @@
-use std::num::{NonZeroU16, TryFromIntError};
+use std::num::{NonZeroU128, TryFromIntError};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct Player(NonZeroU16);
+pub struct Player(NonZeroU128);
 
-impl TryFrom<u16> for Player {
+impl TryFrom<u128> for Player {
     type Error = TryFromIntError;
 
-    fn try_from(n: u16) -> Result<Self, Self::Error> {
+    fn try_from(n: u128) -> Result<Self, Self::Error> {
         n.try_into().map(Player)
     }
 }
@@ -15,12 +15,12 @@ impl TryFrom<u16> for Player {
 ///
 /// # Panics
 ///
-/// panics if n == 0 || n > [`u16::MAX`]
+/// panics if n == 0 || n > [`u128::MAX`]
 pub fn p<T>(n: T) -> Player
 where
-    T: TryInto<u16>,
-    <T as TryInto<u16>>::Error: std::fmt::Debug,
+    T: TryInto<u128>,
+    <T as TryInto<u128>>::Error: std::fmt::Debug,
 {
-    let num: u16 = n.try_into().unwrap();
+    let num: u128 = n.try_into().unwrap();
     num.try_into().unwrap()
 }

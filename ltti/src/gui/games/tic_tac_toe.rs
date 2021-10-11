@@ -25,7 +25,7 @@ impl ActionRequestState<TicTacToe> for UIState {
     fn on_input(
         &mut self,
         event: KeyEvent,
-        _player: &Player,
+        _player: Player,
         _player_view: &<TicTacToe as Play>::PlayerView,
         _spectator_view: &<TicTacToe as Play>::SpectatorView,
         _action_request: &<TicTacToe as Play>::ActionRequest,
@@ -51,7 +51,7 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
     fn render_action_request(
         frame: &mut Frame<B>,
         rect: Rect,
-        _player: &Player,
+        _player: Player,
         _player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
         _action_request: &<Self as Play>::ActionRequest,

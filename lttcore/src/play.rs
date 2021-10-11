@@ -47,12 +47,14 @@ pub trait Play: Sized + Clone + Debug {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    fn player_view(&self) -> Self::PlayerView;
+    fn player_view(&self, player: Player) -> Option<Self::PlayerView>;
     fn spectator_view(&self) -> Self::SpectatorView;
 
     fn initial_state_for_settings(settings: &Self::Settings) -> Self;
 
     fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
+
+    fn players(settings: &Self::Settings) -> &[Player];
 
     fn action_requests_into(
         &self,

@@ -173,8 +173,8 @@ impl Play for TicTacToe {
         }
     }
 
-    fn player_view(&self) -> <Self as Play>::PlayerView {
-        Default::default()
+    fn player_view(&self, _player: Player) -> Option<<Self as Play>::PlayerView> {
+        Some(Default::default())
     }
 
     fn spectator_view(&self) -> SpectatorView {
@@ -187,6 +187,10 @@ impl Play for TicTacToe {
 
     fn is_valid_for_settings(&self, _settings: &Settings) -> bool {
         true
+    }
+
+    fn players(settings: &<Self as Play>::Settings) -> &[Player] {
+        settings.players()
     }
 
     fn advance(
