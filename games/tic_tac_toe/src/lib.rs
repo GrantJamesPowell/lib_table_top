@@ -15,24 +15,7 @@ mod spectator_view;
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use marker::*;
 pub use settings::Settings;
-pub use spectator_view::SpectatorView;
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum Status {
-    /// There are still available positions to be claimed on the board
-    InProgress { next_up: Marker },
-    /// All positions have been claimed and there is no winner
-    Draw,
-    /// Win by resignation
-    WinByResignation { winner: Marker },
-    /// There *is* a winner via connecting three spaces
-    Win {
-        winner: Marker,
-        positions: [Position; 3],
-    },
-}
-
-use Status::*;
+pub use spectator_view::{SpectatorView, Status};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TicTacToe {
@@ -53,85 +36,17 @@ impl TicTacToe {
     /// Resigns a player, ending the game
     ///
     /// ```
-    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*};
+    /// use lttcore::{Play, player::p};
+    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, Settings};
     ///
+    /// let settings = Settings::new([p(1), p(2)]);
     /// let mut game: TicTacToe = Default::default();
-    /// assert_eq!(game.status(), InProgress{ next_up: X });
+    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X });
     /// game.resign(X);
-    /// assert_eq!(game.status(), WinByResignation { winner: O });
+    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O });
     /// ```
     pub fn resign(&mut self, marker: Marker) {
         self.resigned = Some(marker);
-    }
-
-    /// Returns the status of the current game
-    /// ```
-    /// use tic_tac_toe::{TicTacToe, Board, Row, Col, Status::*, Marker::*};
-    ///
-    /// // In progress
-    /// let game: TicTacToe = Default::default();
-    /// assert_eq!(game.status(), InProgress{ next_up: X });
-    ///
-    /// // A draw
-    /// let game: TicTacToe = Board::from_ints([
-    ///   [1, 2, 1],
-    ///   [1, 1, 2],
-    ///   [2, 1, 2]
-    /// ]).into();
-    /// assert_eq!(game.status(), Draw);
-    ///
-    /// // If someone resigns
-    /// let mut game: TicTacToe = Default::default();
-    /// game.resign(X);
-    /// assert_eq!(game.status(), WinByResignation { winner: O });
-    ///
-    /// // With a winning position
-    /// let game: TicTacToe = Board::from_ints([
-    ///   [1, 1, 1],
-    ///   [0, 0, 0],
-    ///   [0, 0, 0]
-    /// ]).into();
-    ///
-    /// assert_eq!(
-    ///   game.status(),
-    ///   Win {
-    ///     winner: X,
-    ///     positions: [
-    ///       (Col::new(0), Row::new(0)),
-    ///       (Col::new(0), Row::new(1)),
-    ///       (Col::new(0), Row::new(2))
-    ///     ]
-    ///   }
-    /// );
-    /// ```
-    pub fn status(&self) -> Status {
-        if let Some(loser) = self.resigned {
-            return WinByResignation {
-                winner: loser.opponent(),
-            };
-        }
-
-        POSSIBLE_WINS
-            .iter()
-            .filter_map(|&positions| {
-                let [a, b, c] = positions.map(|pos| self.board.at_position(pos));
-
-                if a == b && b == c {
-                    a.map(|winner| Win { winner, positions })
-                } else {
-                    None
-                }
-            })
-            .next()
-            .unwrap_or_else(|| {
-                if self.board.is_full() {
-                    Draw
-                } else {
-                    InProgress {
-                        next_up: self.board.whose_turn(),
-                    }
-                }
-            })
     }
 }
 
@@ -167,7 +82,7 @@ impl Play for TicTacToe {
         settings: &Self::Settings,
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     ) {
-        if let Status::InProgress { next_up: marker } = self.status() {
+        if let Status::InProgress { next_up: marker } = self.spectator_view(settings).status() {
             let player = settings.player_for_marker(marker);
             action_requests.push((player, ActionRequest { marker }));
         }
@@ -182,7 +97,7 @@ impl Play for TicTacToe {
     }
 
     fn spectator_view(&self, _settings: &Self::Settings) -> SpectatorView {
-        self.board.into()
+        SpectatorView::from_board_and_resigned(self.board, self.resigned)
     }
 
     fn initial_state_for_settings(_settings: &<Self as Play>::Settings) -> Self {
