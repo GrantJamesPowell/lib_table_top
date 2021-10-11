@@ -5,6 +5,8 @@ use std::sync::Arc;
 use crate::play::GameAdvance;
 use crate::{Play, Player};
 
+use thiserror::Error;
+
 #[derive(Builder, Clone, Debug)]
 #[builder(setter(into, strip_option), build_fn(skip))]
 pub struct GameRunner<T>
@@ -25,14 +27,16 @@ where
 }
 
 #[derive(Debug)]
-pub struct Turn<'a, T: Play> {
-    action_requests: &'a Vec<(Player, <T as Play>::ActionRequest)>,
+pub struct Turn<T: Play> {
+    action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
     returned_actions: Vec<Option<<T as Play>::ActionResponse>>,
 }
 
-impl<'a, T: Play> Turn<'a, T> {
-    pub fn action_request(&self) -> Option<(usize, &(Player, <T as Play>::ActionRequest))> {
-        self.pending_action_requests().next()
+impl<T: Play> Turn<T> {
+    pub fn action_request(&self) -> Option<(usize, (Player, <T as Play>::ActionRequest))> {
+        self.pending_action_requests()
+            .next()
+            .map(|(id, req)| (id, req.clone()))
     }
 
     pub fn pending_action_requests(
@@ -57,8 +61,9 @@ impl<'a, T: Play> Turn<'a, T> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Error, Debug, Clone, Copy)]
 pub enum SubmitError {
+    #[error("Can't submit turn with invalid actions")]
     InvalidTurn,
 }
 
@@ -77,7 +82,7 @@ impl<T: Play> GameRunner<T> {
             n => {
                 let returned_actions = (0..n).map(|_| None).collect();
                 Some(Turn {
-                    action_requests: &self.pending_action_requests,
+                    action_requests: self.pending_action_requests.clone(),
                     returned_actions: returned_actions,
                 })
             }
@@ -87,7 +92,7 @@ impl<T: Play> GameRunner<T> {
     pub fn submit_turn_mut(&mut self, turn: Turn<T>) -> Result<&GameAdvance<T>, SubmitError> {
         use SubmitError::*;
 
-        if !turn.is_ready_to_submit() || turn.action_requests != &self.pending_action_requests {
+        if !turn.is_ready_to_submit() || turn.action_requests != self.pending_action_requests {
             return Err(InvalidTurn);
         }
 

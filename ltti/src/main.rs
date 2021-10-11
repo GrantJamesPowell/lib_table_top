@@ -48,27 +48,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     let mut ui_state = Default::default();
-    let mut turn = game_runner.turn().unwrap();
-    let (action_id, (player, action_request)) = turn.action_request().unwrap();
+    let mut turn = game_runner.turn();
+    let (action_id, (player, action_request)) = turn
+        .as_ref()
+        .map(|t| t.action_request())
+        .flatten()
+        .expect("New game has a first turn");
     let player_view = game_runner.game().player_view();
     let mut spectator_view = game_runner.game().spectator_view();
 
     let (action_sender, action_receiver) = mpsc::channel();
 
     loop {
-        // if let Ok((action_id, action)) = action_receiver.try_recv() {
-        //     turn.submit_action(action_id, ActionResponse::Response(action));
+        if let Ok((action_id, action)) = action_receiver.try_recv() {
+            if let Some(mut current_turn) = Option::take(&mut turn) {
+                current_turn.submit_action(action_id, ActionResponse::Response(action));
 
-        //     if turn.is_ready_to_submit() {
-        //         let game_advance = game_runner
-        //             .submit_turn_mut(turn)
-        //             .expect("it was a valid action id");
+                if current_turn.is_ready_to_submit() {
+                    let game_advance = game_runner.submit_turn_mut(current_turn)?;
 
-        //         for update in &game_advance.spectator_view_updates {
-        //             spectator_view.update(&update);
-        //         }
-        //     }
-        // }
+                    for update in &game_advance.spectator_view_updates {
+                        spectator_view.update(&update)?;
+                    }
+
+                    turn = game_runner.turn();
+                }
+            }
+        }
 
         terminal.draw(|frame| {
             let chunks = layout().split(frame.size());
@@ -82,7 +88,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 game_runner.settings(),
                 &ui_state,
             );
-        });
+        })?;
 
         match events_receiver
             .recv()

@@ -260,6 +260,7 @@ dependencies = [
  "derive_builder",
  "rand",
  "rand_chacha",
+ "thiserror",
 ]
 
 [[package]]
