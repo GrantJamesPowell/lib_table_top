@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 #![feature(never_type)]
 
-use lttcore::{play::ActionResponse, Play, Player};
+use lttcore::{
+    play::{ActionResponse, GameAdvance},
+    Play, Player,
+};
 use thiserror::Error;
 
 mod board;
@@ -132,7 +135,7 @@ impl TicTacToe {
     }
 }
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Action {
     pub position: Position,
 }
@@ -144,7 +147,7 @@ pub enum ActionError {
     SpaceIsTaken { attempted: Position },
 }
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ActionRequest {
     marker: Marker,
 }
@@ -189,13 +192,18 @@ impl Play for TicTacToe {
     fn advance(
         &mut self,
         _settings: &Self::Settings,
-        actions: &[((Player, ActionRequest), <Self as Play>::ActionResponse)],
+        actions: impl Iterator<
+            Item = (
+                (Player, <Self as Play>::ActionRequest),
+                <Self as Play>::ActionResponse,
+            ),
+        >,
         _rng: &mut impl rand::Rng,
-        game_advance: &mut <Self as Play>::GameAdvance,
+        game_advance: &mut GameAdvance<Self>,
     ) {
         use ActionResponse::*;
 
-        for &((_player, action_request), response) in actions {
+        for ((player, action_request), response) in actions {
             match response {
                 Resign => {
                     self.resign(action_request.marker);
@@ -212,7 +220,9 @@ impl Play for TicTacToe {
                                 .push((action_request.marker, action.position));
                         }
                         Err(err) => {
-                            game_advance.action_errors.insert(action_request, err);
+                            game_advance
+                                .action_errors
+                                .push((player, (action_request, err)));
                         }
                     }
                 }
