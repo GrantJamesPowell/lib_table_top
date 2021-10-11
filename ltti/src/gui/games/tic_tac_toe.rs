@@ -6,13 +6,15 @@ use lttcore::{Play, Player};
 use tic_tac_toe::{
     Action, Col,
     Marker::{self, *},
-    Row, TicTacToe,
+    Row,
+    Status::{self, *},
+    TicTacToe,
 };
 
 use tui::backend::Backend;
 use tui::layout::{Alignment, Constraint::*, Direction::*, Layout, Margin, Rect};
 use tui::style::{Color::*, Style};
-use tui::widgets::{Block, BorderType::*, Borders, Widget};
+use tui::widgets::{Block, BorderType::*, Borders, Paragraph, Widget};
 use tui::Frame;
 
 #[derive(Default, Debug, PartialEq, Eq)]
@@ -96,6 +98,18 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
                 );
             }
         }
+    }
+}
+
+fn status(status: Status) -> impl Widget {
+    match status {
+        InProgress { next_up: _next_up } => Paragraph::new("foo"),
+        Draw => Paragraph::new("foo"),
+        WinByResignation { winner: _winner } => Paragraph::new("foo"),
+        Win {
+            winner: _winner,
+            positions: _positions,
+        } => Paragraph::new("foo"),
     }
 }
 

@@ -27,7 +27,7 @@ pub enum Status {
     WinByResignation { winner: Marker },
     /// There *is* a winner via connecting three spaces
     Win {
-        marker: Marker,
+        winner: Marker,
         positions: [Position; 3],
     },
 }
@@ -95,7 +95,7 @@ impl TicTacToe {
     /// assert_eq!(
     ///   game.status(),
     ///   Win {
-    ///     marker: X,
+    ///     winner: X,
     ///     positions: [
     ///       (Col::new(0), Row::new(0)),
     ///       (Col::new(0), Row::new(1)),
@@ -117,7 +117,7 @@ impl TicTacToe {
                 let [a, b, c] = positions.map(|pos| self.board.at_position(pos));
 
                 if a == b && b == c {
-                    a.map(|marker| Win { marker, positions })
+                    a.map(|winner| Win { winner, positions })
                 } else {
                     None
                 }
