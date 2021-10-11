@@ -124,6 +124,7 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
         game_advance: &mut GameAdvance<Self>,
     ) {
+        use crate::spectator_view::Update;
         use ActionResponse::*;
 
         for ((player, action_request), response) in actions {
@@ -140,7 +141,7 @@ impl Play for TicTacToe {
                         Ok(_) => {
                             game_advance
                                 .spectator_view_updates
-                                .push((action_request.marker, action.position));
+                                .push(Update::Claim(action_request.marker, action.position));
                         }
                         Err(err) => {
                             game_advance
