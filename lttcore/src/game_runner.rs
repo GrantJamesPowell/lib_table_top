@@ -6,7 +6,7 @@ use crate::play::GameAdvance;
 use crate::{Play, Player};
 
 #[derive(Builder, Clone, Debug)]
-#[builder(setter(into, strip_option))]
+#[builder(setter(into, strip_option), build_fn(skip))]
 pub struct GameRunner<T>
 where
     T: Play,
@@ -128,5 +128,32 @@ impl<T: Play> GameRunnerBuilder<T> {
             }
             _ => Ok(<T as Play>::initial_state_for_settings(&settings)),
         }
+    }
+
+    pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
+        let settings = self
+            .settings
+            .as_ref()
+            .cloned()
+            .ok_or(GameRunnerBuilderError::UninitializedField("settings"))?;
+
+        let initial_state = self.initial_state.as_ref().cloned().flatten();
+
+        let seed = self
+            .seed
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| Arc::new(rand::thread_rng().gen::<[u8; 32]>()));
+        let state = self.choose_state()?;
+        let pending_action_requests = state.action_requests(&settings);
+
+        Ok(GameRunner {
+            settings,
+            seed,
+            state,
+            initial_state,
+            pending_action_requests,
+            game_advance: Default::default(),
+        })
     }
 }
