@@ -9,11 +9,15 @@ use crate::{Play, Player};
 use thiserror::Error;
 
 #[derive(Builder, Clone, Debug)]
-#[builder(setter(into, strip_option), build_fn(skip))]
+#[builder(
+    setter(into, strip_option),
+    build_fn(name = "build_without_initializing")
+)]
 pub struct GameRunner<T>
 where
     T: Play,
 {
+    #[builder(default)]
     settings: Arc<<T as Play>::Settings>,
     #[builder(default)]
     initial_state: Option<Arc<T>>,
@@ -133,10 +137,8 @@ impl<T: Play> GameRunner<T> {
 
 impl<T: Play> GameRunnerBuilder<T> {
     fn choose_state(&self) -> Result<T, String> {
-        let settings = self
-            .settings
-            .as_ref()
-            .ok_or("settings must be set".to_string())?;
+        let default_settings = Default::default();
+        let settings: &<T as Play>::Settings = self.settings.as_ref().unwrap_or(&default_settings);
 
         match self.initial_state.as_ref() {
             Some(Some(state)) => {
@@ -150,30 +152,12 @@ impl<T: Play> GameRunnerBuilder<T> {
         }
     }
 
+    // Custom adding of the first set of pending requests into the buffer
     pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
-        let settings = self
-            .settings
-            .as_ref()
-            .cloned()
-            .ok_or(GameRunnerBuilderError::UninitializedField("settings"))?;
-
-        let initial_state = self.initial_state.as_ref().cloned().flatten();
-
-        let seed = self
-            .seed
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(|| Arc::new(rand::thread_rng().gen::<[u8; 32]>()));
-        let state = self.choose_state()?;
-        let pending_action_requests = state.action_requests(&settings);
-
-        Ok(GameRunner {
-            settings,
-            seed,
-            state,
-            initial_state,
-            pending_action_requests,
-            game_advance: Default::default(),
-        })
+        let mut runner = self.build_without_initializing()?;
+        runner
+            .state
+            .action_requests_into(&runner.settings, &mut runner.pending_action_requests);
+        Ok(runner)
     }
 }

@@ -47,7 +47,7 @@ pub trait Play: Sized + Clone + Debug {
     type ActionError: Clone + Debug + PartialEq + Eq;
     type ActionRequest: Clone + Debug + PartialEq + Eq;
 
-    type Settings: Clone + Debug + PartialEq + Eq = NoCustomSettings;
+    type Settings: Clone + Debug + PartialEq + Eq + Default = NoCustomSettings;
     type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;
 
     type PlayerView: View = NoSecretPlayerInformation;
