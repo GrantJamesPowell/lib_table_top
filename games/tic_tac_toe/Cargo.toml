@@ -7,5 +7,4 @@ edition = "2021"
 lttcore = { path = "../../lttcore" }
 thiserror = "1.0.23"
 itertools = "0.10.0"
-enum-map = "0.6.4"
 rand = "0.8.0"
