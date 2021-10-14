@@ -60,8 +60,10 @@ name = "crazy_eights"
 version = "0.1.0"
 dependencies = [
  "derive_builder",
+ "lazy_static",
  "lttcore",
  "rand",
+ "smallvec",
  "thiserror",
 ]
 
@@ -211,6 +213,12 @@ checksum = "69ddb889f9d0d08a67338271fa9b62996bc788c7796a5c18cf057420aaed5eaf"
 dependencies = [
  "either",
 ]
+
+[[package]]
+name = "lazy_static"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
