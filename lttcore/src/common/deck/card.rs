@@ -17,7 +17,7 @@ impl fmt::Display for Card {
 }
 
 impl Card {
-    pub fn new(rank: Rank, suit: Suit) -> Self {
+    pub const fn new(rank: Rank, suit: Suit) -> Self {
         Self(rank, suit)
     }
 

@@ -1,4 +1,5 @@
 mod card;
+pub mod cards;
 mod rank;
 mod suit;
 
