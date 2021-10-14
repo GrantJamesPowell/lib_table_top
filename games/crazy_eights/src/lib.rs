@@ -1,5 +1,8 @@
 #![allow(dead_code)]
-#![feature(never_type)]
+#![feature(never_type, derive_default_enum)]
+
+#[macro_use]
+extern crate derive_builder;
 
 mod player_view;
 mod settings;

@@ -59,6 +59,7 @@ dependencies = [
 name = "crazy_eights"
 version = "0.1.0"
 dependencies = [
+ "derive_builder",
  "lttcore",
  "rand",
  "thiserror",
