@@ -49,7 +49,7 @@ mod tests {
         assert_eq!(pile.draw(), Some(1));
         assert!(!pile.contains(&1));
 
-        assert_eq!(pile, &[2, 3]);
+        assert_eq!(pile.deref(), &[2, 3]);
         assert_eq!(pile.len(), 2);
         assert_eq!(pile.draw(), Some(2));
 
