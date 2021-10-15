@@ -1,8 +1,4 @@
-use lttcore::common::deck::{
-    cards::*,
-    Card,
-    Rank::{self, *},
-};
+use lttcore::common::deck::{cards::*, Card};
 use smallvec::{smallvec, SmallVec};
 use std::collections::HashMap;
 
@@ -99,6 +95,13 @@ pub struct Settings {
 impl Settings {
     pub fn num_players(&self) -> u8 {
         self.num_players
+    }
+
+    pub fn deck(&self) -> &[Card] {
+        self.custom_deck
+            .as_ref()
+            .map(|deck| deck.as_slice())
+            .unwrap_or(STANDARD_DECK.as_slice())
     }
 }
 
