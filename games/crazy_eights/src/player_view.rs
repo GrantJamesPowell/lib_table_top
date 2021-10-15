@@ -1,3 +1,4 @@
+use crate::Hand;
 use lttcore::common::deck::Card;
 use lttcore::View;
 use std::error::Error;
@@ -12,15 +13,15 @@ use Update::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct PlayerView {
-    hand: Vec<Card>,
+    hand: Hand,
 }
 
 impl PlayerView {
-    fn new(hand: Vec<Card>) -> Self {
+    pub fn new(hand: Hand) -> Self {
         Self { hand }
     }
 
-    fn hand(&self) -> &[Card] {
+    pub fn hand(&self) -> &[Card] {
         &self.hand
     }
 }

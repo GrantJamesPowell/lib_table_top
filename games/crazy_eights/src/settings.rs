@@ -96,6 +96,12 @@ pub struct Settings {
     custom_power_rules: PowerRules,
 }
 
+impl Settings {
+    pub fn num_players(&self) -> u8 {
+        self.num_players
+    }
+}
+
 fn validate_settings(builder: &SettingsBuilder) -> Result<(), String> {
     let num_players = builder.num_players.ok_or("number of players must be set")?;
     let starting_num_of_cards_per_player = builder

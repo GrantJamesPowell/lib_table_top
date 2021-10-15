@@ -4,21 +4,21 @@ use std::error::Error;
 use lttcore::common::deck::{Card, Rank, Suit};
 use lttcore::{Player, View};
 
-use crate::Action;
+use crate::{Action, PlayerCardCounts};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BoardInfo {
-    current_suit_and_rank: (Suit, Rank),
-    draw_pile_num_remaining_cards: usize,
-    top_card: Card,
+    pub(crate) current_suit_and_rank: (Suit, Rank),
+    pub(crate) draw_pile_size: usize,
+    pub(crate) discard_pile_size: usize,
+    pub(crate) top_card: Card,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpectatorView {
-    whose_turn: Player,
-    discard_pile: Vec<Card>,
-    player_card_count: HashMap<Player, usize>,
-    board_info: BoardInfo,
+    pub(crate) whose_turn: Player,
+    pub(crate) player_card_counts: PlayerCardCounts,
+    pub(crate) board_info: BoardInfo,
 }
 
 impl SpectatorView {
