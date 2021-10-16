@@ -18,7 +18,7 @@ use lttcore::{
     play::{ActionResponse, GameAdvance},
     Play, Player,
 };
-use smallvec::{smallvec, SmallVec};
+use smallvec::SmallVec;
 use std::collections::HashMap;
 // Optimize hands to store up to 8 cards inline
 pub type Hand = SmallVec<[Card; 8]>;
@@ -56,6 +56,28 @@ pub struct CrazyEights {
 }
 
 impl CrazyEights {
+    pub fn discard_pile<'a, 'b>(
+        &'a self,
+        settings: &'b Settings,
+    ) -> impl Iterator<Item = Card> + 'b {
+        let num_in_play: usize = self.hands.iter().map(|h| h.len()).sum::<usize>() + 1;
+
+        let mut in_play: Vec<Card> = Vec::with_capacity(num_in_play);
+
+        for hand in &self.hands {
+            in_play.extend(hand.iter().cloned());
+        }
+
+        in_play.extend(Some(self.top_card));
+        in_play.sort();
+
+        settings
+            .deck()
+            .iter()
+            .filter(move |card| in_play.binary_search(card).is_err())
+            .cloned()
+    }
+
     pub fn discard_pile_size(&self) -> usize {
         todo!()
     }
