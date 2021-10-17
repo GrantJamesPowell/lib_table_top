@@ -7,4 +7,4 @@ mod suit;
 pub use card::Card;
 pub use draw_pile::DrawPile;
 pub use rank::Rank;
-pub use suit::{Color, Suit};
+pub use suit::{Color, Suit, COLORS, SUITS};

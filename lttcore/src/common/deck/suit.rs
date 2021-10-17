@@ -17,6 +17,8 @@ pub enum Color {
 use Color::*;
 use Suit::*;
 
+pub const SUITS: [Suit; 4] = [Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades];
+
 impl Suit {
     /// Returns the color of a suit
     /// ```
@@ -34,6 +36,8 @@ impl Suit {
         }
     }
 }
+
+pub const COLORS: [Color; 2] = [Color::Black, Color::Red];
 
 impl Color {
     /// Returns the suits of a color
