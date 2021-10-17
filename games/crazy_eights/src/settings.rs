@@ -66,7 +66,7 @@ pub enum PowerRules {
 }
 
 impl PowerRules {
-    fn powers_for_card(&self, card: Card) -> &[Power] {
+    pub fn powers_for_card(&self, card: Card) -> &[Power] {
         let rules: &HashMap<Card, SmallVec<[Power; 2]>> = match self {
             PowerRules::EightsWild => &EIGHTS_WILD_POWER_RULES,
             PowerRules::Dos => &DOS_POWER_RULES,
@@ -79,6 +79,7 @@ impl PowerRules {
 #[derive(Builder, Clone, Debug, Default, PartialEq, Eq)]
 #[builder(setter(into, strip_option))]
 pub struct Settings {
+    #[builder(default = "2")]
     num_players: u8,
     #[builder(default = "DEFAULT_TURN_LIMIT")]
     turn_limit: usize,
@@ -89,7 +90,7 @@ pub struct Settings {
     #[builder(default)]
     unable_to_play_card_rule: UnableToPlayCardRule,
     #[builder(default)]
-    custom_power_rules: PowerRules,
+    power_rules: PowerRules,
 }
 
 impl Settings {
@@ -102,6 +103,14 @@ impl Settings {
             .as_ref()
             .map(|deck| deck.as_slice())
             .unwrap_or(STANDARD_DECK.as_slice())
+    }
+
+    pub fn is_wild(&self, card: Card) -> bool {
+        self.powers_for_card(card).contains(&Wild)
+    }
+
+    pub fn powers_for_card(&self, card: Card) -> &[Power] {
+        self.power_rules.powers_for_card(card)
     }
 }
 

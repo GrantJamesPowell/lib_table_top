@@ -1,20 +1,21 @@
 #![allow(dead_code)]
-#![feature(never_type, derive_default_enum)]
+#![feature(never_type, derive_default_enum, bool_to_option)]
 
 #[macro_use]
 extern crate derive_builder;
 #[macro_use]
 extern crate lazy_static;
 
+pub mod logic;
 mod player_view;
 mod settings;
 mod spectator_view;
 pub use player_view::PlayerView;
-pub use settings::Settings;
-pub use spectator_view::{BoardInfo, SpectatorView};
+pub use settings::{Power, Settings};
+pub use spectator_view::SpectatorView;
 
 use lttcore::{
-    common::deck::{Card, Rank, Suit},
+    common::deck::{Card, Suit},
     play::{ActionResponse, GameAdvance},
     Play, Player,
 };
@@ -30,13 +31,9 @@ type Hands = SmallVec<[Hand; 6]>;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Action {
-    /// Draw a card from the draw pile. Reshuffles the deck if there are no cards remaining in the
-    /// draw pile. If there are no cards in the draw pile or discard pile, this is a no-op.
     Draw,
-    /// Play a card from your hand
-    Play(Card),
-    /// Play and eight, and select the next suit
-    PlayEight(Card, Suit),
+    PlayCard(Card),
+    PlayWild(Card, Suit),
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -51,11 +48,18 @@ pub struct CrazyEights {
     hands: Hands,
     draw_pile: Vec<Card>,
     whose_turn: Player,
-    current_suit_and_rank: (Suit, Rank),
+
+    // Because that you can use "powers" to affect what needs to be played next
+    // (i. e. Eights can change the suit), we need to keep track of the current_suit + top_card
+    current_suit: Suit,
     top_card: Card,
 }
 
 impl CrazyEights {
+    pub fn player_card_counts(&self) -> PlayerCardCounts {
+        SmallVec::from_iter(self.hands.iter().map(|hand| hand.len()))
+    }
+
     pub fn discard_pile<'a, 'b>(
         &'a self,
         settings: &'b Settings,
@@ -64,11 +68,12 @@ impl CrazyEights {
 
         let mut in_play: Vec<Card> = Vec::with_capacity(num_in_play);
 
+        in_play.push(self.top_card);
+
         for hand in &self.hands {
             in_play.extend(hand.iter().cloned());
         }
 
-        in_play.extend(Some(self.top_card));
         in_play.sort();
 
         settings
@@ -76,10 +81,6 @@ impl CrazyEights {
             .iter()
             .filter(move |card| in_play.binary_search(card).is_err())
             .cloned()
-    }
-
-    pub fn discard_pile_size(&self) -> usize {
-        todo!()
     }
 }
 
@@ -109,18 +110,15 @@ impl Play for CrazyEights {
     }
 
     fn spectator_view(&self, settings: &<Self as Play>::Settings) -> <Self as Play>::SpectatorView {
-        let player_card_counts: PlayerCardCounts =
-            SmallVec::from_iter(self.hands.iter().map(|hand| hand.len()));
-
         SpectatorView {
-            player_card_counts,
+            resigned: self.resigned.clone(),
+            settings: settings.clone(),
+            player_card_counts: self.player_card_counts(),
             whose_turn: self.whose_turn,
-            board_info: BoardInfo {
-                top_card: self.top_card,
-                current_suit_and_rank: self.current_suit_and_rank,
-                draw_pile_size: self.draw_pile.len(),
-                discard_pile_size: self.discard_pile_size(),
-            },
+            discard_pile: self.discard_pile(&settings).collect(),
+            current_suit: self.current_suit,
+            draw_pile_size: self.draw_pile.len(),
+            top_card: self.top_card,
         }
     }
 
