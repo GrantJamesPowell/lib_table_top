@@ -1,6 +1,7 @@
 use lttcore::common::deck::{cards::*, Card};
 use smallvec::{smallvec, SmallVec};
 use std::collections::HashMap;
+use std::num::NonZeroU8;
 
 pub const DEFAULT_NUMBER_OF_STARTING_CARDS_PER_PLAYER: usize = 7;
 pub const DEFAULT_TURN_LIMIT: usize = 200;
@@ -79,7 +80,7 @@ impl PowerRules {
 #[derive(Builder, Clone, Debug, Default, PartialEq, Eq)]
 #[builder(setter(into, strip_option))]
 pub struct Settings {
-    #[builder(default = "2")]
+    #[builder(default = "2.try_into().unwrap()")]
     num_players: u8,
     #[builder(default = "DEFAULT_TURN_LIMIT")]
     turn_limit: usize,

@@ -192,15 +192,16 @@ impl Play for CrazyEights {
         game_advance: &mut GameAdvance<Self>,
     ) {
         use crate::player_view::Update as PlayerViewUpdate;
-        use crate::spectator_view::Update as SpectatorViewUpdate;
+        use crate::spectator_view::PlayerAction as SpectatorViewUpdate;
 
         for ((player, _action_request), action_response) in actions {
             match action_response {
                 Resign => {
                     self.resigned.push(player);
-                    game_advance
-                        .spectator_view_updates
-                        .push(SpectatorViewUpdate::Resignation { player: player })
+                    game_advance.spectator_view_updates.push((
+                        SpectatorViewUpdate::Resignation { player: player },
+                        self.board_info,
+                    ))
                 }
                 Response(Draw) => {
                     let drawn = self.draw_pile.draw();

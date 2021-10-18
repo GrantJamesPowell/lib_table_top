@@ -23,14 +23,14 @@ impl SpectatorView {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Update {
+pub enum PlayerAction {
     Resignation { player: Player },
     DrawCards { player: Player },
     PlayCard { card: Card, player: Player },
 }
 
 impl View for SpectatorView {
-    type Update = Update;
+    type Update = (PlayerAction, BoardInfo);
 
     fn update(&mut self, _update: &Self::Update) -> Result<(), Box<dyn Error>> {
         Ok(())
