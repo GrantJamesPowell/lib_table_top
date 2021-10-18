@@ -54,18 +54,20 @@ pub enum ActionError {}
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ActionRequest;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BoardInfo {
+    pub(crate) top_card: Card,
+    pub(crate) current_suit: Suit,
+    pub(crate) whose_turn: Player,
+    pub(crate) direction: Direction,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrazyEights {
-    direction: Direction,
     resigned: Vec<Player>,
     hands: Hands,
     draw_pile: DrawPile<Card>,
-    whose_turn: Player,
-
-    // Because that you can use "powers" to affect what needs to be played next
-    // (i. e. Eights can change the suit), we need to keep track of the current_suit + top_card
-    current_suit: Suit,
-    top_card: Card,
+    board_info: BoardInfo,
 }
 
 impl CrazyEights {
@@ -81,7 +83,7 @@ impl CrazyEights {
 
         let mut in_play: Vec<Card> = Vec::with_capacity(num_in_play);
 
-        in_play.push(self.top_card);
+        in_play.push(self.board_info.top_card);
 
         for hand in &self.hands {
             in_play.extend(hand.iter().cloned());
@@ -124,15 +126,12 @@ impl Play for CrazyEights {
 
     fn spectator_view(&self, settings: &<Self as Play>::Settings) -> <Self as Play>::SpectatorView {
         SpectatorView {
-            direction: self.direction,
             resigned: self.resigned.clone(),
             settings: settings.clone(),
             player_card_counts: self.player_card_counts(),
-            whose_turn: self.whose_turn,
             discard_pile: self.discard_pile(&settings).collect(),
-            current_suit: self.current_suit,
             draw_pile_size: self.draw_pile.len(),
-            top_card: self.top_card,
+            board_info: self.board_info,
         }
     }
 
@@ -157,12 +156,14 @@ impl Play for CrazyEights {
 
         Self {
             draw_pile,
-            direction: Default::default(),
             resigned: Vec::new(),
             hands,
-            whose_turn: Player::new(0),
-            top_card,
-            current_suit: top_card.suit(),
+            board_info: BoardInfo {
+                whose_turn: Player::new(0),
+                top_card,
+                current_suit: top_card.suit(),
+                direction: Default::default(),
+            },
         }
     }
 
@@ -175,7 +176,7 @@ impl Play for CrazyEights {
         settings: &<Self as Play>::Settings,
         action_requests: &mut Vec<(Player, <Self as Play>::ActionRequest)>,
     ) {
-        action_requests.push((self.whose_turn, Default::default()));
+        action_requests.push((self.board_info.whose_turn, Default::default()));
     }
 
     fn advance(
