@@ -10,17 +10,19 @@ pub mod logic;
 mod player_view;
 mod settings;
 mod spectator_view;
-pub use logic::{BoardInfo, Direction};
+pub use logic::BoardInfo;
 pub use player_view::PlayerView;
 pub use settings::{Power, Settings};
 pub use spectator_view::SpectatorView;
 
 use lttcore::{
     common::deck::{Card, DrawPile, Suit},
+    common::direction::LeftOrRight,
     play::{
         ActionResponse::{self, *},
         GameAdvance,
     },
+    player::PlayerResignations,
     Play, Player,
 };
 use rand::prelude::*;
@@ -50,7 +52,7 @@ pub struct ActionRequest;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrazyEights {
-    resigned: Vec<Player>,
+    resigned: PlayerResignations,
     hands: Hands,
     draw_pile: DrawPile<Card>,
     board_info: BoardInfo,
@@ -94,7 +96,7 @@ impl Play for CrazyEights {
     type PlayerView = PlayerView;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> u8 {
-        settings.num_players()
+        settings.num_players().get()
     }
 
     fn player_views_into(
@@ -132,7 +134,7 @@ impl Play for CrazyEights {
         let top_card = draw_pile
             .draw()
             .expect("There must be at least one card in the deck");
-        let mut hands: Hands = smallvec![SmallVec::new(); settings.num_players() as usize];
+        let mut hands: Hands = smallvec![SmallVec::new(); settings.num_players().get() as usize];
 
         for _card in 0..settings.starting_num_cards_per_player() {
             for hand in hands.iter_mut() {
@@ -142,7 +144,7 @@ impl Play for CrazyEights {
 
         Self {
             draw_pile,
-            resigned: Vec::new(),
+            resigned: Default::default(),
             hands,
             board_info: BoardInfo {
                 whose_turn: Player::new(0),
@@ -183,7 +185,7 @@ impl Play for CrazyEights {
         for ((player, _action_request), action_response) in actions {
             match action_response {
                 Resign => {
-                    self.resigned.push(player);
+                    self.resigned.resign(player);
                     game_advance.spectator_view_updates.push((
                         SpectatorViewUpdate::Resignation { player: player },
                         self.board_info,

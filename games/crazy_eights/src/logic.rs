@@ -4,6 +4,7 @@ use crate::{
     Settings,
 };
 use lttcore::common::deck::{Card, Rank, Suit, SUITS};
+use lttcore::common::direction::LeftOrRight;
 use lttcore::Player;
 use std::num::NonZeroU8;
 
@@ -12,97 +13,12 @@ pub struct BoardInfo {
     pub top_card: Card,
     pub current_suit: Suit,
     pub whose_turn: Player,
-    pub direction: Direction,
+    pub direction: LeftOrRight,
 }
 
 impl BoardInfo {
     pub fn reverse(&mut self) {
         self.direction = self.direction.reverse();
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Direction {
-    #[default]
-    Left,
-    Right,
-}
-
-use Direction::*;
-
-impl Direction {
-    /// Reverses the direction
-    ///
-    /// ```
-    /// use crazy_eights::Direction;
-    /// assert_eq!(Left.reverse(), Right);
-    /// assert_eq!(Right.reverse(), Left);
-    /// ```
-    pub fn reverse(&self) -> Self {
-        match self {
-            Left => Right,
-            Right => Left,
-        }
-    }
-}
-
-/// Returns the next player given the direction and number of players,
-/// will wrap the player numbers correctly.
-///
-/// ```
-/// use crazy_eights::{Direction::*, logic::next_players_turn};
-///
-/// for (player, num_players, direction, expected) in [
-///   // Player 0 is to the left of Player 1 in a 3 Player game
-///   (1, 3, Left, 0),
-///   // Player 2 is to the right of Player 1 in a 3 Player game
-///   (1, 3, Right, 2),
-///   // Player 0 is to the right of Player 1 in a 2 Player game
-///   (1, 2, Right, 0),
-///   // Player 0 is to the left of Player 1 in a 2 Player game
-///   (1, 2, Left, 0),
-///   // Player 0 is to the left of himself in a 1 Player game
-///   (0, 1, Left, 0),
-///   // Player 0 is to the right of himself in a 1 Player game
-///   (0, 1, Right, 0),
-/// ] {
-///   assert_eq!(
-///      next_players_turn(player.into(), num_players.try_into().unwrap(), direction),
-///      expected.into()
-///   )
-/// }
-///
-/// ```
-///
-/// # Panics
-///
-/// Panics if the player is outside the range of number of players
-///
-/// ```should_panic
-/// use crazy_eights::{Direction::*, logic::next_players_turn};
-///
-/// next_players_turn(42.into(), 4.try_into().unwrap(), Left);
-/// ```
-pub fn next_players_turn(
-    player: Player,
-    number_of_players: NonZeroU8,
-    direction: Direction,
-) -> Player {
-    assert!(
-        player.as_u8() < number_of_players.get(),
-        "Player must be less than number of players"
-    );
-
-    let player_num = player.as_u8();
-    match direction {
-        Left => match player_num {
-            0 => (number_of_players.get() - 1).into(),
-            n => (n - 1).into(),
-        },
-        Right => match player_num {
-            n if n == (number_of_players.get() - 1) => 0.into(),
-            n => (n + 1).into(),
-        },
     }
 }
 

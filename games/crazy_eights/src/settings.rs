@@ -1,4 +1,5 @@
 use lttcore::common::deck::{cards::*, Card};
+use lttcore::player::NumberOfPlayers;
 use smallvec::{smallvec, SmallVec};
 use std::collections::HashMap;
 use std::num::NonZeroU8;
@@ -77,11 +78,11 @@ impl PowerRules {
     }
 }
 
-#[derive(Builder, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Builder, Clone, Debug, PartialEq, Eq)]
 #[builder(setter(into, strip_option))]
 pub struct Settings {
     #[builder(default = "2.try_into().unwrap()")]
-    num_players: u8,
+    num_players: NumberOfPlayers,
     #[builder(default = "DEFAULT_TURN_LIMIT")]
     turn_limit: usize,
     #[builder(default)]
@@ -94,8 +95,16 @@ pub struct Settings {
     power_rules: PowerRules,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        SettingsBuilder::default()
+            .build()
+            .expect("default c8s settings should be valid")
+    }
+}
+
 impl Settings {
-    pub fn num_players(&self) -> u8 {
+    pub fn num_players(&self) -> NumberOfPlayers {
         self.num_players
     }
 
@@ -130,8 +139,9 @@ fn validate_settings(builder: &SettingsBuilder) -> Result<(), String> {
         _ => 52,
     };
 
-    if num_cards_in_deck < (starting_num_of_cards_per_player * (num_players as usize)) {
-        return Err("Number of cards in deck is too few for the number of players and number of starting cards per player".to_string());
+    if num_cards_in_deck == 0 {
+        return Err("number of cards in the deck must be at least 1".into());
     }
+
     Ok(())
 }
