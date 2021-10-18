@@ -10,6 +10,7 @@ pub mod logic;
 mod player_view;
 mod settings;
 mod spectator_view;
+pub use logic::{BoardInfo, Direction};
 pub use player_view::PlayerView;
 pub use settings::{Power, Settings};
 pub use spectator_view::SpectatorView;
@@ -32,13 +33,6 @@ pub type Hand = SmallVec<[Card; 8]>;
 pub type PlayerCardCounts = SmallVec<[usize; 6]>;
 type Hands = SmallVec<[Hand; 6]>;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum Direction {
-    #[default]
-    Left,
-    Right,
-}
-
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Action {
     Draw,
@@ -53,14 +47,6 @@ pub enum ActionError {}
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ActionRequest;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct BoardInfo {
-    pub(crate) top_card: Card,
-    pub(crate) current_suit: Suit,
-    pub(crate) whose_turn: Player,
-    pub(crate) direction: Direction,
-}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrazyEights {

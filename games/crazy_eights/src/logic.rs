@@ -1,12 +1,50 @@
 use crate::{
     Action::{self, *},
-    Direction::{self, *},
     Power::*,
     Settings,
 };
 use lttcore::common::deck::{Card, Rank, Suit, SUITS};
 use lttcore::Player;
 use std::num::NonZeroU8;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct BoardInfo {
+    pub top_card: Card,
+    pub current_suit: Suit,
+    pub whose_turn: Player,
+    pub direction: Direction,
+}
+
+impl BoardInfo {
+    pub fn reverse(&mut self) {
+        self.direction = self.direction.reverse();
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Direction {
+    #[default]
+    Left,
+    Right,
+}
+
+use Direction::*;
+
+impl Direction {
+    /// Reverses the direction
+    ///
+    /// ```
+    /// use crazy_eights::Direction;
+    /// assert_eq!(Left.reverse(), Right);
+    /// assert_eq!(Right.reverse(), Left);
+    /// ```
+    pub fn reverse(&self) -> Self {
+        match self {
+            Left => Right,
+            Right => Left,
+        }
+    }
+}
 
 /// Returns the next player given the direction and number of players,
 /// will wrap the player numbers correctly.
