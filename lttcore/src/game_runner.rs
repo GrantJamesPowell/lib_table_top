@@ -4,15 +4,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, GameAdvance};
-use crate::{Play, Player};
+use crate::{rng, Play, Player, Seed};
 
 use thiserror::Error;
 
 #[derive(Builder, Clone, Debug)]
-#[builder(
-    setter(into, strip_option),
-    build_fn(name = "build_without_initializing")
-)]
+#[builder(setter(into, strip_option), build_fn(skip))]
 pub struct GameRunner<T>
 where
     T: Play,
@@ -21,8 +18,8 @@ where
     settings: Arc<<T as Play>::Settings>,
     #[builder(default)]
     initial_state: Option<Arc<T>>,
-    #[builder(default = "Arc::new(rand::thread_rng().gen::<[u8; 32]>())")]
-    seed: Arc<[u8; 32]>,
+    #[builder(default = "Arc::new(rand::thread_rng().gen::<[u8; 32]>().into())")]
+    seed: Arc<Seed>,
     #[builder(setter(skip), default = "self.choose_state()?")]
     state: T,
     #[builder(setter(skip))]
@@ -136,25 +133,41 @@ impl<T: Play> GameRunner<T> {
 }
 
 impl<T: Play> GameRunnerBuilder<T> {
-    fn choose_state(&self) -> Result<T, String> {
-        let default_settings = Default::default();
-        let settings: &<T as Play>::Settings = self.settings.as_ref().unwrap_or(&default_settings);
+    pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
+        let seed = self.seed.as_ref().cloned().unwrap_or_else(|| {
+            let seed = rand::thread_rng().gen::<[u8; 32]>().into();
+            Arc::new(seed)
+        });
 
-        match self.initial_state.as_ref() {
-            Some(Some(state)) => {
-                if state.is_valid_for_settings(&settings) {
-                    Ok((**state).clone())
-                } else {
-                    Err("Provided initial state is not valid for settings".to_string())
+        let settings = self.settings.as_ref().cloned().unwrap_or_default();
+
+        let state = {
+            match self.initial_state.as_ref() {
+                Some(Some(state)) => {
+                    if state.is_valid_for_settings(&settings) {
+                        Ok((**state).clone())
+                    } else {
+                        Err("Provided initial state is not valid for settings".to_string())
+                    }
+                }
+                _ => {
+                    let mut rng = rng::for_init(*seed);
+                    Ok(<T as Play>::initial_state_for_settings(&settings, &mut rng))
                 }
             }
-            _ => Ok(<T as Play>::initial_state_for_settings(&settings)),
-        }
-    }
+        }?;
 
-    // Custom adding of the first set of pending requests into the buffer
-    pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
-        let mut runner = self.build_without_initializing()?;
+        let initial_state = self.initial_state.as_ref().cloned().unwrap_or_default();
+
+        let mut runner = GameRunner {
+            seed,
+            state,
+            settings,
+            initial_state,
+            pending_action_requests: Default::default(),
+            game_advance: Default::default(),
+        };
+
         runner
             .state
             .action_requests_into(&runner.settings, &mut runner.pending_action_requests);
