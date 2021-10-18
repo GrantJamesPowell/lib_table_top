@@ -2,6 +2,7 @@
 #![feature(associated_type_defaults)]
 #![feature(never_type)]
 #![feature(derive_default_enum)]
+#![feature(bool_to_option)]
 
 #[macro_use]
 extern crate derive_builder;
