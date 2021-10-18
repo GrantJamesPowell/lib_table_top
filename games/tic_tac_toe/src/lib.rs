@@ -88,7 +88,10 @@ impl Play for TicTacToe {
         SpectatorView::from_board_and_resigned(self.board, self.resigned)
     }
 
-    fn initial_state_for_settings(_settings: &<Self as Play>::Settings) -> Self {
+    fn initial_state_for_settings(
+        _settings: &<Self as Play>::Settings,
+        _rng: &mut impl rand::Rng,
+    ) -> Self {
         Default::default()
     }
 
