@@ -69,7 +69,7 @@ pub trait Play: Sized + Clone + Debug {
 
     fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView;
 
-    fn initial_state_for_settings(settings: &Self::Settings) -> Self;
+    fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
 
     fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
 
