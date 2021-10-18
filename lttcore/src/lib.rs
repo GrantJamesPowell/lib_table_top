@@ -17,4 +17,7 @@ pub use play::Play;
 pub mod game_runner;
 pub use game_runner::{GameRunner, GameRunnerBuilder};
 
+pub mod rng;
+pub use rng::Seed;
+
 pub mod common;
