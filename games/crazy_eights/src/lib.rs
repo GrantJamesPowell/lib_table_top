@@ -15,19 +15,29 @@ pub use settings::{Power, Settings};
 pub use spectator_view::SpectatorView;
 
 use lttcore::{
-    common::deck::{Card, Suit},
-    play::{ActionResponse, GameAdvance},
+    common::deck::{Card, DrawPile, Suit},
+    play::{
+        ActionResponse::{self, *},
+        GameAdvance,
+    },
     Play, Player,
 };
-use smallvec::SmallVec;
+use rand::prelude::*;
+use smallvec::{smallvec, SmallVec};
 use std::collections::HashMap;
+
 // Optimize hands to store up to 8 cards inline
 pub type Hand = SmallVec<[Card; 8]>;
 // Optimize the CrazyEights struct to store 6 players hands inline
 pub type PlayerCardCounts = SmallVec<[usize; 6]>;
 type Hands = SmallVec<[Hand; 6]>;
 
-// use thiserror::Error;
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Direction {
+    #[default]
+    Left,
+    Right,
+}
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum Action {
@@ -36,17 +46,20 @@ pub enum Action {
     PlayWild(Card, Suit),
 }
 
+use Action::*;
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub enum ActionError {}
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ActionRequest {}
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ActionRequest;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CrazyEights {
+    direction: Direction,
     resigned: Vec<Player>,
     hands: Hands,
-    draw_pile: Vec<Card>,
+    draw_pile: DrawPile<Card>,
     whose_turn: Player,
 
     // Because that you can use "powers" to affect what needs to be played next
@@ -111,6 +124,7 @@ impl Play for CrazyEights {
 
     fn spectator_view(&self, settings: &<Self as Play>::Settings) -> <Self as Play>::SpectatorView {
         SpectatorView {
+            direction: self.direction,
             resigned: self.resigned.clone(),
             settings: settings.clone(),
             player_card_counts: self.player_card_counts(),
@@ -122,8 +136,34 @@ impl Play for CrazyEights {
         }
     }
 
-    fn initial_state_for_settings(_: &<Self as Play>::Settings, rng: &mut impl rand::Rng) -> Self {
-        todo!()
+    fn initial_state_for_settings(
+        settings: &<Self as Play>::Settings,
+        rng: &mut impl rand::Rng,
+    ) -> Self {
+        let mut draw_pile: Vec<Card> = Vec::from(settings.deck());
+        draw_pile.shuffle(rng);
+        let mut draw_pile: DrawPile<Card> = draw_pile.into();
+
+        let top_card = draw_pile
+            .draw()
+            .expect("There must be at least one card in the deck");
+        let mut hands: Hands = smallvec![SmallVec::new(); settings.num_players() as usize];
+
+        for _card in 0..settings.starting_num_cards_per_player() {
+            for hand in hands.iter_mut() {
+                hand.extend(draw_pile.draw());
+            }
+        }
+
+        Self {
+            draw_pile,
+            direction: Default::default(),
+            resigned: Vec::new(),
+            hands,
+            whose_turn: Player::new(0),
+            top_card,
+            current_suit: top_card.suit(),
+        }
     }
 
     fn is_valid_for_settings(&self, _: &<Self as Play>::Settings) -> bool {
@@ -132,23 +172,52 @@ impl Play for CrazyEights {
 
     fn action_requests_into(
         &self,
-        _: &<Self as Play>::Settings,
-        _: &mut Vec<(Player, <Self as Play>::ActionRequest)>,
+        settings: &<Self as Play>::Settings,
+        action_requests: &mut Vec<(Player, <Self as Play>::ActionRequest)>,
     ) {
-        todo!()
+        action_requests.push((self.whose_turn, Default::default()));
     }
 
     fn advance(
         &mut self,
-        _settings: &Self::Settings,
-        _actions: impl Iterator<
+        settings: &Self::Settings,
+        actions: impl Iterator<
             Item = (
                 (Player, <Self as Play>::ActionRequest),
                 ActionResponse<<Self as Play>::Action>,
             ),
         >,
-        _rng: &mut impl rand::Rng,
+        rng: &mut impl rand::Rng,
         game_advance: &mut GameAdvance<Self>,
     ) {
+        use crate::player_view::Update as PlayerViewUpdate;
+        use crate::spectator_view::Update as SpectatorViewUpdate;
+
+        for ((player, _action_request), action_response) in actions {
+            match action_response {
+                Resign => {
+                    self.resigned.push(player);
+                    game_advance
+                        .spectator_view_updates
+                        .push(SpectatorViewUpdate::Resignation { player: player })
+                }
+                Response(Draw) => {
+                    let drawn = self.draw_pile.draw();
+                    self.hands[player.as_usize()].extend(drawn);
+
+                    if let Some(card) = drawn {
+                        game_advance
+                            .player_view_updates
+                            .push((player, PlayerViewUpdate::AddCards(vec![card])));
+                    };
+                }
+                Response(PlayCard(card)) => {
+                    todo!()
+                }
+                Response(PlayWild(card, suit)) => {
+                    todo!()
+                }
+            }
+        }
     }
 }

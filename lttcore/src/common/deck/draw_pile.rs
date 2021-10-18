@@ -20,7 +20,7 @@ impl<T: Clone> From<Vec<T>> for DrawPile<T> {
 }
 
 impl<T: Clone> DrawPile<T> {
-    fn draw(&mut self) -> Option<T> {
+    pub fn draw(&mut self) -> Option<T> {
         let next = self.pile.get(self.offset).cloned();
         self.offset += 1;
         next

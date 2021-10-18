@@ -98,6 +98,10 @@ impl Settings {
         self.num_players
     }
 
+    pub fn starting_num_cards_per_player(&self) -> usize {
+        self.starting_num_cards_per_player
+    }
+
     pub fn deck(&self) -> &[Card] {
         self.custom_deck
             .as_ref()

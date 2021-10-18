@@ -3,10 +3,11 @@ use std::error::Error;
 use lttcore::common::deck::{Card, Suit};
 use lttcore::{Player, View};
 
-use crate::{Action, PlayerCardCounts, Settings};
+use crate::{Action, Direction, PlayerCardCounts, Settings};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SpectatorView {
+    pub(crate) direction: Direction,
     pub(crate) resigned: Vec<Player>,
     pub(crate) settings: Settings,
     pub(crate) whose_turn: Player,
@@ -24,13 +25,17 @@ impl SpectatorView {
     }
 }
 
+pub struct BoardInfo {
+    player_card_counts: PlayerCardCounts,
+    whose_turn: Player,
+    direction: Direction,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Update {
-    PlayCard {
-        card: Card,
-        player: Player,
-        player_hand_size_after_playing_card: usize,
-    },
+    Resignation { player: Player },
+    DrawCards { player: Player },
+    PlayCard { card: Card, player: Player },
 }
 
 impl View for SpectatorView {
