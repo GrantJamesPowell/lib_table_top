@@ -1,5 +1,5 @@
 use crate::common::direction::LeftOrRight::{self, *};
-use crate::{NumberOfPlayers, PlayerResignations};
+use crate::{NumberOfPlayers, PlayerSet};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Player(u8);
@@ -32,11 +32,11 @@ impl Player {
     /// Returns the "next" player, taking into account direction, number of players, and
     /// resignations. Will return `None` if all players are resigned, including the current player.
     /// ```
-    /// use lttcore::{Player, PlayerResignations, common::direction::LeftOrRight::*};
+    /// use lttcore::{Player, PlayerSet, common::direction::LeftOrRight::*};
     ///
     /// let player: Player = 1.into();
     /// let num_players = 3.try_into().unwrap();
-    /// let mut resignations: PlayerResignations = Default::default();
+    /// let mut resignations: PlayerSet = Default::default();
     ///
     /// // The 0th player is to the left of the first player
     /// assert_eq!(
@@ -53,7 +53,7 @@ impl Player {
     /// This will likely represent  a logic bug in game code.
     ///
     /// ```should_panic
-    /// use lttcore::{Player, PlayerResignations, common::direction::LeftOrRight::*};
+    /// use lttcore::{Player, PlayerSet, common::direction::LeftOrRight::*};
     /// let player: Player = 42.into();
     /// let num_players = 3.try_into().unwrap();
     ///
@@ -63,7 +63,7 @@ impl Player {
         &self,
         direction: LeftOrRight,
         num_players: NumberOfPlayers,
-        resignations: &PlayerResignations,
+        resignations: &PlayerSet,
     ) -> Option<Player> {
         assert!(
             num_players.includes_player(*self),
@@ -87,8 +87,8 @@ impl Player {
 
         loop {
             if curr == *self {
-                return Some(*self).filter(|&p| !resignations.is_resigned(p));
-            } else if !resignations.is_resigned(curr) {
+                return Some(*self).filter(|&p| !resignations.contains(p));
+            } else if !resignations.contains(curr) {
                 return Some(curr);
             } else {
                 curr = next(curr)
