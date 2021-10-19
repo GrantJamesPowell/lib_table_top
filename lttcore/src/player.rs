@@ -5,8 +5,8 @@ use crate::{NumberOfPlayers, PlayerSet};
 pub struct Player(u8);
 
 impl Player {
-    pub fn new(n: u8) -> Self {
-        n.into()
+    pub const fn new(n: u8) -> Self {
+        Self(n)
     }
 
     pub fn all() -> impl Iterator<Item = Player> {

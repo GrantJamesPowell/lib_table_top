@@ -4,7 +4,10 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub struct NoCustomSettings {}
+pub struct NoCustomSettings;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub struct NoCustomActionRequest;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoCustomSettingsError {}
@@ -30,7 +33,7 @@ pub enum GameAdvance<T: Play> {
 pub trait Play: Sized + Clone + Debug {
     type Action: Clone + Debug + PartialEq + Eq;
     type ActionError: Clone + Debug + PartialEq + Eq;
-    type ActionRequest: Clone + Debug + PartialEq + Eq;
+    type ActionRequest: Clone + Debug + PartialEq + Eq = NoCustomActionRequest;
 
     type Settings: Clone + Debug + PartialEq + Eq + Default = NoCustomSettings;
     type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;

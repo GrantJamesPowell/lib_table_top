@@ -1,5 +1,5 @@
 use crate::ActionError::{self, *};
-use crate::Marker::{self, *};
+use lttcore::{number_of_players::TWO_PLAYER, Player};
 use std::collections::HashMap;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -193,7 +193,7 @@ pub const POSSIBLE_WINS: [[(Col, Row); 3]; 8] = [
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Board(pub [[Option<Marker>; 3]; 3]);
+pub struct Board(pub [[Option<Player>; 3]; 3]);
 
 impl Default for Board {
     fn default() -> Self {
@@ -212,12 +212,16 @@ impl Board {
     ///
     /// assert_eq!(board.at_position(pos), None);
     /// assert!(board.claim_space(X, pos).is_ok());
-    /// assert_eq!(board.at_position(pos), Some(X));
+    /// assert_eq!(board.at_position(pos), Some(X.into()));
     ///
     /// // Taking an already claimed space returns an error
     /// assert_eq!(board.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
     /// ```
-    pub fn claim_space(&mut self, marker: Marker, position: Position) -> Result<(), ActionError> {
+    pub fn claim_space(
+        &mut self,
+        player: impl Into<Player>,
+        position: Position,
+    ) -> Result<(), ActionError> {
         if self.at_position(position).is_some() {
             return Err(SpaceIsTaken {
                 attempted: position,
@@ -225,7 +229,7 @@ impl Board {
         }
 
         let (Col(c), Row(r)) = position;
-        self.0[c as usize][r as usize] = Some(marker);
+        self.0[c as usize][r as usize] = Some(player.into());
         Ok(())
     }
 
@@ -236,11 +240,11 @@ impl Board {
     /// use tic_tac_toe::{Board, Row, Col, Marker::*};
     ///
     /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
-    /// assert_eq!(board.at_position((Col::new(2), Row::new(0))), Some(X));
-    /// assert_eq!(board.at_position((Col::new(0), Row::new(2))), Some(O));
+    /// assert_eq!(board.at_position((Col::new(2), Row::new(0))), Some(X.into()));
+    /// assert_eq!(board.at_position((Col::new(0), Row::new(2))), Some(O.into()));
     /// assert_eq!(board.at_position((Col::new(0), Row::new(0))), None);
     /// ```
-    pub fn at_position(&self, (Col(c), Row(r)): Position) -> Option<Marker> {
+    pub fn at_position(&self, (Col(c), Row(r)): Position) -> Option<Player> {
         self.0[c as usize][r as usize]
     }
 
@@ -250,15 +254,15 @@ impl Board {
     /// use tic_tac_toe::{Board, Row, Col, Marker::*};
     ///
     /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
-    /// assert_eq!(board.at((2, 0)), Some(X));
-    /// assert_eq!(board.at((0, 2)), Some(O));
+    /// assert_eq!(board.at((2, 0)), Some(X.into()));
+    /// assert_eq!(board.at((0, 2)), Some(O.into()));
     /// assert_eq!(board.at((0, 0)), None);
     ///
     /// // Out of bounds numbers return None
     /// assert_eq!(board.at((0, 1000)), None);
     /// assert_eq!(board.at((1000, 0)), None);
     /// ```
-    pub fn at(&self, (c, r): (usize, usize)) -> Option<Marker> {
+    pub fn at(&self, (c, r): (usize, usize)) -> Option<Player> {
         let col = Col::try_new(c.try_into().ok()?)?;
         let row = Row::try_new(r.try_into().ok()?)?;
 
@@ -275,26 +279,26 @@ impl Board {
     ///   board.spaces().collect::<Vec<_>>(),
     ///   vec![
     ///     ((Col::new(0), Row::new(0)), None),
-    ///     ((Col::new(0), Row::new(1)), Some(X)),
-    ///     ((Col::new(0), Row::new(2)), Some(O)),
+    ///     ((Col::new(0), Row::new(1)), Some(X.into())),
+    ///     ((Col::new(0), Row::new(2)), Some(O.into())),
     ///     ((Col::new(1), Row::new(0)), None),
     ///     ((Col::new(1), Row::new(1)), None),
     ///     ((Col::new(1), Row::new(2)), None),
-    ///     ((Col::new(2), Row::new(0)), Some(X)),
-    ///     ((Col::new(2), Row::new(1)), Some(O)),
-    ///     ((Col::new(2), Row::new(2)), Some(X))
+    ///     ((Col::new(2), Row::new(0)), Some(X.into())),
+    ///     ((Col::new(2), Row::new(1)), Some(O.into())),
+    ///     ((Col::new(2), Row::new(2)), Some(X.into()))
     ///   ]
     /// );
     /// ```
-    pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Marker>)> + '_ {
+    pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Player>)> + '_ {
         self.0.iter().enumerate().flat_map(|(col_num, col)| {
-            col.iter().enumerate().map(move |(row_num, &marker)| {
+            col.iter().enumerate().map(move |(row_num, &player)| {
                 (
                     (
                         Col::new(col_num.try_into().unwrap()),
                         Row::new(row_num.try_into().unwrap()),
                     ),
-                    marker,
+                    player,
                 )
             })
         })
@@ -309,16 +313,16 @@ impl Board {
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
-    ///     ((Col::new(0), Row::new(1)), X),
-    ///     ((Col::new(0), Row::new(2)), O),
-    ///     ((Col::new(2), Row::new(0)), X),
-    ///     ((Col::new(2), Row::new(1)), O),
-    ///     ((Col::new(2), Row::new(2)), X)
+    ///     ((Col::new(0), Row::new(1)), X.into()),
+    ///     ((Col::new(0), Row::new(2)), O.into()),
+    ///     ((Col::new(2), Row::new(0)), X.into()),
+    ///     ((Col::new(2), Row::new(1)), O.into()),
+    ///     ((Col::new(2), Row::new(2)), X.into())
     ///   ]
     /// );
-    pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Marker)> + '_ {
+    pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Player)> + '_ {
         self.spaces()
-            .filter_map(|(pos, marker)| marker.map(|p| (pos, p)))
+            .filter_map(|(pos, player)| player.map(|p| (pos, p)))
     }
 
     /// Return the marker who's turn it is
@@ -328,38 +332,37 @@ impl Board {
     ///
     /// // Starts with X
     /// let board: Board = Default::default();
-    /// assert_eq!(X, board.whose_turn());
+    /// assert_eq!(board.whose_turn(), X.into());
 
     /// // Once the first player goes, it's the second player's turn
     /// let board = Board::from_ints([[1, 0, 0], [0, 0, 0], [0, 0, 0]]);
-    /// assert_eq!(O, board.whose_turn());
+    /// assert_eq!(board.whose_turn(), O.into());
 
     /// // Once O goes, it's X's turn again
     /// let board = Board::from_ints([[1, 2, 0], [0, 0, 0], [0, 0, 0]]);
-    /// assert_eq!(X, board.whose_turn());
+    /// assert_eq!(board.whose_turn(), X.into());
 
     /// // The next player to go is always the one with the fewest spaces
     /// let board = Board::from_ints([[0, 2, 2], [2, 2, 2], [2, 2, 2]]);
-    /// assert_eq!(X, board.whose_turn());
+    /// assert_eq!(board.whose_turn(), X.into());
     /// ```
-    pub fn whose_turn(&self) -> Marker {
-        let mut counts: HashMap<Marker, usize> = HashMap::new();
+    pub fn whose_turn(&self) -> Player {
+        let mut counts: HashMap<Player, usize> = HashMap::new();
 
-        for (_, marker) in self.taken_spaces() {
-            *counts.entry(marker).or_insert(0) += 1;
+        for (_, player) in self.taken_spaces() {
+            *counts.entry(player).or_insert(0) += 1;
         }
 
-        [X, O]
-            .iter()
-            .min_by_key(|marker| counts.get(marker).cloned().unwrap_or(0))
-            .copied()
-            .unwrap_or(X)
+        TWO_PLAYER
+            .players()
+            .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
+            .unwrap_or(TWO_PLAYER.starting_player())
     }
 
     /// Convenience method to construct a board from arrays of ints, nice for literals in specs
     /// 0 => None
-    /// 1 => Some(X)
-    /// 2 => Some(O)
+    /// 1 => Some(X | Player::new(0))
+    /// 2 => Some(O | Player::new(1))
     ///
     /// ```
     /// // An empty board
@@ -387,9 +390,9 @@ impl Board {
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
-    ///     ((Col::new(0), Row::new(0)), X),
-    ///     ((Col::new(1), Row::new(0)), O),
-    ///     ((Col::new(1), Row::new(1)), X)
+    ///     ((Col::new(0), Row::new(0)), X.into()),
+    ///     ((Col::new(1), Row::new(0)), O.into()),
+    ///     ((Col::new(1), Row::new(1)), X.into())
     ///   ]
     /// )
     /// ```
@@ -413,8 +416,8 @@ impl Board {
         let b = board.map(|col| {
             col.map(|n| match n {
                 0 => None,
-                1 => Some(X),
-                2 => Some(O),
+                1 => Some(0.into()),
+                2 => Some(1.into()),
                 _ => panic!("Invalid number, must ints must be within 0..=2"),
             })
         });
