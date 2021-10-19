@@ -24,8 +24,6 @@ where
     state: T,
     #[builder(setter(skip))]
     pending_action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
-    #[builder(setter(skip))]
-    game_advance: GameAdvance<T>,
 }
 
 #[derive(Debug)]
@@ -103,7 +101,7 @@ impl<T: Play> GameRunner<T> {
         }
     }
 
-    pub fn submit_turn_mut(&mut self, turn: Turn<T>) -> Result<&GameAdvance<T>, SubmitError> {
+    pub fn submit_turn_mut(&mut self, turn: Turn<T>) -> Result<GameAdvance<T>, SubmitError> {
         use SubmitError::*;
 
         if !turn.is_ready_to_submit() || turn.action_requests != self.pending_action_requests {
@@ -116,19 +114,15 @@ impl<T: Play> GameRunner<T> {
             .enumerate()
             .map(|(i, action)| (self.pending_action_requests[i].clone(), action.unwrap()));
 
-        self.game_advance.reset();
-        self.state.advance(
-            &self.settings,
-            actions_iter,
-            &mut rand::thread_rng(),
-            &mut self.game_advance,
-        );
+        let game_advance =
+            self.state
+                .advance(&self.settings, actions_iter, &mut rand::thread_rng());
 
         self.pending_action_requests.clear();
         self.state
             .action_requests_into(&self.settings, &mut self.pending_action_requests);
 
-        Ok(&self.game_advance)
+        Ok(game_advance)
     }
 }
 
@@ -165,7 +159,6 @@ impl<T: Play> GameRunnerBuilder<T> {
             settings,
             initial_state,
             pending_action_requests: Default::default(),
-            game_advance: Default::default(),
         };
 
         runner

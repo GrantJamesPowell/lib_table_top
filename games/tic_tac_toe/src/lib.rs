@@ -117,40 +117,42 @@ impl Play for TicTacToe {
     fn advance(
         &mut self,
         _settings: &Self::Settings,
-        actions: impl Iterator<
+        mut actions: impl Iterator<
             Item = (
                 (Player, <Self as Play>::ActionRequest),
                 ActionResponse<<Self as Play>::Action>,
             ),
         >,
         _rng: &mut impl rand::Rng,
-        game_advance: &mut GameAdvance<Self>,
-    ) {
+    ) -> GameAdvance<Self> {
         use crate::spectator_view::Update;
         use ActionResponse::*;
 
-        for ((player, action_request), response) in actions {
-            match response {
-                Resign => {
-                    self.resign(action_request.marker);
-                    break;
+        let ((player, action_request), response) = actions
+            .next()
+            .expect("Tic Tac Toe is single player at a time");
+
+        match response {
+            Resign => {
+                self.resign(action_request.marker);
+                GameAdvance::Advance {
+                    spectator_update: Update::Resign(action_request.marker),
+                    player_updates: Default::default(),
                 }
-                Response(action) => {
-                    match self
-                        .board
-                        .claim_space(action_request.marker, action.position)
-                    {
-                        Ok(_) => {
-                            game_advance
-                                .spectator_view_updates
-                                .push(Update::Claim(action_request.marker, action.position));
-                        }
-                        Err(err) => {
-                            game_advance
-                                .action_errors
-                                .push((player, (action_request, err)));
-                        }
-                    }
+            }
+            Response(action) => {
+                match self
+                    .board
+                    .claim_space(action_request.marker, action.position)
+                {
+                    Ok(_) => GameAdvance::Advance {
+                        spectator_update: Update::Claim(action_request.marker, action.position),
+                        player_updates: Default::default(),
+                    },
+                    Err(error) => GameAdvance::Unadvanceable {
+                        error,
+                        request: (player, action_request),
+                    },
                 }
             }
         }

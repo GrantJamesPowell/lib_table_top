@@ -1,4 +1,5 @@
 use crate::{view::NoSecretPlayerInformation, Player, View};
+use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -15,31 +16,15 @@ pub enum ActionResponse<T> {
 }
 
 #[derive(Clone, Debug)]
-pub struct GameAdvance<T: Play> {
-    pub spectator_view_updates: Vec<<<T as Play>::SpectatorView as View>::Update>,
-    pub player_view_updates: Vec<(Player, <<T as Play>::PlayerView as View>::Update)>,
-    pub action_errors: Vec<(
-        Player,
-        (<T as Play>::ActionRequest, <T as Play>::ActionError),
-    )>,
-}
-
-impl<T: Play> GameAdvance<T> {
-    pub fn reset(&mut self) {
-        self.spectator_view_updates.clear();
-        self.player_view_updates.clear();
-        self.action_errors.clear();
-    }
-}
-
-impl<T: Play> Default for GameAdvance<T> {
-    fn default() -> Self {
-        Self {
-            spectator_view_updates: Vec::new(),
-            player_view_updates: Vec::new(),
-            action_errors: Vec::new(),
-        }
-    }
+pub enum GameAdvance<T: Play> {
+    Unadvanceable {
+        request: (Player, <T as Play>::ActionRequest),
+        error: <T as Play>::ActionError,
+    },
+    Advance {
+        spectator_update: <<T as Play>::SpectatorView as View>::Update,
+        player_updates: SmallVec<[(Player, <<T as Play>::PlayerView as View>::Update); 2]>,
+    },
 }
 
 pub trait Play: Sized + Clone + Debug {
@@ -91,6 +76,5 @@ pub trait Play: Sized + Clone + Debug {
         settings: &Self::Settings,
         actions: impl Iterator<Item = ((Player, Self::ActionRequest), ActionResponse<Self::Action>)>,
         rng: &mut impl rand::Rng,
-        game_advance: &mut GameAdvance<Self>,
-    );
+    ) -> GameAdvance<Self>;
 }
