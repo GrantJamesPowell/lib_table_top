@@ -2,8 +2,9 @@
 #![feature(never_type)]
 
 use lttcore::{
+    number_of_players::TWO_PLAYER,
     play::{ActionResponse, GameAdvance},
-    Play, Player,
+    NumberOfPlayers, Play, Player,
 };
 use thiserror::Error;
 
@@ -99,8 +100,8 @@ impl Play for TicTacToe {
         true
     }
 
-    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> u8 {
-        2
+    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> NumberOfPlayers {
+        TWO_PLAYER
     }
 
     fn player_views_into(

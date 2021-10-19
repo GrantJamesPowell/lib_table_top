@@ -3,12 +3,16 @@
 #![feature(never_type)]
 #![feature(derive_default_enum)]
 #![feature(bool_to_option)]
+#![feature(const_option)]
 
 #[macro_use]
 extern crate derive_builder;
 
 pub mod player;
 pub use player::Player;
+
+pub mod number_of_players;
+pub use number_of_players::NumberOfPlayers;
 
 pub mod view;
 pub use view::View;
