@@ -29,26 +29,6 @@ impl From<u8> for Player {
 }
 
 impl Player {
-    /// Returns true if a player is within a certain number of players.
-    ///
-    /// Players are zero indexed, so 2 players would represent players 0 && 1
-    /// ```
-    /// use lttcore::{Player, NumberOfPlayers};
-    ///
-    /// let p0: Player = 0.into();
-    /// let p1: Player = 1.into();
-    /// let p2: Player = 2.into();
-    ///
-    /// let num_players: NumberOfPlayers = 2.try_into().unwrap();
-    ///
-    /// assert!(p0.is_in_range_for_num_players(num_players));
-    /// assert!(p1.is_in_range_for_num_players(num_players));
-    /// assert!(!p2.is_in_range_for_num_players(num_players));
-    /// ```
-    pub fn is_in_range_for_num_players(&self, num_players: NumberOfPlayers) -> bool {
-        self.as_u8() <= (num_players.get() - 1)
-    }
-
     /// Returns the "next" player, taking into account direction, number of players, and
     /// resignations. Will return `None` if all players are resigned, including the current player.
     /// ```
@@ -86,8 +66,8 @@ impl Player {
         resignations: &PlayerResignations,
     ) -> Option<Player> {
         assert!(
-            self.is_in_range_for_num_players(num_players),
-            "current_player is outside of num_players range"
+            num_players.includes_player(*self),
+            "current_player is not in num_players"
         );
 
         let next = |p: Player| -> Player {
