@@ -11,6 +11,9 @@ extern crate derive_builder;
 pub mod player;
 pub use player::Player;
 
+pub mod player_resignations;
+pub use player_resignations::PlayerResignations;
+
 pub mod number_of_players;
 pub use number_of_players::NumberOfPlayers;
 
