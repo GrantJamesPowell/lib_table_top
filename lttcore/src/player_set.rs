@@ -28,6 +28,20 @@ impl PlayerSet {
         (self.0[Self::section(player)] & (1usize << Self::offset(player)) as u64) > 0
     }
 
+    /// If a PlayerSet is empty
+    ///
+    /// ```
+    /// use lttcore::PlayerSet;
+    ///
+    /// let mut set: PlayerSet = Default::default();
+    /// assert!(set.is_empty());
+    /// set.add(1.into());
+    /// assert!(!set.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.0 == [0u64; 4]
+    }
+
     /// Iterator over players in the set
     ///
     /// ```

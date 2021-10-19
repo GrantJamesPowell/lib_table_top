@@ -1,4 +1,4 @@
-use crate::Player;
+use crate::{Player, PlayerSet};
 use std::num::{NonZeroU8, TryFromIntError};
 use std::ops::Deref;
 
@@ -24,6 +24,29 @@ impl NumberOfPlayers {
     /// ```
     pub fn players(&self) -> impl Iterator<Item = Player> {
         (0..self.get()).map(|p| p.into())
+    }
+
+    /// Returns the `PlayerSet` containing all the players for that number of players
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet, NumberOfPlayers, number_of_players::THREE_PLAYER};
+    ///
+    /// let mut expected = PlayerSet::new();
+    /// expected.add(0.into());
+    /// expected.add(1.into());
+    /// expected.add(2.into());
+    ///
+    /// assert_eq!(
+    ///   THREE_PLAYER.player_set(),
+    ///   expected
+    /// );
+    /// ```
+    pub fn player_set(&self) -> PlayerSet {
+        let mut set = PlayerSet::new();
+        for player in self.players() {
+            set.add(player);
+        }
+        set
     }
 
     /// Returns true if a player is within a certain number of players.
