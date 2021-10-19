@@ -1,10 +1,9 @@
 use rand::prelude::*;
-// use rand_chacha::ChaCha20Rng;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, GameAdvance};
-use crate::{rng, Play, Player, Seed};
+use crate::{rng, NumberOfPlayers, Play, Player, Seed};
 
 use thiserror::Error;
 
@@ -80,8 +79,8 @@ impl<T: Play> GameRunner<T> {
         self.state.player_views(&self.settings)
     }
 
-    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
-        (0..<T as Play>::number_of_players_for_settings(&self.settings)).map(|p| Player::new(p))
+    pub fn number_of_players(&self) -> NumberOfPlayers {
+        <T as Play>::number_of_players_for_settings(&self.settings)
     }
 
     pub fn spectator_view(&self) -> <T as Play>::SpectatorView {

@@ -1,4 +1,4 @@
-use crate::{view::NoSecretPlayerInformation, Player, View};
+use crate::{view::NoSecretPlayerInformation, NumberOfPlayers, Player, View};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -38,7 +38,7 @@ pub trait Play: Sized + Clone + Debug {
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
-    fn number_of_players_for_settings(settings: &Self::Settings) -> u8;
+    fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
 
     fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView> {
         let mut map = HashMap::new();

@@ -30,18 +30,16 @@ impl NumberOfPlayers {
     ///
     /// Players are zero indexed, so 2 players would represent players 0 && 1
     /// ```
-    /// use lttcore::{Player, NumberOfPlayers};
+    /// use lttcore::{Player, NumberOfPlayers, number_of_players::{TWO_PLAYER, THREE_PLAYER}};
     ///
     /// let p0: Player = 0.into();
     /// let p1: Player = 1.into();
     /// let p2: Player = 2.into();
     ///
-    /// let num_players: NumberOfPlayers = 2.try_into().unwrap();
-    ///
-    /// assert!(num_players.includes_player(p0));
-    /// assert!(num_players.includes_player(p1));
-    /// assert!(!num_players.includes_player(p2));
-    ///
+    /// assert!(TWO_PLAYER.includes_player(p0));
+    /// assert!(TWO_PLAYER.includes_player(p1));
+    /// assert!(!TWO_PLAYER.includes_player(p2));
+    /// assert!(THREE_PLAYER.includes_player(p2));
     /// ```
     pub fn includes_player(&self, player: Player) -> bool {
         player.as_u8() <= (self.get() - 1)
