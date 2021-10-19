@@ -30,7 +30,7 @@ use crossterm::{
 };
 
 use lttcore::{
-    play::{ActionResponse, NoCustomSettings},
+    play::{ActionResponse, GameAdvance::*, NoCustomSettings},
     GameRunner, GameRunnerBuilder, Play, Player, View,
 };
 
@@ -69,15 +69,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 current_turn.submit_action(action_id, ActionResponse::Response(action));
 
                 if current_turn.is_ready_to_submit() {
-                    let game_advance = game_runner.submit_turn_mut(current_turn)?;
+                    match game_runner.submit_turn_mut(current_turn)? {
+                        Advance {
+                            spectator_update,
+                            player_updates,
+                        } => {
+                            spectator_view.update(&spectator_update)?;
 
-                    for update in &game_advance.spectator_view_updates {
-                        spectator_view.update(&update)?;
-                    }
-
-                    for (player, player_update) in &game_advance.player_view_updates {
-                        let view = player_views.get_mut(player).unwrap();
-                        view.update(player_update)?;
+                            for (player, player_update) in &player_updates {
+                                let player_view = player_views.get_mut(player).unwrap();
+                                player_view.update(player_update)?;
+                            }
+                        }
+                        Unadvanceable { .. } => {
+                            panic!("something here I guess");
+                        }
                     }
 
                     turn = game_runner.turn();
