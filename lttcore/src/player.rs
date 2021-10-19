@@ -1,10 +1,8 @@
 use crate::common::direction::LeftOrRight::{self, *};
-use std::num::NonZeroU8;
+use crate::NumberOfPlayers;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct Player(u8);
-
-pub type NumberOfPlayers = NonZeroU8;
 
 impl Player {
     pub fn new(n: u8) -> Self {
@@ -35,7 +33,7 @@ impl Player {
     ///
     /// Players are zero indexed, so 2 players would represent players 0 && 1
     /// ```
-    /// use lttcore::{Player, player::NumberOfPlayers};
+    /// use lttcore::{Player, NumberOfPlayers};
     ///
     /// let p0: Player = 0.into();
     /// let p1: Player = 1.into();
