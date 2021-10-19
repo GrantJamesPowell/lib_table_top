@@ -3,6 +3,7 @@
 #![feature(never_type)]
 #![feature(derive_default_enum)]
 #![feature(bool_to_option)]
+#![feature(const_option)]
 
 #[macro_use]
 extern crate derive_builder;
