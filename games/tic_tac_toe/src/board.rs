@@ -332,19 +332,19 @@ impl Board {
     ///
     /// // Starts with X
     /// let board: Board = Default::default();
-    /// assert_eq!(board.whose_turn(), X.into());
+    /// assert_eq!(board.whose_turn(), X);
 
     /// // Once the first player goes, it's the second player's turn
     /// let board = Board::from_ints([[1, 0, 0], [0, 0, 0], [0, 0, 0]]);
-    /// assert_eq!(board.whose_turn(), O.into());
+    /// assert_eq!(board.whose_turn(), O);
 
     /// // Once O goes, it's X's turn again
     /// let board = Board::from_ints([[1, 2, 0], [0, 0, 0], [0, 0, 0]]);
-    /// assert_eq!(board.whose_turn(), X.into());
+    /// assert_eq!(board.whose_turn(), X);
 
     /// // The next player to go is always the one with the fewest spaces
     /// let board = Board::from_ints([[0, 2, 2], [2, 2, 2], [2, 2, 2]]);
-    /// assert_eq!(board.whose_turn(), X.into());
+    /// assert_eq!(board.whose_turn(), X);
     /// ```
     pub fn whose_turn(&self) -> Player {
         let mut counts: HashMap<Player, usize> = HashMap::new();
