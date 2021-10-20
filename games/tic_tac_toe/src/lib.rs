@@ -1,28 +1,24 @@
 #![allow(dead_code)]
-#![feature(never_type)]
 
 use lttcore::{
     number_of_players::TWO_PLAYER,
     play::{ActionResponse, GameAdvance},
-    NumberOfPlayers, Play, Player,
+    NumberOfPlayers, Play, Player, PlayerSet,
 };
 use thiserror::Error;
 
 mod board;
-mod marker;
 mod spectator_view;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
-pub use marker::*;
 pub use spectator_view::{SpectatorView, Status};
 
 use std::collections::HashMap;
-use Marker::*;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TicTacToe {
     board: Board,
-    resigned: Option<Marker>,
+    resigned: PlayerSet,
 }
 
 impl From<Board> for TicTacToe {
@@ -31,6 +27,84 @@ impl From<Board> for TicTacToe {
             board,
             ..Default::default()
         }
+    }
+}
+
+/// Conveniences for Player 0 and Player 1
+///
+/// Markers implement `Into<Player>` and `PartialEq` with Player,
+/// most methods and functions accept an `impl Into<Player>` so markers
+/// can be used in their stead
+/// ```
+/// use lttcore::Player;
+/// use tic_tac_toe::Marker::*;
+///
+/// let p0: Player = 0.into();
+/// let p1: Player = 1.into();
+///
+/// assert_eq!(p0, X);
+/// assert_eq!(p1, O);
+/// ```
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum Marker {
+    X,
+    O,
+}
+
+impl PartialEq<Marker> for Player {
+    fn eq(&self, &other: &Marker) -> bool {
+        let p: Player = other.into();
+        *self == p
+    }
+}
+
+impl PartialEq<Player> for Marker {
+    fn eq(&self, &other: &Player) -> bool {
+        let p: Player = (*self).into();
+        other == p
+    }
+}
+
+impl Into<Player> for Marker {
+    fn into(self) -> Player {
+        match self {
+            Marker::X => 0.into(),
+            Marker::O => 1.into(),
+        }
+    }
+}
+
+/// Returns the opponent of a player in TicTacToe
+///
+/// ```
+/// use lttcore::Player;
+/// use tic_tac_toe::{Marker::*, opponent};
+///
+/// let p0: Player = 0.into();
+/// let p1: Player = 1.into();
+///
+/// assert_eq!(opponent(p0), p1);
+/// assert_eq!(opponent(p1), p0);
+/// assert_eq!(opponent(X), p1);
+/// assert_eq!(opponent(O), p0);
+/// ```
+///
+/// # Panics
+///
+/// This panics with a player not in [0, 1]
+///
+/// ```should_panic
+/// use lttcore::Player;
+/// use tic_tac_toe::opponent;
+///
+/// let p3: Player = 3.into();
+/// opponent(p3);
+/// ```
+pub fn opponent(player: impl Into<Player>) -> Player {
+    match player.into().as_u8() {
+        0 => 1.into(),
+        1 => 0.into(),
+        _ => panic!("Invalid Player for TicTacToe"),
     }
 }
 
@@ -43,12 +117,12 @@ impl TicTacToe {
     ///
     /// let settings = Default::default();
     /// let mut game: TicTacToe = Default::default();
-    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X });
-    /// game.resign(X);
-    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O });
+    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X.into() });
+    /// game.resign(X); // or game.resign(0.into());
+    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O.into() });
     /// ```
-    pub fn resign(&mut self, marker: Marker) {
-        self.resigned = Some(marker);
+    pub fn resign(&mut self, player: impl Into<Player>) {
+        self.resigned.add(player.into());
     }
 }
 
@@ -64,15 +138,9 @@ pub enum ActionError {
     SpaceIsTaken { attempted: Position },
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct ActionRequest {
-    marker: Marker,
-}
-
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
-    type ActionRequest = ActionRequest;
     type SpectatorView = SpectatorView;
 
     fn action_requests_into(
@@ -80,8 +148,8 @@ impl Play for TicTacToe {
         settings: &Self::Settings,
         action_requests: &mut Vec<(Player, Self::ActionRequest)>,
     ) {
-        if let Status::InProgress { next_up: marker } = self.spectator_view(settings).status() {
-            action_requests.push((marker.player(), ActionRequest { marker }));
+        if let Status::InProgress { next_up } = self.spectator_view(settings).status() {
+            action_requests.push((next_up, Default::default()));
         }
     }
 
@@ -110,8 +178,8 @@ impl Play for TicTacToe {
         views: &mut HashMap<Player, <Self as Play>::PlayerView>,
     ) {
         // This is pretty much a no-op since tic tac toe has no secret info
-        for marker in [X, O] {
-            views.insert(marker.player(), Default::default());
+        for player in TWO_PLAYER.players() {
+            views.insert(player, Default::default());
         }
     }
 
@@ -135,27 +203,22 @@ impl Play for TicTacToe {
 
         match response {
             Resign => {
-                self.resign(action_request.marker);
+                self.resign(player);
                 GameAdvance::Advance {
-                    spectator_update: Update::Resign(action_request.marker),
+                    spectator_update: Update::Resign(player),
                     player_updates: Default::default(),
                 }
             }
-            Response(action) => {
-                match self
-                    .board
-                    .claim_space(action_request.marker, action.position)
-                {
-                    Ok(_) => GameAdvance::Advance {
-                        spectator_update: Update::Claim(action_request.marker, action.position),
-                        player_updates: Default::default(),
-                    },
-                    Err(error) => GameAdvance::Unadvanceable {
-                        error,
-                        request: (player, action_request),
-                    },
-                }
-            }
+            Response(action) => match self.board.claim_space(player, action.position) {
+                Ok(_) => GameAdvance::Advance {
+                    spectator_update: Update::Claim(player, action.position),
+                    player_updates: Default::default(),
+                },
+                Err(error) => GameAdvance::Unadvanceable {
+                    error,
+                    request: (player, action_request),
+                },
+            },
         }
     }
 }

@@ -10,6 +10,12 @@ impl NumberOfPlayers {
         Self(n)
     }
 
+    /// Return the "Starting Player" for a game, mostly just for readability,
+    /// always returns Player 0
+    pub const fn starting_player(&self) -> Player {
+        Player::new(0)
+    }
+
     /// Returns an iterator over the players for a NumberOfPlayers
     ///
     /// ```

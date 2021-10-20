@@ -4,9 +4,7 @@ use std::sync::mpsc::Sender;
 use crossterm::event::{KeyCode, KeyEvent};
 use lttcore::{Play, Player};
 use tic_tac_toe::{
-    Action, Col,
-    Marker::{self, *},
-    Row,
+    opponent, Action, Col, Row,
     Status::{self, *},
     TicTacToe,
 };
@@ -118,7 +116,7 @@ fn status(status: Status) -> impl Widget {
         WinByResignation { winner } => Paragraph::new(Spans::from(vec![
             styled_marker_span(winner),
             Span::raw(" wins because "),
-            styled_marker_span(winner.opponent()),
+            styled_marker_span(opponent(winner)),
             Span::raw(" resigned"),
         ])),
         Win { winner, positions } => Paragraph::new(Spans::from(vec![
@@ -132,15 +130,11 @@ fn status(status: Status) -> impl Widget {
     }
 }
 
-fn styled_marker_span(marker: Marker) -> Span<'static> {
-    let color = match marker {
-        X => Red,
-        O => Blue,
-    };
-
-    let text = match marker {
-        X => "X",
-        O => "O",
+fn styled_marker_span(player: Player) -> Span<'static> {
+    let (color, text) = match player.as_u8() {
+        0 => (Red, "X"),
+        1 => (Blue, "O"),
+        _ => panic!("Invalid player for tic tac toe!"),
     };
 
     Span::styled(
@@ -152,13 +146,14 @@ fn styled_marker_span(marker: Marker) -> Span<'static> {
 fn draw_square<B: Backend>(
     frame: &mut Frame<B>,
     square: Rect,
-    marker: Option<Marker>,
+    player: Option<Player>,
     (col, row): (usize, usize),
     selected: bool,
 ) {
-    let background_color = match marker {
-        Some(X) => Red,
-        Some(O) => Blue,
+    let background_color = match player.map(|p| p.as_u8()) {
+        Some(0) => Red,
+        Some(1) => Blue,
+        Some(_) => panic!("Invalid Player"),
         None => Black,
     };
 

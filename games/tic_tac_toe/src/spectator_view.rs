@@ -1,19 +1,19 @@
 use crate::board::POSSIBLE_WINS;
-use crate::{Board, Marker, Position};
-use lttcore::View;
+use crate::{opponent, Board, Position};
+use lttcore::{Player, PlayerSet, View};
 use std::error::Error;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     /// There are still available positions to be claimed on the board
-    InProgress { next_up: Marker },
+    InProgress { next_up: Player },
     /// All positions have been claimed and there is no winner
     Draw,
     /// Win by resignation
-    WinByResignation { winner: Marker },
+    WinByResignation { winner: Player },
     /// There *is* a winner via connecting three spaces
     Win {
-        winner: Marker,
+        winner: Player,
         positions: [Position; 3],
     },
 }
@@ -23,7 +23,7 @@ use Status::*;
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
 pub struct SpectatorView {
     board: Board,
-    resigned: Option<Marker>,
+    resigned: PlayerSet,
 }
 
 impl SpectatorView {
@@ -34,23 +34,23 @@ impl SpectatorView {
     pub fn from_board(board: Board) -> Self {
         Self {
             board,
-            resigned: None,
+            resigned: Default::default(),
         }
     }
 
-    pub fn from_board_and_resigned(board: Board, resigned: Option<Marker>) -> Self {
+    pub fn from_board_and_resigned(board: Board, resigned: PlayerSet) -> Self {
         Self { board, resigned }
     }
 
     /// Returns the status of the current game
     /// ```
-    /// use lttcore::Play;
+    /// use lttcore::{Play, Player};
     /// use tic_tac_toe::{TicTacToe, Board, Row, Col, Status::*, Marker::*};
     /// let settings = Default::default();
     ///
     /// // In progress
     /// let game: TicTacToe = Default::default();
-    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X });
+    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X.into() });
     ///
     /// // A draw
     /// let game: TicTacToe = Board::from_ints([
@@ -63,7 +63,7 @@ impl SpectatorView {
     /// // If someone resigns
     /// let mut game: TicTacToe = Default::default();
     /// game.resign(X);
-    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O });
+    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O.into() });
     ///
     /// // With a winning position
     /// let game: TicTacToe = Board::from_ints([
@@ -75,7 +75,7 @@ impl SpectatorView {
     /// assert_eq!(
     ///   game.spectator_view(&settings).status(),
     ///   Win {
-    ///     winner: X,
+    ///     winner: X.into(),
     ///     positions: [
     ///       (Col::new(0), Row::new(0)),
     ///       (Col::new(0), Row::new(1)),
@@ -85,9 +85,9 @@ impl SpectatorView {
     /// );
     /// ```
     pub fn status(&self) -> Status {
-        if let Some(loser) = self.resigned {
+        if let Some(loser) = self.resigned.players().next() {
             return WinByResignation {
-                winner: loser.opponent(),
+                winner: opponent(loser),
             };
         }
 
@@ -117,8 +117,8 @@ impl SpectatorView {
 
 #[derive(Clone, Debug)]
 pub enum Update {
-    Resign(Marker),
-    Claim(Marker, Position),
+    Resign(Player),
+    Claim(Player, Position),
 }
 
 impl View for SpectatorView {
@@ -126,8 +126,8 @@ impl View for SpectatorView {
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn Error>> {
         match update {
-            Update::Resign(marker) => self.resigned = Some(*marker),
-            Update::Claim(marker, position) => self.board.claim_space(*marker, *position)?,
+            Update::Resign(player) => self.resigned.add(*player),
+            Update::Claim(player, position) => self.board.claim_space(*player, *position)?,
         }
         Ok(())
     }
