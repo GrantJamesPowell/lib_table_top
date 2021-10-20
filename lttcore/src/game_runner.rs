@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, GameAdvance};
-use crate::{rng, NumberOfPlayers, Play, Player, PlayerSet, Seed};
+use crate::{NumberOfPlayers, Play, Player, PlayerSet, Seed};
 
 use thiserror::Error;
 
@@ -20,12 +20,12 @@ where
     #[builder(setter(skip))]
     state: T,
     #[builder(setter(skip))]
-    turn_num: usize,
+    turn_num: u64,
 }
 
 #[derive(Debug, Clone)]
 pub struct Turn<T: Play> {
-    turn_num: usize,
+    turn_num: u64,
     action_requests: PlayerSet,
     actions: SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>,
 }
@@ -67,9 +67,9 @@ impl<T: Play> Turn<T> {
 
 #[derive(Error, Debug, Clone, Copy)]
 pub enum SubmitError {
-    #[error("Can't add action for player that was not requested")]
+    #[error("can't add action for player that was not requested")]
     InvalidPlayer,
-    #[error("Can't submit turn with invalid actions")]
+    #[error("can't submit turn with invalid actions")]
     InvalidTurn,
 }
 
@@ -95,79 +95,55 @@ impl<T: Play> GameRunner<T> {
     }
 
     pub fn turn(&self) -> Option<Turn<T>> {
-        todo!()
-        // let action_requests = self.state.action_requests(&self.settings);
-        // match action_requests.len() {
-        //     0 => None,
-        //     n => {
-        //         let returned_actions = (0..n).map(|_| None).collect();
-        //         Some(Turn {
-        //             action_requests,
-        //             returned_actions,
-        //         })
-        //     }
-        // }
+        let action_requests = self.state.action_requests(&self.settings);
+
+        match action_requests.count() {
+            0 => None,
+            _ => Some(Turn {
+                action_requests,
+                actions: Default::default(),
+                turn_num: self.turn_num,
+            }),
+        }
     }
 
-    pub fn submit_turn_mut(&mut self, turn: Turn<T>) -> Result<GameAdvance<T>, SubmitError> {
-        todo!()
-        // use SubmitError::*;
+    pub fn submit_turn(&self, turn: Turn<T>) -> Result<(Self, GameAdvance<T>), SubmitError> {
+        if !turn.is_ready_to_submit() || (turn.turn_num != self.turn_num) {
+            return Err(SubmitError::InvalidTurn);
+        }
 
-        // if !turn.is_ready_to_submit()
-        //     || turn.action_requests != self.state.action_requests(&self.settings)
-        // {
-        //     return Err(InvalidTurn);
-        // }
+        let (new_state, game_advance) = self.state.advance(
+            &self.settings,
+            turn.actions.into_iter(),
+            &mut self.seed.rng_for_turn(self.turn_num),
+        );
 
-        // let actions_iter = turn
-        //     .returned_actions
-        //     .into_iter()
-        //     .enumerate()
-        //     .map(|(i, action)| (turn.action_requests[i].clone(), action.unwrap()));
-
-        // let (new_state, game_advance) =
-        //     self.state
-        //         .advance(&self.settings, actions_iter, &mut rand::thread_rng());
-        // self.state = new_state;
-        // Ok(game_advance)
+        Ok((
+            Self {
+                state: new_state,
+                turn_num: self.turn_num + 1,
+                ..self.clone()
+            },
+            game_advance,
+        ))
     }
 }
 
-// impl<T: Play> GameRunnerBuilder<T> {
-//     pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
-//         todo!()
-//         // let seed = self.seed.as_ref().cloned().unwrap_or_else(|| {
-//         //     let seed = rand::thread_rng().gen::<[u8; 32]>().into();
-//         //     Arc::new(seed)
-//         // });
-//
-//         // let settings = self.settings.as_ref().cloned().unwrap_or_default();
-//
-//         // let state = {
-//         //     match self.initial_state.as_ref() {
-//         //         Some(Some(state)) => {
-//         //             if state.is_valid_for_settings(&settings) {
-//         //                 Ok((**state).clone())
-//         //             } else {
-//         //                 Err("Provided initial state is not valid for settings".to_string())
-//         //             }
-//         //         }
-//         //         _ => {
-//         //             let mut rng = rng::for_init(*seed);
-//         //             Ok(<T as Play>::initial_state_for_settings(&settings, &mut rng))
-//         //         }
-//         //     }
-//         // }?;
-//
-//         // let initial_state = self.initial_state.as_ref().cloned().unwrap_or_default();
-//         // let pending_action_requests = state.action_requests(&settings);
-//
-//         // Ok(GameRunner {
-//         //     seed,
-//         //     state,
-//         //     settings,
-//         //     initial_state,
-//         //     pending_action_requests,
-//         // })
-//     }
-// }
+impl<T: Play> GameRunnerBuilder<T> {
+    pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
+        let seed = self.seed.as_ref().cloned().unwrap_or_else(|| {
+            let seed: Seed = rand::thread_rng().gen::<[u8; 32]>().into();
+            Arc::new(seed)
+        });
+
+        let settings = self.settings.as_ref().cloned().unwrap_or_default();
+        let state = <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init());
+
+        Ok(GameRunner {
+            seed,
+            settings,
+            state,
+            turn_num: 0,
+        })
+    }
+}
