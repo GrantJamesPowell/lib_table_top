@@ -3,5 +3,6 @@
 members = [
     "lttcore",
     "games/tic_tac_toe",
+    "games/crazy_eights",
     "ltti",
 ]

@@ -1,10 +1,12 @@
 [package]
-name = "tic_tac_toe"
+name = "crazy_eights"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 lttcore = { path = "../../lttcore" }
 thiserror = "1.0.23"
-itertools = "0.10.0"
 rand = "0.8.0"
+derive_builder = "0.10.2"
+smallvec = "1.7.0"
+lazy_static = "1.4.0"
