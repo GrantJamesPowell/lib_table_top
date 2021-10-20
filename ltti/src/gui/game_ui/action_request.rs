@@ -12,7 +12,6 @@ pub trait ActionRequestState<T: Play> {
         player: Player,
         player_view: &<T as Play>::PlayerView,
         spectator_view: &<T as Play>::SpectatorView,
-        action_request: &<T as Play>::ActionRequest,
         settings: &<T as Play>::Settings,
         send_action: impl FnOnce(<T as Play>::Action),
     );
@@ -27,7 +26,6 @@ pub trait ActionRequestInterface<B: Backend>: Play {
         player: Player,
         player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
-        action_request: &<Self as Play>::ActionRequest,
         settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     );

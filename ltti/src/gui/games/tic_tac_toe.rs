@@ -29,7 +29,6 @@ impl ActionRequestState<TicTacToe> for UIState {
         _player: Player,
         _player_view: &<TicTacToe as Play>::PlayerView,
         _spectator_view: &<TicTacToe as Play>::SpectatorView,
-        _action_request: &<TicTacToe as Play>::ActionRequest,
         _settings: &<TicTacToe as Play>::Settings,
         send_action: impl FnOnce(<TicTacToe as Play>::Action),
     ) {
@@ -55,7 +54,6 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
         _player: Player,
         _player_view: &<Self as Play>::PlayerView,
         spectator_view: &<Self as Play>::SpectatorView,
-        _action_request: &<Self as Play>::ActionRequest,
         _settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     ) {
