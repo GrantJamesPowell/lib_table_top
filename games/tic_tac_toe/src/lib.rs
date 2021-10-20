@@ -2,7 +2,7 @@
 
 use lttcore::{
     number_of_players::TWO_PLAYER,
-    play::{ActionResponse, GameAdvance},
+    play::{ActionRequests, ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
     NumberOfPlayers, Play, Player, PlayerSet,
 };
 use thiserror::Error;
@@ -142,15 +142,16 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type SpectatorView = SpectatorView;
+    type Status = Status;
 
-    fn action_requests_into(
-        &self,
-        settings: &Self::Settings,
-        action_requests: &mut Vec<(Player, Self::ActionRequest)>,
-    ) {
+    fn action_requests(&self, settings: &Self::Settings) -> ActionRequests<Self> {
+        let mut action_requests: ActionRequests<Self> = Default::default();
+
         if let Status::InProgress { next_up } = self.spectator_view(settings).status() {
             action_requests.push((next_up, Default::default()));
         }
+
+        action_requests
     }
 
     fn spectator_view(&self, _settings: &Self::Settings) -> SpectatorView {
@@ -172,19 +173,18 @@ impl Play for TicTacToe {
         TWO_PLAYER
     }
 
-    fn player_views_into(
+    fn player_views(
         &self,
         _settings: &<Self as Play>::Settings,
-        views: &mut HashMap<Player, <Self as Play>::PlayerView>,
-    ) {
-        // This is pretty much a no-op since tic tac toe has no secret info
-        for player in TWO_PLAYER.players() {
-            views.insert(player, Default::default());
-        }
+    ) -> HashMap<Player, Self::PlayerView> {
+        TWO_PLAYER
+            .players()
+            .map(|player| (player, Default::default()))
+            .collect()
     }
 
     fn advance(
-        &mut self,
+        &self,
         _settings: &Self::Settings,
         mut actions: impl Iterator<
             Item = (
@@ -193,32 +193,56 @@ impl Play for TicTacToe {
             ),
         >,
         _rng: &mut impl rand::Rng,
-    ) -> GameAdvance<Self> {
+    ) -> (Self, GameAdvance<Self>) {
         use crate::spectator_view::Update;
         use ActionResponse::*;
 
-        let ((player, action_request), response) = actions
+        let ((player, _action_request), response) = actions
             .next()
             .expect("Tic Tac Toe is single player at a time");
 
-        match response {
-            Resign => {
-                self.resign(player);
-                GameAdvance::Advance {
-                    spectator_update: Update::Resign(player),
-                    player_updates: Default::default(),
+        let mut new_state = self.clone();
+        let mut debug_msgs: DebugMsgs<Self> = Default::default();
+
+        let spectator_update = {
+            match response {
+                Resign => {
+                    new_state.resign(player);
+                    Update::Resign(player)
+                }
+                Response(attempted_action @ Action { position }) => {
+                    match new_state.board.claim_space(player, position) {
+                        Ok(_) => Update::Claim(player, position),
+                        Err(err) => {
+                            let replacement = new_state.board.empty_spaces().next().unwrap();
+
+                            new_state.board.claim_space(player, replacement).unwrap();
+
+                            debug_msgs.push((
+                                player,
+                                DebugMsg {
+                                    attempted_action,
+                                    replaced_action: Action {
+                                        position: replacement,
+                                    },
+                                    error: err,
+                                },
+                            ));
+
+                            Update::Claim(player, position)
+                        }
+                    }
                 }
             }
-            Response(action) => match self.board.claim_space(player, action.position) {
-                Ok(_) => GameAdvance::Advance {
-                    spectator_update: Update::Claim(player, action.position),
-                    player_updates: Default::default(),
-                },
-                Err(error) => GameAdvance::Unadvanceable {
-                    error,
-                    request: (player, action_request),
-                },
+        };
+
+        (
+            new_state,
+            GameAdvance {
+                debug_msgs,
+                spectator_update,
+                player_updates: Default::default(),
             },
-        }
+        )
     }
 }

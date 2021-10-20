@@ -2,7 +2,7 @@ use rand::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::play::{ActionResponse, GameAdvance};
+use crate::play::{ActionRequests, ActionResponse, GameAdvance};
 use crate::{rng, NumberOfPlayers, Play, Player, Seed};
 
 use thiserror::Error;
@@ -13,21 +13,20 @@ pub struct GameRunner<T>
 where
     T: Play,
 {
+    seed: Arc<Seed>,
     #[builder(default)]
     settings: Arc<<T as Play>::Settings>,
     #[builder(default)]
     initial_state: Option<Arc<T>>,
-    #[builder(default = "Arc::new(rand::thread_rng().gen::<[u8; 32]>().into())")]
-    seed: Arc<Seed>,
-    #[builder(setter(skip), default = "self.choose_state()?")]
+    #[builder(setter(skip))]
     state: T,
     #[builder(setter(skip))]
-    pending_action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
+    pending_action_requests: ActionRequests<T>,
 }
 
 #[derive(Debug)]
 pub struct Turn<T: Play> {
-    action_requests: Vec<(Player, <T as Play>::ActionRequest)>,
+    action_requests: ActionRequests<T>,
     returned_actions: Vec<Option<ActionResponse<<T as Play>::Action>>>,
 }
 
@@ -88,13 +87,14 @@ impl<T: Play> GameRunner<T> {
     }
 
     pub fn turn(&self) -> Option<Turn<T>> {
-        match self.pending_action_requests.len() {
+        let action_requests = self.state.action_requests(&self.settings);
+        match action_requests.len() {
             0 => None,
             n => {
                 let returned_actions = (0..n).map(|_| None).collect();
                 Some(Turn {
-                    action_requests: self.pending_action_requests.clone(),
-                    returned_actions: returned_actions,
+                    action_requests,
+                    returned_actions,
                 })
             }
         }
@@ -103,7 +103,9 @@ impl<T: Play> GameRunner<T> {
     pub fn submit_turn_mut(&mut self, turn: Turn<T>) -> Result<GameAdvance<T>, SubmitError> {
         use SubmitError::*;
 
-        if !turn.is_ready_to_submit() || turn.action_requests != self.pending_action_requests {
+        if !turn.is_ready_to_submit()
+            || turn.action_requests != self.state.action_requests(&self.settings)
+        {
             return Err(InvalidTurn);
         }
 
@@ -111,16 +113,12 @@ impl<T: Play> GameRunner<T> {
             .returned_actions
             .into_iter()
             .enumerate()
-            .map(|(i, action)| (self.pending_action_requests[i].clone(), action.unwrap()));
+            .map(|(i, action)| (turn.action_requests[i].clone(), action.unwrap()));
 
-        let game_advance =
+        let (new_state, game_advance) =
             self.state
                 .advance(&self.settings, actions_iter, &mut rand::thread_rng());
-
-        self.pending_action_requests.clear();
-        self.state
-            .action_requests_into(&self.settings, &mut self.pending_action_requests);
-
+        self.state = new_state;
         Ok(game_advance)
     }
 }
@@ -151,18 +149,14 @@ impl<T: Play> GameRunnerBuilder<T> {
         }?;
 
         let initial_state = self.initial_state.as_ref().cloned().unwrap_or_default();
+        let pending_action_requests = state.action_requests(&settings);
 
-        let mut runner = GameRunner {
+        Ok(GameRunner {
             seed,
             state,
             settings,
             initial_state,
-            pending_action_requests: Default::default(),
-        };
-
-        runner
-            .state
-            .action_requests_into(&runner.settings, &mut runner.pending_action_requests);
-        Ok(runner)
+            pending_action_requests,
+        })
     }
 }

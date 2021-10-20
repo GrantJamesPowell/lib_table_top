@@ -269,6 +269,36 @@ impl Board {
         self.at_position((col, row))
     }
 
+    /// Iterator over the empty spaces on the board
+    ///
+    /// ```
+    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
+    ///
+    /// let board: Board = Default::default();
+    /// assert_eq!(board.empty_spaces().count(), 9);
+    ///
+    /// let board = Board::from_ints([[1, 1, 1], [1, 1, 1], [1, 1, 1]]);
+    /// assert_eq!(board.empty_spaces().count(), 0);
+    ///
+    /// let board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
+    /// assert_eq!(board.empty_spaces().count(), 4);
+    /// assert_eq!(
+    ///   board.empty_spaces().collect::<Vec<_>>(),
+    ///   vec![
+    ///    (Col::new(0), Row::new(0)),
+    ///    (Col::new(1), Row::new(0)),
+    ///    (Col::new(1), Row::new(1)),
+    ///    (Col::new(1), Row::new(2))
+    ///   ]
+    /// );
+    /// ```
+    pub fn empty_spaces(&self) -> impl Iterator<Item = Position> + '_ {
+        self.spaces().filter_map(|(pos, player)| match player {
+            None => Some(pos),
+            Some(_) => None,
+        })
+    }
+
     /// Iterate over the spaces on the board and the marker in the space (if there is one)
     ///
     /// ```
