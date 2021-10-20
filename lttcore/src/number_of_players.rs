@@ -38,9 +38,9 @@ impl NumberOfPlayers {
     /// use lttcore::{Player, PlayerSet, NumberOfPlayers, number_of_players::THREE_PLAYER};
     ///
     /// let mut expected = PlayerSet::new();
-    /// expected.add(0.into());
-    /// expected.add(1.into());
-    /// expected.add(2.into());
+    /// expected.add(0);
+    /// expected.add(1);
+    /// expected.add(2);
     ///
     /// assert_eq!(
     ///   THREE_PLAYER.player_set(),
@@ -70,7 +70,8 @@ impl NumberOfPlayers {
     /// assert!(!TWO_PLAYER.includes_player(p2));
     /// assert!(THREE_PLAYER.includes_player(p2));
     /// ```
-    pub fn includes_player(&self, player: Player) -> bool {
+    pub fn includes_player(&self, player: impl Into<Player>) -> bool {
+        let player = player.into();
         player.as_u8() <= (self.get() - 1)
     }
 }

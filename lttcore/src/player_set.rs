@@ -12,6 +12,28 @@ impl PlayerSet {
         Default::default()
     }
 
+    /// Return the count of players in the set
+    /// ```
+    /// use lttcore::PlayerSet;
+    ///
+    /// let mut set: PlayerSet = Default::default();
+    /// assert_eq!(set.count(), 0);
+    /// set.add(0);
+    /// assert_eq!(set.count(), 1);
+    /// set.add(1);
+    /// assert_eq!(set.count(), 2);
+    /// set.add(1);
+    /// assert_eq!(set.count(), 2);
+    /// ```
+    pub fn count(&self) -> u8 {
+        self.0
+            .iter()
+            .map(|&x| x.count_ones())
+            .sum::<u32>()
+            .try_into()
+            .unwrap()
+    }
+
     /// Returns if a player is in set
     ///
     /// ```
@@ -24,7 +46,8 @@ impl PlayerSet {
     /// set.add(player);
     /// assert!(set.contains(player));
     /// ```
-    pub fn contains(&self, player: Player) -> bool {
+    pub fn contains(&self, player: impl Into<Player>) -> bool {
+        let player = player.into();
         (self.0[Self::section(player)] & (1usize << Self::offset(player)) as u64) > 0
     }
 
@@ -35,7 +58,7 @@ impl PlayerSet {
     ///
     /// let mut set: PlayerSet = Default::default();
     /// assert!(set.is_empty());
-    /// set.add(1.into());
+    /// set.add(1);
     /// assert!(!set.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -75,7 +98,8 @@ impl PlayerSet {
     /// set.add(player);
     /// assert!(set.contains(player));
     /// ```
-    pub fn add(&mut self, player: Player) {
+    pub fn add(&mut self, player: impl Into<Player>) {
+        let player = player.into();
         self.0[Self::section(player)] |= (1usize << Self::offset(player)) as u64
     }
 
@@ -93,7 +117,8 @@ impl PlayerSet {
     /// set.remove(player);
     /// assert!(!set.contains(player));
     /// ```
-    pub fn remove(&mut self, player: Player) {
+    pub fn remove(&mut self, player: impl Into<Player>) {
+        let player = player.into();
         self.0[Self::section(player)] &= !(1usize << Self::offset(player)) as u64
     }
 
@@ -103,6 +128,14 @@ impl PlayerSet {
 
     fn offset(player: Player) -> usize {
         player.as_usize() % 64
+    }
+}
+
+impl From<Player> for PlayerSet {
+    fn from(p: Player) -> Self {
+        let mut set: Self = Default::default();
+        set.add(p);
+        set
     }
 }
 
