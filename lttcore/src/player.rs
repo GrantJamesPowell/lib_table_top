@@ -1,7 +1,7 @@
 use crate::common::direction::LeftOrRight::{self, *};
 use crate::{NumberOfPlayers, PlayerSet};
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Player(u8);
 
 impl Player {

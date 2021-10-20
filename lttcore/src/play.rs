@@ -1,4 +1,4 @@
-use crate::{view::NoSecretPlayerInformation, NumberOfPlayers, Player, View};
+use crate::{view::NoSecretPlayerInformation, NumberOfPlayers, Player, PlayerSet, View};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -6,13 +6,8 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct NoCustomSettings;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub struct NoCustomActionRequest;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoCustomSettingsError {}
-
-pub type ActionRequests<T> = SmallVec<[(Player, <T as Play>::ActionRequest); 2]>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DebugMsg<T: Play> {
@@ -39,7 +34,6 @@ pub struct GameAdvance<T: Play> {
 pub trait Play: Sized + Clone + Debug {
     type Action: Clone + Debug + PartialEq + Eq;
     type ActionError: Clone + Debug + PartialEq + Eq;
-    type ActionRequest: Clone + Debug + PartialEq + Eq = NoCustomActionRequest;
 
     type Settings: Clone + Debug + PartialEq + Eq + Default = NoCustomSettings;
     type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;
@@ -53,13 +47,12 @@ pub trait Play: Sized + Clone + Debug {
     fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView>;
     fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
-    fn is_valid_for_settings(&self, settings: &Self::Settings) -> bool;
-    fn action_requests(&self, settings: &Self::Settings) -> ActionRequests<Self>;
+    fn action_requests(&self, settings: &Self::Settings) -> PlayerSet;
 
     fn advance(
         &self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = ((Player, Self::ActionRequest), ActionResponse<Self::Action>)>,
+        actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
         rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>);
 }

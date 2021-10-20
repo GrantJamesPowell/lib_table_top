@@ -45,92 +45,92 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         events_sender,
     ));
 
-    let mut game_runner: GameRunner<TicTacToe> = GameRunnerBuilder::default()
-        .settings(NoCustomSettings {})
-        .build()
-        .unwrap();
+    // let mut game_runner: GameRunner<TicTacToe> = GameRunnerBuilder::default()
+    //     .settings(NoCustomSettings {})
+    //     .build()
+    //     .unwrap();
 
-    let mut ui_state = Default::default();
-    let mut turn = game_runner.turn();
-    let (action_id, (player, action_request)) = turn
-        .as_ref()
-        .map(|t| t.action_request())
-        .flatten()
-        .expect("New game has a first turn");
+    // let mut ui_state = Default::default();
+    // let mut turn = game_runner.turn();
+    // let (action_id, (player, action_request)) = turn
+    //     .as_ref()
+    //     .map(|t| t.action_request())
+    //     .flatten()
+    //     .expect("New game has a first turn");
 
-    let mut player_views = game_runner.player_views();
-    let mut spectator_view = game_runner.spectator_view();
+    // let mut player_views = game_runner.player_views();
+    // let mut spectator_view = game_runner.spectator_view();
 
-    let (action_sender, action_receiver) = mpsc::channel();
+    // let (action_sender, action_receiver) = mpsc::channel();
 
-    loop {
-        if let Ok((action_id, action)) = action_receiver.try_recv() {
-            if let Some(mut current_turn) = Option::take(&mut turn) {
-                current_turn.submit_action(action_id, ActionResponse::Response(action));
+    // loop {
+    //     if let Ok((action_id, action)) = action_receiver.try_recv() {
+    //         if let Some(mut current_turn) = Option::take(&mut turn) {
+    //             current_turn.submit_action(action_id, ActionResponse::Response(action));
 
-                if current_turn.is_ready_to_submit() {
-                    match game_runner.submit_turn_mut(current_turn)? {
-                        Advance {
-                            spectator_update,
-                            player_updates,
-                        } => {
-                            spectator_view.update(&spectator_update)?;
+    //             if current_turn.is_ready_to_submit() {
+    //                 match game_runner.submit_turn_mut(current_turn)? {
+    //                     Advance {
+    //                         spectator_update,
+    //                         player_updates,
+    //                     } => {
+    //                         spectator_view.update(&spectator_update)?;
 
-                            for (player, player_update) in &player_updates {
-                                let player_view = player_views.get_mut(player).unwrap();
-                                player_view.update(player_update)?;
-                            }
-                        }
-                        Unadvanceable { .. } => {
-                            panic!("something here I guess");
-                        }
-                    }
+    //                         for (player, player_update) in &player_updates {
+    //                             let player_view = player_views.get_mut(player).unwrap();
+    //                             player_view.update(player_update)?;
+    //                         }
+    //                     }
+    //                     Unadvanceable { .. } => {
+    //                         panic!("something here I guess");
+    //                     }
+    //                 }
 
-                    turn = game_runner.turn();
-                }
-            }
-        }
+    //                 turn = game_runner.turn();
+    //             }
+    //         }
+    //     }
 
-        terminal.draw(|frame| {
-            let chunks = layout().split(frame.size());
-            TicTacToe::render_action_request(
-                frame,
-                chunks[1],
-                player,
-                &player_views.get(&player).unwrap(),
-                &spectator_view,
-                &action_request,
-                game_runner.settings(),
-                &ui_state,
-            );
-        })?;
+    //     terminal.draw(|frame| {
+    //         let chunks = layout().split(frame.size());
+    //         TicTacToe::render_action_request(
+    //             frame,
+    //             chunks[1],
+    //             player,
+    //             &player_views.get(&player).unwrap(),
+    //             &spectator_view,
+    //             &action_request,
+    //             game_runner.settings(),
+    //             &ui_state,
+    //         );
+    //     })?;
 
-        match events_receiver
-            .recv()
-            .expect("ticking background thread is alive")
-        {
-            Tick => {}
-            Resize => {}
-            Input(event) => match event.code {
-                KeyCode::Char('q') | KeyCode::Esc => {
-                    break;
-                }
-                _ => {
-                    let sender = action_sender.clone();
+    //     match events_receiver
+    //         .recv()
+    //         .expect("ticking background thread is alive")
+    //     {
+    //         Tick => {}
+    //         Resize => {}
+    //         Input(event) => match event.code {
+    //             KeyCode::Char('q') | KeyCode::Esc => {
+    //                 break;
+    //             }
+    //             _ => {
+    //                 let sender = action_sender.clone();
 
-                    ui_state.on_input(
-                        event,
-                        player,
-                        player_views.get(&player).unwrap(),
-                        &spectator_view,
-                        &action_request,
-                        game_runner.settings(),
-                        |action| sender.send((action_id, action)).unwrap(),
-                    )
-                }
-            },
-        };
-    }
+    //                 ui_state.on_input(
+    //                     event,
+    //                     player,
+    //                     player_views.get(&player).unwrap(),
+    //                     &spectator_view,
+    //                     &action_request,
+    //                     game_runner.settings(),
+    //                     |action| sender.send((action_id, action)).unwrap(),
+    //                 )
+    //             }
+    //         },
+    //     };
+    // }
 
     clean_up_terminal(terminal)?;
     Ok(())

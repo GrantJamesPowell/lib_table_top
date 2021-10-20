@@ -2,7 +2,7 @@
 
 use lttcore::{
     number_of_players::TWO_PLAYER,
-    play::{ActionRequests, ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
     NumberOfPlayers, Play, Player, PlayerSet,
 };
 use thiserror::Error;
@@ -144,14 +144,11 @@ impl Play for TicTacToe {
     type SpectatorView = SpectatorView;
     type Status = Status;
 
-    fn action_requests(&self, settings: &Self::Settings) -> ActionRequests<Self> {
-        let mut action_requests: ActionRequests<Self> = Default::default();
-
-        if let Status::InProgress { next_up } = self.spectator_view(settings).status() {
-            action_requests.push((next_up, Default::default()));
+    fn action_requests(&self, settings: &Self::Settings) -> PlayerSet {
+        match self.spectator_view(settings).status() {
+            Status::InProgress { next_up } => next_up.into(),
+            _ => Default::default(),
         }
-
-        action_requests
     }
 
     fn spectator_view(&self, _settings: &Self::Settings) -> SpectatorView {
@@ -163,10 +160,6 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
     ) -> Self {
         Default::default()
-    }
-
-    fn is_valid_for_settings(&self, _settings: &<Self as Play>::Settings) -> bool {
-        true
     }
 
     fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> NumberOfPlayers {
@@ -186,18 +179,13 @@ impl Play for TicTacToe {
     fn advance(
         &self,
         _settings: &Self::Settings,
-        mut actions: impl Iterator<
-            Item = (
-                (Player, <Self as Play>::ActionRequest),
-                ActionResponse<<Self as Play>::Action>,
-            ),
-        >,
+        mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
         _rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>) {
         use crate::spectator_view::Update;
         use ActionResponse::*;
 
-        let ((player, _action_request), response) = actions
+        let (player, response) = actions
             .next()
             .expect("Tic Tac Toe is single player at a time");
 

@@ -106,6 +106,14 @@ impl PlayerSet {
     }
 }
 
+impl From<Player> for PlayerSet {
+    fn from(p: Player) -> Self {
+        let mut set: Self = Default::default();
+        set.add(p);
+        set
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
