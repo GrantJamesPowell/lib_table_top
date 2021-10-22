@@ -1,5 +1,7 @@
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
+use serde::Serialize;
 use serde_json::json;
+use std::fmt::Debug;
 
 #[test]
 fn test_serialize_player_set() {
@@ -35,12 +37,13 @@ fn test_serialize_player() {
 fn test_serialize_number_of_players() {
     let num_players: NumberOfPlayers = serde_json::from_str("3").unwrap();
     assert_eq!(num_players.get(), 3);
+
     assert_eq!(json!(4), serde_json::to_value(&FOUR_PLAYER).unwrap());
 }
 
 #[test]
 fn test_serialize_rng() {
-    let cases = [
+    for (bytes, expected) in [
         (
             [0u8; 32],
             "0000000000000000000000000000000000000000000000000000000000000000",
@@ -81,13 +84,46 @@ fn test_serialize_rng() {
             [255u8; 32],
             "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         ),
-    ];
-
-    for &(bytes, hex) in cases.iter() {
+    ] {
         let seed: Seed = bytes.into();
-        let serialized = serde_json::to_value(&seed).unwrap();
-        assert_eq!(serialized, json!(hex));
-        let deserialized: Seed = serde_json::from_value(serialized).unwrap();
-        assert_eq!(&seed, &deserialized);
+        test_serialization((seed, expected));
     }
+}
+
+#[test]
+fn test_serialize_directions() {
+    use lttcore::common::direction::{ArrowKey, Compass, LeftOrRight};
+
+    for test_case in [
+        (ArrowKey::Up, "Up"),
+        (ArrowKey::Down, "Down"),
+        (ArrowKey::Left, "Left"),
+        (ArrowKey::Right, "Right"),
+    ] {
+        test_serialization(test_case);
+    }
+
+    for test_case in [(LeftOrRight::Left, "Left"), (LeftOrRight::Right, "Right")] {
+        test_serialization(test_case);
+    }
+
+    for test_case in [
+        (Compass::North, "North"),
+        (Compass::East, "East"),
+        (Compass::West, "West"),
+        (Compass::South, "South"),
+    ] {
+        test_serialization(test_case);
+    }
+}
+
+fn test_serialization<'a, T, U>((data, expected): (T, U))
+where
+    T: Serialize + Debug + PartialEq + for<'de> serde::Deserialize<'de>,
+    U: Serialize,
+{
+    let serialized = serde_json::to_value(&data).unwrap();
+    assert_eq!(serialized, serde_json::to_value(&expected).unwrap());
+    let deserialized: T = serde_json::from_value(serialized).unwrap();
+    assert_eq!(deserialized, data);
 }
