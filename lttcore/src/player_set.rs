@@ -1,9 +1,10 @@
 use crate::Player;
+use serde::{Deserialize, Serialize};
 
 /// High performance player set abstraction designd to be O(1) for
 /// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
 /// `Copy` which makes it super ergonomic to use
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlayerSet([u64; 4]);
 
 impl PlayerSet {
