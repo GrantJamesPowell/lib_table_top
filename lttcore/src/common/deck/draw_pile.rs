@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::sync::Arc;
 
 /// Designed to provide a structurally shared draw pile. Once created the draw pile is
 /// immutable, but it can be cloned very cheaply. DrawPile also deref's to a slice of T
 /// so it can be used anywhere you need an immutable slice
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DrawPile<T: Clone> {
     pile: Arc<Vec<T>>,
     offset: usize,
@@ -20,7 +21,7 @@ impl<T: Clone> From<Vec<T>> for DrawPile<T> {
 }
 
 impl<T: Clone> DrawPile<T> {
-    fn draw(&mut self) -> Option<T> {
+    pub fn draw(&mut self) -> Option<T> {
         let next = self.pile.get(self.offset).cloned();
         self.offset += 1;
         next

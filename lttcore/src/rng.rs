@@ -1,8 +1,9 @@
 use rand::prelude::*;
 use rand_chacha::ChaCha20Rng;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Seed([u8; 32]);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Seed(#[serde(with = "hex")] [u8; 32]);
 
 impl From<[u8; 32]> for Seed {
     fn from(bytes: [u8; 32]) -> Self {

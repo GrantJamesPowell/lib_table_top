@@ -1,7 +1,8 @@
 use crate::common::deck::{Color, Rank, Suit};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord, Serialize, Deserialize)]
 pub struct Card(Rank, Suit);
 
 impl From<(Rank, Suit)> for Card {

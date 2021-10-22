@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use crate::common::direction::LeftOrRight::{self, *};
 use crate::{NumberOfPlayers, PlayerSet};
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Player(u8);
 
 impl Player {
