@@ -1,4 +1,4 @@
-use lttcore::{Player, PlayerSet};
+use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet};
 use serde_json::json;
 
 #[test]
@@ -29,4 +29,11 @@ fn test_serialize_player_set() {
 fn test_serialize_player() {
     let player: Player = 1.into();
     assert_eq!(json!(1), serde_json::to_value(&player).unwrap());
+}
+
+#[test]
+fn test_serialize_number_of_players() {
+    let num_players: NumberOfPlayers = serde_json::from_str("3").unwrap();
+    assert_eq!(num_players.get(), 3);
+    assert_eq!(json!(4), serde_json::to_value(&FOUR_PLAYER).unwrap());
 }

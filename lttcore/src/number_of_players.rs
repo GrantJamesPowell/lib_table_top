@@ -1,8 +1,10 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{Player, PlayerSet};
 use std::num::{NonZeroU8, TryFromIntError};
 use std::ops::Deref;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct NumberOfPlayers(NonZeroU8);
 
 impl NumberOfPlayers {
