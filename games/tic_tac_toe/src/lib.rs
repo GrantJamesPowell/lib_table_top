@@ -8,6 +8,7 @@ use lttcore::{
 use thiserror::Error;
 
 mod board;
+mod helpers;
 mod spectator_view;
 
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};

@@ -45,7 +45,7 @@ impl SpectatorView {
     /// Returns the status of the current game
     /// ```
     /// use lttcore::{Play, Player};
-    /// use tic_tac_toe::{TicTacToe, Board, Row, Col, Status::*, Marker::*};
+    /// use tic_tac_toe::{ttt, TicTacToe, Board, Row, Col, Status::*, Marker::*};
     /// let settings = Default::default();
     ///
     /// // In progress
@@ -53,10 +53,10 @@ impl SpectatorView {
     /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X.into() });
     ///
     /// // A draw
-    /// let game: TicTacToe = Board::from_ints([
-    ///   [1, 2, 1],
-    ///   [1, 1, 2],
-    ///   [2, 1, 2]
+    /// let game: TicTacToe = ttt!([
+    ///   X O X
+    ///   X X O
+    ///   O X O
     /// ]).into();
     /// assert_eq!(game.spectator_view(&settings).status(), Draw);
     ///
@@ -66,10 +66,10 @@ impl SpectatorView {
     /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O.into() });
     ///
     /// // With a winning position
-    /// let game: TicTacToe = Board::from_ints([
-    ///   [1, 1, 1],
-    ///   [0, 0, 0],
-    ///   [0, 0, 0]
+    /// let game: TicTacToe = ttt!([
+    ///   X X X
+    ///   - - -
+    ///   - - -
     /// ]).into();
     ///
     /// assert_eq!(

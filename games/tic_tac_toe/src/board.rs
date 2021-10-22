@@ -237,9 +237,13 @@ impl Board {
     /// the indexing will always be inbound
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Marker::*};
+    /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
-    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
+    /// let board = ttt!([
+    ///   - X O
+    ///   - - -
+    ///   X - -
+    /// ]);
     /// assert_eq!(board.at_position((Col::new(2), Row::new(0))), Some(X.into()));
     /// assert_eq!(board.at_position((Col::new(0), Row::new(2))), Some(O.into()));
     /// assert_eq!(board.at_position((Col::new(0), Row::new(0))), None);
@@ -251,9 +255,13 @@ impl Board {
     /// Returns a marker at a position, if the row or col is greater than 2, this returns None
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Marker::*};
+    /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
-    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 0, 0]]);
+    /// let board = ttt!([
+    ///   - X O
+    ///   - - -
+    ///   X - -
+    /// ]);
     /// assert_eq!(board.at((2, 0)), Some(X.into()));
     /// assert_eq!(board.at((0, 2)), Some(O.into()));
     /// assert_eq!(board.at((0, 0)), None);
@@ -272,15 +280,23 @@ impl Board {
     /// Iterator over the empty spaces on the board
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
+    /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*, Position};
     ///
     /// let board: Board = Default::default();
     /// assert_eq!(board.empty_spaces().count(), 9);
     ///
-    /// let board = Board::from_ints([[1, 1, 1], [1, 1, 1], [1, 1, 1]]);
+    /// let board = ttt!([
+    ///   X X X
+    ///   X X X
+    ///   X X X
+    /// ]);
     /// assert_eq!(board.empty_spaces().count(), 0);
     ///
-    /// let board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
+    /// let board = ttt!([
+    ///   - X O
+    ///   - - -
+    ///   X O X
+    /// ]);
     /// assert_eq!(board.empty_spaces().count(), 4);
     /// assert_eq!(
     ///   board.empty_spaces().collect::<Vec<_>>(),
@@ -302,9 +318,13 @@ impl Board {
     /// Iterate over the spaces on the board and the marker in the space (if there is one)
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
+    /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*, Position};
     ///
-    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
+    /// let board = ttt!([
+    ///   - X O
+    ///   - - -
+    ///   X O X
+    /// ]);
     /// assert_eq!(
     ///   board.spaces().collect::<Vec<_>>(),
     ///   vec![
@@ -337,9 +357,13 @@ impl Board {
     /// Iterate over the spaces on the board that are taken
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Row, Col, Marker::*, Position};
+    /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
     ///
-    /// let board: Board = Board::from_ints([[0, 1, 2], [0, 0, 0], [1, 2, 1]]);
+    /// let board = ttt!([
+    ///   - X O
+    ///   - - -
+    ///   X O X
+    /// ]);
     /// assert_eq!(
     ///   board.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
@@ -358,22 +382,34 @@ impl Board {
     /// Return the marker who's turn it is
     ///
     /// ```
-    /// use tic_tac_toe::{Board, Marker::*};
+    /// use tic_tac_toe::{ttt, Board, Marker::*};
     ///
     /// // Starts with X
     /// let board: Board = Default::default();
     /// assert_eq!(board.whose_turn(), X);
 
     /// // Once the first player goes, it's the second player's turn
-    /// let board = Board::from_ints([[1, 0, 0], [0, 0, 0], [0, 0, 0]]);
+    /// let board = ttt!([
+    ///   X - -
+    ///   - - -
+    ///   - - -
+    /// ]);
     /// assert_eq!(board.whose_turn(), O);
 
     /// // Once O goes, it's X's turn again
-    /// let board = Board::from_ints([[1, 2, 0], [0, 0, 0], [0, 0, 0]]);
+    /// let board = ttt!([
+    ///   X O -
+    ///   - - -
+    ///   - - -
+    /// ]);
     /// assert_eq!(board.whose_turn(), X);
 
     /// // The next player to go is always the one with the fewest spaces
-    /// let board = Board::from_ints([[0, 2, 2], [2, 2, 2], [2, 2, 2]]);
+    /// let board = ttt!([
+    ///   - O O
+    ///   O O O
+    ///   O O O
+    /// ]);
     /// assert_eq!(board.whose_turn(), X);
     /// ```
     pub fn whose_turn(&self) -> Player {
@@ -389,7 +425,8 @@ impl Board {
             .unwrap_or(TWO_PLAYER.starting_player())
     }
 
-    /// Convenience method to construct a board from arrays of ints, nice for literals in specs
+    /// Convenience method to construct a board from arrays of ints, mostly used as the
+    /// implementation of the `ttt!` macro
     /// 0 => None
     /// 1 => Some(X | Player::new(0))
     /// 2 => Some(O | Player::new(1))
@@ -457,25 +494,21 @@ impl Board {
     /// is the board full?
     ///
     /// ```
-    /// use tic_tac_toe::Board;
+    /// use tic_tac_toe::ttt;
     ///
-    /// let board = Board::from_ints(
-    ///   [
-    ///     [1, 1, 1],
-    ///     [1, 0, 1],
-    ///     [1, 1, 1]
-    ///   ]
-    /// );
+    /// let board = ttt!([
+    ///   X X X
+    ///   X - X
+    ///   X X X
+    /// ]);
     ///
     /// assert!(!board.is_full());
     ///
-    /// let board = Board::from_ints(
-    ///   [
-    ///     [1, 1, 1],
-    ///     [1, 1, 1],
-    ///     [1, 1, 1]
-    ///   ]
-    /// );
+    /// let board = ttt!([
+    ///   X X X
+    ///   X X X
+    ///   X X X
+    /// ]);
     ///
     /// assert!(board.is_full());
     ///
