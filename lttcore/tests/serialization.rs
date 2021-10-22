@@ -1,4 +1,4 @@
-use lttcore::common::deck::{Card, Color::*, Rank, Suit::*};
+use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
 use serde::Serialize;
 use serde_json::json;
@@ -164,6 +164,20 @@ fn test_serialize_cards() {
         let deserialized: Card = serde_json::from_str(&serialized).unwrap();
         assert_eq!(card, deserialized);
     }
+}
+
+#[test]
+fn test_serialize_draw_pile() {
+    let empty_draw_pile: DrawPile<Card> = vec![].into();
+    let serialized = serde_json::to_value(&empty_draw_pile).unwrap();
+    assert_eq!(serialized, json!({"offset": 0, "pile": []}));
+
+    let mut draw_pile: DrawPile<usize> = vec![1, 2, 3].into();
+    assert_eq!(draw_pile.draw(), Some(1));
+    let serialized = serde_json::to_value(&draw_pile).unwrap();
+    assert_eq!(serialized, json!({"offset": 1, "pile": [1,2,3]}));
+    let deserialized: DrawPile<usize> = serde_json::from_value(serialized).unwrap();
+    assert_eq!(draw_pile, deserialized);
 }
 
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
