@@ -10,3 +10,7 @@ derive_builder = "0.10.2"
 thiserror = "1.0.23"
 smallvec = "1.7.0"
 serde = { version = "1.0", features = ["derive"] }
+hex = { version = "0.4.3", features = ["serde"] }
+
+[dev-dependencies]
+serde_json = "1.0"
