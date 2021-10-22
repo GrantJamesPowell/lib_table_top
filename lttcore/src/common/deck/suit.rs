@@ -1,16 +1,24 @@
+use serde::{Deserialize, Serialize};
+
 /// The four suits of a standard deck
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord, Serialize, Deserialize)]
 pub enum Suit {
+    #[serde(rename = "c")]
     Clubs,
+    #[serde(rename = "d")]
     Diamonds,
+    #[serde(rename = "h")]
     Hearts,
+    #[serde(rename = "s")]
     Spades,
 }
 
 /// The two colors of a standard deck
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Color {
+    #[serde(rename = "r")]
     Red,
+    #[serde(rename = "b")]
     Black,
 }
 

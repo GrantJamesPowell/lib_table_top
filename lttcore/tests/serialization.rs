@@ -1,3 +1,7 @@
+use lttcore::common::deck::{
+    Color::{self, *},
+    Suit::{self, *},
+};
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
 use serde::Serialize;
 use serde_json::json;
@@ -86,7 +90,7 @@ fn test_serialize_rng() {
         ),
     ] {
         let seed: Seed = bytes.into();
-        test_serialization((seed, expected));
+        test_simple_serialization((seed, expected));
     }
 }
 
@@ -100,11 +104,11 @@ fn test_serialize_directions() {
         (ArrowKey::Left, "Left"),
         (ArrowKey::Right, "Right"),
     ] {
-        test_serialization(test_case);
+        test_simple_serialization(test_case);
     }
 
     for test_case in [(LeftOrRight::Left, "Left"), (LeftOrRight::Right, "Right")] {
-        test_serialization(test_case);
+        test_simple_serialization(test_case);
     }
 
     for test_case in [
@@ -113,11 +117,22 @@ fn test_serialize_directions() {
         (Compass::West, "West"),
         (Compass::South, "South"),
     ] {
-        test_serialization(test_case);
+        test_simple_serialization(test_case);
     }
 }
 
-fn test_serialization<'a, T, U>((data, expected): (T, U))
+#[test]
+fn test_serialize_suits_and_colors() {
+    for test_case in [(Clubs, "c"), (Diamonds, "d"), (Hearts, "h"), (Spades, "s")] {
+        test_simple_serialization(test_case);
+    }
+
+    for test_case in [(Black, "b"), (Red, "r")] {
+        test_simple_serialization(test_case);
+    }
+}
+
+fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
 where
     T: Serialize + Debug + PartialEq + for<'de> serde::Deserialize<'de>,
     U: Serialize,
