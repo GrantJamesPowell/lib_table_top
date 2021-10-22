@@ -29,4 +29,5 @@ pub use game_runner::{GameRunner, GameRunnerBuilder};
 pub mod rng;
 pub use rng::Seed;
 
+pub mod bots;
 pub mod common;
