@@ -1,5 +1,6 @@
-use crate::Player;
 use serde::{Deserialize, Serialize};
+
+use crate::Player;
 
 /// High performance player set abstraction designd to be O(1) for
 /// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
