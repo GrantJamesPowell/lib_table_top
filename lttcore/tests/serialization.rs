@@ -1,8 +1,4 @@
-use lttcore::common::deck::{
-    Color::{self, *},
-    Rank,
-    Suit::{self, *},
-};
+use lttcore::common::deck::{Card, Color::*, Rank, Suit::*};
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
 use serde::Serialize;
 use serde_json::json;
@@ -151,6 +147,22 @@ fn test_serialize_ranks() {
         (Rank::King, 13),
     ] {
         test_simple_serialization(test_case);
+    }
+}
+
+#[test]
+fn test_serialize_cards() {
+    for (card, expected) in [
+        ((Rank::Ace, Clubs), "[1,\"c\"]"),
+        ((Rank::Four, Diamonds), "[4,\"d\"]"),
+        ((Rank::Jack, Hearts), "[11,\"h\"]"),
+        ((Rank::King, Spades), "[13,\"s\"]"),
+    ] {
+        let card: Card = card.into();
+        let serialized = serde_json::to_string(&card).unwrap();
+        assert_eq!(serialized, expected);
+        let deserialized: Card = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(card, deserialized);
     }
 }
 
