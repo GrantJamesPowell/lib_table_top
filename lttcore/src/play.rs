@@ -1,13 +1,14 @@
 use crate::{view::NoSecretPlayerInformation, NumberOfPlayers, Player, PlayerSet, View};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct NoCustomSettings;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NoCustomSettingsError {}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NoCustomSettingsError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DebugMsg<T: Play> {
@@ -35,8 +36,10 @@ pub trait Play: Sized + Clone + Debug {
     type Action: Clone + Debug + PartialEq + Eq;
     type ActionError: Clone + Debug + PartialEq + Eq;
 
-    type Settings: Clone + Debug + PartialEq + Eq + Default = NoCustomSettings;
-    type SettingsError: Clone + Debug + PartialEq + Eq = NoCustomSettingsError;
+    type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
+        NoCustomSettings;
+    type SettingsError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned =
+        NoCustomSettingsError;
 
     type Status: Clone + Debug + PartialEq + Eq;
 
