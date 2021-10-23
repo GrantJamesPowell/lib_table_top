@@ -1,5 +1,5 @@
 use crate::board::POSSIBLE_WINS;
-use crate::{opponent, Board, Position};
+use crate::{helpers::opponent, Board, Position};
 use lttcore::{Player, PlayerSet, View};
 use std::error::Error;
 
