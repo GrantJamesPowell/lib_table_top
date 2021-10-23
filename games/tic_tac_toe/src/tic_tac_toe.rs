@@ -1,4 +1,4 @@
-use crate::{Board, Position, SpectatorView, Status};
+use crate::{Action, ActionError, Board, SpectatorView, Status};
 use lttcore::{
     number_of_players::TWO_PLAYER,
     play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
@@ -6,7 +6,6 @@ use lttcore::{
 };
 use std::collections::HashMap;
 use std::ops::Deref;
-use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
 pub struct TicTacToe {
@@ -55,18 +54,6 @@ impl TicTacToe {
     pub fn resigned(&self) -> &PlayerSet {
         &self.resigned
     }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct Action {
-    pub position: Position,
-}
-
-#[derive(Error, Clone, Debug, Hash, PartialEq, Eq)]
-pub enum ActionError {
-    /// Returned when trying to claim an already claimed space
-    #[error("space ({:?}, {:?}) is taken", attempted.0, attempted.1)]
-    SpaceIsTaken { attempted: Position },
 }
 
 impl Play for TicTacToe {
