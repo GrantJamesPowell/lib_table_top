@@ -1,8 +1,9 @@
 use crate::ActionError::{self, *};
 use lttcore::{number_of_players::TWO_PLAYER, Player};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Col(u8);
 
 impl Default for Col {
@@ -89,7 +90,7 @@ impl Col {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Row(u8);
 
 impl Default for Row {
@@ -192,8 +193,8 @@ pub const POSSIBLE_WINS: [[(Col, Row); 3]; 8] = [
     [(Col(2), Row(0)), (Col(1), Row(1)), (Col(0), Row(2))],
 ];
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct Board(pub [[Option<Player>; 3]; 3]);
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Board([[Option<Player>; 3]; 3]);
 
 impl Default for Board {
     fn default() -> Self {

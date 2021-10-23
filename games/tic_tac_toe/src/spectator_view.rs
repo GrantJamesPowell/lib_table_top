@@ -1,6 +1,7 @@
 use crate::board::POSSIBLE_WINS;
 use crate::{helpers::opponent, Board, Position};
 use lttcore::{Player, PlayerSet, View};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -20,7 +21,7 @@ pub enum Status {
 
 use Status::*;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SpectatorView {
     board: Board,
     resigned: PlayerSet,
@@ -115,7 +116,7 @@ impl SpectatorView {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Update {
     Resign(Player),
     Claim(Player, Position),
