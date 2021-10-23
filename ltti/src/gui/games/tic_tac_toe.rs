@@ -4,7 +4,8 @@ use std::sync::mpsc::Sender;
 use crossterm::event::{KeyCode, KeyEvent};
 use lttcore::{Play, Player};
 use tic_tac_toe::{
-    opponent, Action, Col, Row,
+    helpers::opponent,
+    Action, Col, Row,
     Status::{self, *},
     TicTacToe,
 };

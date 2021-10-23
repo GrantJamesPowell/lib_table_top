@@ -1,5 +1,5 @@
 use crate::board::POSSIBLE_WINS;
-use crate::{opponent, Board, Position};
+use crate::{helpers::opponent, Board, Position};
 use lttcore::{Player, PlayerSet, View};
 use std::error::Error;
 
@@ -104,7 +104,7 @@ impl SpectatorView {
             })
             .next()
             .unwrap_or_else(|| {
-                if self.board.is_full() {
+                if !self.board.has_open_spaces() {
                     Draw
                 } else {
                     InProgress {

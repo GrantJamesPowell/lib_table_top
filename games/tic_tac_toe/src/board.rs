@@ -239,14 +239,14 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - X O
     ///   - - -
     ///   X - -
     /// ]);
-    /// assert_eq!(board.at_position((Col::new(2), Row::new(0))), Some(X.into()));
-    /// assert_eq!(board.at_position((Col::new(0), Row::new(2))), Some(O.into()));
-    /// assert_eq!(board.at_position((Col::new(0), Row::new(0))), None);
+    /// assert_eq!(game.at_position((Col::new(2), Row::new(0))), Some(X.into()));
+    /// assert_eq!(game.at_position((Col::new(0), Row::new(2))), Some(O.into()));
+    /// assert_eq!(game.at_position((Col::new(0), Row::new(0))), None);
     /// ```
     pub fn at_position(&self, (Col(c), Row(r)): Position) -> Option<Player> {
         self.0[c as usize][r as usize]
@@ -257,18 +257,18 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - X O
     ///   - - -
     ///   X - -
     /// ]);
-    /// assert_eq!(board.at((2, 0)), Some(X.into()));
-    /// assert_eq!(board.at((0, 2)), Some(O.into()));
-    /// assert_eq!(board.at((0, 0)), None);
+    /// assert_eq!(game.at((2, 0)), Some(X.into()));
+    /// assert_eq!(game.at((0, 2)), Some(O.into()));
+    /// assert_eq!(game.at((0, 0)), None);
     ///
     /// // Out of bounds numbers return None
-    /// assert_eq!(board.at((0, 1000)), None);
-    /// assert_eq!(board.at((1000, 0)), None);
+    /// assert_eq!(game.at((0, 1000)), None);
+    /// assert_eq!(game.at((1000, 0)), None);
     /// ```
     pub fn at(&self, (c, r): (usize, usize)) -> Option<Player> {
         let col = Col::try_new(c.try_into().ok()?)?;
@@ -292,14 +292,14 @@ impl Board {
     /// ]);
     /// assert_eq!(board.empty_spaces().count(), 0);
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - X O
     ///   - - -
     ///   X O X
     /// ]);
-    /// assert_eq!(board.empty_spaces().count(), 4);
+    /// assert_eq!(game.empty_spaces().count(), 4);
     /// assert_eq!(
-    ///   board.empty_spaces().collect::<Vec<_>>(),
+    ///   game.empty_spaces().collect::<Vec<_>>(),
     ///   vec![
     ///    (Col::new(0), Row::new(0)),
     ///    (Col::new(1), Row::new(0)),
@@ -320,13 +320,13 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*, Position};
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - X O
     ///   - - -
     ///   X O X
     /// ]);
     /// assert_eq!(
-    ///   board.spaces().collect::<Vec<_>>(),
+    ///   game.spaces().collect::<Vec<_>>(),
     ///   vec![
     ///     ((Col::new(0), Row::new(0)), None),
     ///     ((Col::new(0), Row::new(1)), Some(X.into())),
@@ -359,13 +359,13 @@ impl Board {
     /// ```
     /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - X O
     ///   - - -
     ///   X O X
     /// ]);
     /// assert_eq!(
-    ///   board.taken_spaces().collect::<Vec<_>>(),
+    ///   game.taken_spaces().collect::<Vec<_>>(),
     ///   vec![
     ///     ((Col::new(0), Row::new(1)), X.into()),
     ///     ((Col::new(0), Row::new(2)), O.into()),
@@ -389,28 +389,28 @@ impl Board {
     /// assert_eq!(board.whose_turn(), X);
 
     /// // Once the first player goes, it's the second player's turn
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   X - -
     ///   - - -
     ///   - - -
     /// ]);
-    /// assert_eq!(board.whose_turn(), O);
+    /// assert_eq!(game.whose_turn(), O);
 
     /// // Once O goes, it's X's turn again
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   X O -
     ///   - - -
     ///   - - -
     /// ]);
-    /// assert_eq!(board.whose_turn(), X);
+    /// assert_eq!(game.whose_turn(), X);
 
     /// // The next player to go is always the one with the fewest spaces
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   - O O
     ///   O O O
     ///   O O O
     /// ]);
-    /// assert_eq!(board.whose_turn(), X);
+    /// assert_eq!(game.whose_turn(), X);
     /// ```
     pub fn whose_turn(&self) -> Player {
         let mut counts: HashMap<Player, usize> = HashMap::new();
@@ -496,24 +496,24 @@ impl Board {
     /// ```
     /// use tic_tac_toe::ttt;
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   X X X
     ///   X - X
     ///   X X X
     /// ]);
     ///
-    /// assert!(!board.is_full());
+    /// assert!(game.has_open_spaces());
     ///
-    /// let board = ttt!([
+    /// let game = ttt!([
     ///   X X X
     ///   X X X
     ///   X X X
     /// ]);
     ///
-    /// assert!(board.is_full());
+    /// assert!(!game.has_open_spaces());
     ///
     /// ```
-    pub fn is_full(&self) -> bool {
-        self.taken_spaces().count() == 9
+    pub fn has_open_spaces(&self) -> bool {
+        self.taken_spaces().count() < 9
     }
 }
