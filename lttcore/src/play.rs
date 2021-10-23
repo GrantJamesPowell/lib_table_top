@@ -33,8 +33,8 @@ pub struct GameAdvance<T: Play> {
 }
 
 pub trait Play: Sized + Clone + Debug {
-    type Action: Clone + Debug + PartialEq + Eq;
-    type ActionError: Clone + Debug + PartialEq + Eq;
+    type Action: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
+    type ActionError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
 
     type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
         NoCustomSettings;
