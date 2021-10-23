@@ -5,6 +5,7 @@ use lttcore::{
     NumberOfPlayers, Play, Player, PlayerSet,
 };
 use std::collections::HashMap;
+use std::ops::Deref;
 use thiserror::Error;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
@@ -19,6 +20,14 @@ impl From<Board> for TicTacToe {
             board,
             ..Default::default()
         }
+    }
+}
+
+impl Deref for TicTacToe {
+    type Target = Board;
+
+    fn deref(&self) -> &Self::Target {
+        &self.board
     }
 }
 
