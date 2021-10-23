@@ -573,6 +573,8 @@ dependencies = [
  "itertools",
  "lttcore",
  "rand",
+ "serde",
+ "serde_json",
  "thiserror",
 ]
 
