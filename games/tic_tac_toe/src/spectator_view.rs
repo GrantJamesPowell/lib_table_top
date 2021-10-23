@@ -104,7 +104,7 @@ impl SpectatorView {
             })
             .next()
             .unwrap_or_else(|| {
-                if self.board.is_full() {
+                if !self.board.has_open_spaces() {
                     Draw
                 } else {
                     InProgress {

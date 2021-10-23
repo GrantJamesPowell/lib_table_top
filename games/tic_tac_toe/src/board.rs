@@ -502,7 +502,7 @@ impl Board {
     ///   X X X
     /// ]);
     ///
-    /// assert!(!game.is_full());
+    /// assert!(game.has_open_spaces());
     ///
     /// let game = ttt!([
     ///   X X X
@@ -510,10 +510,10 @@ impl Board {
     ///   X X X
     /// ]);
     ///
-    /// assert!(game.is_full());
+    /// assert!(!game.has_open_spaces());
     ///
     /// ```
-    pub fn is_full(&self) -> bool {
-        self.taken_spaces().count() == 9
+    pub fn has_open_spaces(&self) -> bool {
+        self.taken_spaces().count() < 9
     }
 }
