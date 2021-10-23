@@ -12,6 +12,10 @@ impl From<[u8; 32]> for Seed {
 }
 
 impl Seed {
+    pub fn random() -> Self {
+        rand::thread_rng().gen::<[u8; 32]>().into()
+    }
+
     pub fn rng_for_init(&self) -> impl rand::Rng {
         self.rng_for_turn(u64::MAX)
     }

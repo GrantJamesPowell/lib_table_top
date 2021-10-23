@@ -1,4 +1,3 @@
-use rand::prelude::*;
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -10,10 +9,7 @@ use thiserror::Error;
 
 #[derive(Builder, Clone, Debug)]
 #[builder(setter(into, strip_option), build_fn(skip))]
-pub struct GameRunner<T>
-where
-    T: Play,
-{
+pub struct GameRunner<T: Play> {
     seed: Arc<Seed>,
     #[builder(default)]
     settings: Arc<<T as Play>::Settings>,
@@ -131,10 +127,11 @@ impl<T: Play> GameRunner<T> {
 
 impl<T: Play> GameRunnerBuilder<T> {
     pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
-        let seed = self.seed.as_ref().cloned().unwrap_or_else(|| {
-            let seed: Seed = rand::thread_rng().gen::<[u8; 32]>().into();
-            Arc::new(seed)
-        });
+        let seed = self
+            .seed
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| Arc::new(Seed::random()));
 
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
         let state = <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init());
