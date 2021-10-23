@@ -1,6 +1,6 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json::json;
 use std::fmt::Debug;
 
@@ -182,7 +182,7 @@ fn test_serialize_draw_pile() {
 
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
 where
-    T: Serialize + Debug + PartialEq + for<'de> serde::Deserialize<'de>,
+    T: Serialize + Debug + PartialEq + DeserializeOwned,
     U: Serialize,
 {
     let serialized = serde_json::to_value(&data).unwrap();
