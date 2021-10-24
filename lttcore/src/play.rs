@@ -32,7 +32,7 @@ pub struct GameAdvance<T: Play> {
     pub debug_msgs: DebugMsgs<T>,
 }
 
-pub trait Play: Sized + Clone + Debug {
+pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     type Action: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
     type ActionError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
 
