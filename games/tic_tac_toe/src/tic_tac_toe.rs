@@ -100,7 +100,7 @@ impl Play for TicTacToe {
         mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
         _rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>) {
-        use crate::spectator_view::Update;
+        use crate::spectator_view::SpectatorViewUpdate as Update;
         use ActionResponse::*;
 
         let (player, response) = actions

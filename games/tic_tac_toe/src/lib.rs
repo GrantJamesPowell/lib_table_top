@@ -11,4 +11,4 @@ pub use crate::tic_tac_toe::TicTacToe;
 pub use action::{Action, ActionError};
 pub use board::{Board, Col, Position, Row, POSSIBLE_WINS};
 pub use marker::Marker;
-pub use spectator_view::{SpectatorView, Status};
+pub use spectator_view::{SpectatorView, SpectatorViewUpdate, Status};

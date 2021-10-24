@@ -117,18 +117,20 @@ impl SpectatorView {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Update {
+pub enum SpectatorViewUpdate {
     Resign(Player),
     Claim(Player, Position),
 }
 
 impl View for SpectatorView {
-    type Update = Update;
+    type Update = SpectatorViewUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn Error>> {
         match update {
-            Update::Resign(player) => self.resigned.add(*player),
-            Update::Claim(player, position) => self.board.claim_space(*player, *position)?,
+            SpectatorViewUpdate::Resign(player) => self.resigned.add(*player),
+            SpectatorViewUpdate::Claim(player, position) => {
+                self.board.claim_space(*player, *position)?
+            }
         }
         Ok(())
     }
