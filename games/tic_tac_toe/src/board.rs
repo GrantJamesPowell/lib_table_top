@@ -1,4 +1,7 @@
-use crate::ActionError::{self, *};
+use crate::{
+    ActionError::{self, *},
+    SpectatorViewUpdate,
+};
 use lttcore::{number_of_players::TWO_PLAYER, Player};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -222,7 +225,9 @@ impl Board {
         &mut self,
         player: impl Into<Player>,
         position: Position,
-    ) -> Result<(), ActionError> {
+    ) -> Result<SpectatorViewUpdate, ActionError> {
+        let player = player.into();
+
         if self.at_position(position).is_some() {
             return Err(SpaceIsTaken {
                 attempted: position,
@@ -230,8 +235,55 @@ impl Board {
         }
 
         let (Col(c), Row(r)) = position;
-        self.0[c as usize][r as usize] = Some(player.into());
-        Ok(())
+        self.0[c as usize][r as usize] = Some(player);
+        Ok(SpectatorViewUpdate::Claim(player, position))
+    }
+
+    /// Claims the next available space on the board.
+    /// Designed to be deterministic to be used for defaulting moves
+    ///
+    /// ```
+    /// use tic_tac_toe::{ttt, Marker::*, SpectatorViewUpdate::*, Col, Row};
+    ///
+    /// let mut game = ttt!([
+    ///     - - -
+    ///     - - -
+    ///     - - -
+    /// ]);
+    ///
+    /// let update = game.claim_next_available_space(X).unwrap();
+    /// assert_eq!(update, Claim(0.into(), (Col::new(0), Row::new(0))));
+    ///
+    /// assert_eq!(
+    ///   game,
+    ///   ttt!([
+    ///     - - -
+    ///     - - -
+    ///     X - -
+    ///   ])
+    /// );
+    ///
+    /// game.claim_next_available_space(O).unwrap();
+    /// game.claim_next_available_space(X).unwrap();
+    /// game.claim_next_available_space(O).unwrap();
+    /// game.claim_next_available_space(X).unwrap();
+    /// game.claim_next_available_space(O).unwrap();
+    ///
+    /// assert_eq!(
+    ///   game,
+    ///   ttt!([
+    ///     - - -
+    ///     O X O
+    ///     X O X
+    ///   ])
+    /// );
+    /// ```
+    pub fn claim_next_available_space(
+        &mut self,
+        player: impl Into<Player>,
+    ) -> Result<SpectatorViewUpdate, ActionError> {
+        let position = self.empty_spaces().next().ok_or(AllSpacesTaken)?;
+        self.claim_space(player, position)
     }
 
     /// Returns the marker at a position, since this requires [`Row`] and [`Col`] structs

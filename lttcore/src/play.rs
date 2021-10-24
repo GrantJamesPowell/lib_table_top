@@ -13,7 +13,6 @@ pub struct NoCustomSettingsError;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DebugMsg<T: Play> {
     pub attempted_action: <T as Play>::Action,
-    pub replaced_action: <T as Play>::Action,
     pub error: <T as Play>::ActionError,
 }
 
