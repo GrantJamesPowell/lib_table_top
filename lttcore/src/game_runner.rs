@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -7,8 +8,12 @@ use crate::{NumberOfPlayers, Play, Player, PlayerSet, Seed};
 
 use thiserror::Error;
 
-#[derive(Builder, Clone, Debug)]
+#[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]
+// https://stackoverflow.com/questions/61473323/cannot-infer-type-for-type-parameter-when-deriving-deserialize-for-a-type-with-a
+// It looks like this is required because serde is trying to provide redundant bounds to T, but
+// since T and all of T's assoc'd types are deserialize, I think everything is gravy
+#[serde(bound = "")]
 pub struct GameRunner<T: Play> {
     seed: Arc<Seed>,
     #[builder(default)]
@@ -37,9 +42,12 @@ impl<T: Play> Turn<T> {
 
     pub fn add_action(
         &mut self,
-        player: Player,
-        action_response: ActionResponse<<T as Play>::Action>,
+        player: impl Into<Player>,
+        action_response: impl Into<ActionResponse<<T as Play>::Action>>,
     ) -> Result<(), SubmitError> {
+        let player = player.into();
+        let action_response = action_response.into();
+
         if !self.action_requests.contains(player) {
             return Err(SubmitError::InvalidPlayer);
         }

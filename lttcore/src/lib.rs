@@ -21,7 +21,7 @@ pub mod view;
 pub use view::View;
 
 pub mod play;
-pub use play::Play;
+pub use play::{ActionResponse, Play};
 
 pub mod game_runner;
 pub use game_runner::{GameRunner, GameRunnerBuilder};

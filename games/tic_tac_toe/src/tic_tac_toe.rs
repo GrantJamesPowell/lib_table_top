@@ -1,8 +1,8 @@
 use crate::{Action, ActionError, Board, SpectatorView, Status};
 use lttcore::{
     number_of_players::TWO_PLAYER,
-    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
-    NumberOfPlayers, Play, Player, PlayerSet,
+    play::{DebugMsg, DebugMsgs, GameAdvance},
+    ActionResponse, NumberOfPlayers, Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
