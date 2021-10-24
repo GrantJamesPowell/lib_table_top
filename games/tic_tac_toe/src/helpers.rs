@@ -1,13 +1,34 @@
 use lttcore::Player;
 
+/// Helper function to have tic tac toe game literals
+///
+/// ## Notes
+///
+/// Visually ttt! uses Cartesian coordinates for representing games ((0, 0) is in the bottom left
+/// corner). In memory the actual TicTacToe::Board struct represents the board with (0, 0) in the
+/// top left corner.
+/// ```
+/// use tic_tac_toe::{ttt, Marker::*};
+///
+/// let game = ttt!([
+///   X O -
+///   O O -
+///   X - X
+/// ]);
+///
+/// assert_eq!(game.at((0, 0)).unwrap(), X);
+/// assert_eq!(game.at((1, 1)).unwrap(), O);
+/// assert_eq!(game.at((2, 2)), None);
+/// assert!(game.resigned().is_empty());
+/// ```
 #[macro_export]
 macro_rules! ttt {
     ([ $a:tt $b:tt $c:tt $d:tt $e:tt $f:tt $g:tt $h:tt $i:tt ]) => {
         ::tic_tac_toe::TicTacToe::from(
             ::tic_tac_toe::Board::from_ints([
-                [ttt!(@$a), ttt!(@$b), ttt!(@$c)],
+                [ttt!(@$g), ttt!(@$h), ttt!(@$i)],
                 [ttt!(@$d), ttt!(@$e), ttt!(@$f)],
-                [ttt!(@$g), ttt!(@$h), ttt!(@$i)]
+                [ttt!(@$a), ttt!(@$b), ttt!(@$c)],
             ])
         )
     };

@@ -55,10 +55,10 @@ impl SpectatorView {
     ///
     /// // A draw
     /// let game: TicTacToe = ttt!([
-    ///   X O X
-    ///   X X O
     ///   O X O
-    /// ]).into();
+    ///   X X O
+    ///   X O X
+    /// ]);
     /// assert_eq!(game.spectator_view(&settings).status(), Draw);
     ///
     /// // If someone resigns
@@ -68,9 +68,9 @@ impl SpectatorView {
     ///
     /// // With a winning position
     /// let game: TicTacToe = ttt!([
+    ///   - - -
+    ///   - - -
     ///   X X X
-    ///   - - -
-    ///   - - -
     /// ]).into();
     ///
     /// assert_eq!(
