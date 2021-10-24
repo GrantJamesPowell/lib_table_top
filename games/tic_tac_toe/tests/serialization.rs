@@ -46,6 +46,27 @@ fn test_serde_action_and_error() {
     ));
 }
 
+#[test]
+fn test_serde_ttt() {
+    let game = ttt!([
+      X X X
+      O X O
+      - - -
+    ]);
+
+    test_simple_serialization((
+        game,
+        json!({
+            "resigned": [0, 0, 0, 0],
+            "board": [
+                [0, 0, 0],
+                [1, 0, 1],
+                [Null, Null, Null]
+            ]
+        }),
+    ));
+}
+
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
 where
     T: Serialize + Debug + PartialEq + DeserializeOwned,

@@ -4,10 +4,11 @@ use lttcore::{
     play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
     NumberOfPlayers, Play, Player, PlayerSet,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ops::Deref;
 
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TicTacToe {
     board: Board,
     resigned: PlayerSet,
