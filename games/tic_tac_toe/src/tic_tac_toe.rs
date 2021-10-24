@@ -1,4 +1,4 @@
-use crate::{Action, ActionError, Board, SpectatorView, Status};
+use crate::{Action, ActionError, Board, SpectatorView, SpectatorViewUpdate, Status};
 use lttcore::{
     number_of_players::TWO_PLAYER,
     play::{DebugMsg, DebugMsgs, GameAdvance},
@@ -6,7 +6,7 @@ use lttcore::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TicTacToe {
@@ -31,21 +31,29 @@ impl Deref for TicTacToe {
     }
 }
 
+impl DerefMut for TicTacToe {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.board
+    }
+}
+
 impl TicTacToe {
     /// Resigns a player, ending the game
     ///
     /// ```
     /// use lttcore::Play;
-    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*};
+    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, SpectatorViewUpdate::*};
     ///
     /// let settings = Default::default();
     /// let mut game: TicTacToe = Default::default();
     /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X.into() });
-    /// game.resign(X); // or game.resign(0.into());
+    /// assert_eq!(game.resign(X), Resign(X.into()));
     /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O.into() });
     /// ```
-    pub fn resign(&mut self, player: impl Into<Player>) {
-        self.resigned.add(player.into());
+    pub fn resign(&mut self, player: impl Into<Player>) -> SpectatorViewUpdate {
+        let player = player.into();
+        self.resigned.add(player);
+        SpectatorViewUpdate::Resign(player)
     }
 
     pub fn board(&self) -> &Board {
@@ -100,7 +108,6 @@ impl Play for TicTacToe {
         mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
         _rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>) {
-        use crate::spectator_view::SpectatorViewUpdate as Update;
         use ActionResponse::*;
 
         let (player, response) = actions
@@ -112,30 +119,19 @@ impl Play for TicTacToe {
 
         let spectator_update = {
             match response {
-                Resign => {
-                    new_state.resign(player);
-                    Update::Resign(player)
-                }
+                Resign => new_state.resign(player),
                 Response(attempted_action @ Action { position }) => {
-                    match new_state.board.claim_space(player, position) {
+                    match new_state.claim_space(player, position) {
                         Ok(update) => update,
                         Err(err) => {
-                            let replacement = new_state.board.empty_spaces().next().unwrap();
-
-                            new_state.board.claim_space(player, replacement).unwrap();
-
-                            debug_msgs.push((
-                                player,
-                                DebugMsg {
-                                    attempted_action,
-                                    replaced_action: Action {
-                                        position: replacement,
-                                    },
-                                    error: err,
-                                },
-                            ));
-
-                            Update::Claim(player, position)
+                            let msg = DebugMsg {
+                                attempted_action,
+                                error: err,
+                            };
+                            debug_msgs.push((player, msg));
+                            new_state
+                                .claim_next_available_space(player)
+                                .expect("Tried to apply an action to a full board")
                         }
                     }
                 }

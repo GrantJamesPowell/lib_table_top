@@ -239,6 +239,53 @@ impl Board {
         Ok(SpectatorViewUpdate::Claim(player, position))
     }
 
+    /// Claims the next available space on the board.
+    /// Designed to be deterministic to be used for defaulting moves
+    ///
+    /// ```
+    /// use tic_tac_toe::{ttt, Marker::*, SpectatorViewUpdate::*, Col, Row};
+    ///
+    /// let mut game = ttt!([
+    ///     - - -
+    ///     - - -
+    ///     - - -
+    /// ]);
+    ///
+    /// let update = game.claim_next_available_space(X).unwrap();
+    /// assert_eq!(update, Claim(0.into(), (Col::new(0), Row::new(0))));
+    ///
+    /// assert_eq!(
+    ///   game,
+    ///   ttt!([
+    ///     - - -
+    ///     - - -
+    ///     X - -
+    ///   ])
+    /// );
+    ///
+    /// game.claim_next_available_space(O).unwrap();
+    /// game.claim_next_available_space(X).unwrap();
+    /// game.claim_next_available_space(O).unwrap();
+    /// game.claim_next_available_space(X).unwrap();
+    /// game.claim_next_available_space(O).unwrap();
+    ///
+    /// assert_eq!(
+    ///   game,
+    ///   ttt!([
+    ///     - - -
+    ///     O X O
+    ///     X O X
+    ///   ])
+    /// );
+    /// ```
+    pub fn claim_next_available_space(
+        &mut self,
+        player: impl Into<Player>,
+    ) -> Result<SpectatorViewUpdate, ActionError> {
+        let position = self.empty_spaces().next().ok_or(AllSpacesTaken)?;
+        self.claim_space(player, position)
+    }
+
     /// Returns the marker at a position, since this requires [`Row`] and [`Col`] structs
     /// the indexing will always be inbound
     ///
