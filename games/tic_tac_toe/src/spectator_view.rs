@@ -129,7 +129,7 @@ impl View for SpectatorView {
         match update {
             SpectatorViewUpdate::Resign(player) => self.resigned.add(*player),
             SpectatorViewUpdate::Claim(player, position) => {
-                self.board.claim_space(*player, *position)?
+                self.board.claim_space(*player, *position)?;
             }
         }
         Ok(())

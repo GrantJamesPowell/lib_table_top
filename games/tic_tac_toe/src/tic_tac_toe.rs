@@ -118,7 +118,7 @@ impl Play for TicTacToe {
                 }
                 Response(attempted_action @ Action { position }) => {
                     match new_state.board.claim_space(player, position) {
-                        Ok(_) => Update::Claim(player, position),
+                        Ok(update) => update,
                         Err(err) => {
                             let replacement = new_state.board.empty_spaces().next().unwrap();
 

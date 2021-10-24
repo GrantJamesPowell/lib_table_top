@@ -1,4 +1,7 @@
-use crate::ActionError::{self, *};
+use crate::{
+    ActionError::{self, *},
+    SpectatorViewUpdate,
+};
 use lttcore::{number_of_players::TWO_PLAYER, Player};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -222,7 +225,9 @@ impl Board {
         &mut self,
         player: impl Into<Player>,
         position: Position,
-    ) -> Result<(), ActionError> {
+    ) -> Result<SpectatorViewUpdate, ActionError> {
+        let player = player.into();
+
         if self.at_position(position).is_some() {
             return Err(SpaceIsTaken {
                 attempted: position,
@@ -230,8 +235,8 @@ impl Board {
         }
 
         let (Col(c), Row(r)) = position;
-        self.0[c as usize][r as usize] = Some(player.into());
-        Ok(())
+        self.0[c as usize][r as usize] = Some(player);
+        Ok(SpectatorViewUpdate::Claim(player, position))
     }
 
     /// Returns the marker at a position, since this requires [`Row`] and [`Col`] structs
