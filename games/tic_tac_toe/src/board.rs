@@ -241,9 +241,9 @@ impl Board {
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
     /// let game = ttt!([
-    ///   - X O
-    ///   - - -
     ///   X - -
+    ///   - - -
+    ///   - X O
     /// ]);
     /// assert_eq!(game.at_position((Col::new(2), Row::new(0))), Some(X.into()));
     /// assert_eq!(game.at_position((Col::new(0), Row::new(2))), Some(O.into()));
@@ -259,9 +259,9 @@ impl Board {
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*};
     ///
     /// let game = ttt!([
-    ///   - X O
-    ///   - - -
     ///   X - -
+    ///   - - -
+    ///   - X O
     /// ]);
     /// assert_eq!(game.at((2, 0)), Some(X.into()));
     /// assert_eq!(game.at((0, 2)), Some(O.into()));
@@ -294,9 +294,9 @@ impl Board {
     /// assert_eq!(board.empty_spaces().count(), 0);
     ///
     /// let game = ttt!([
-    ///   - X O
-    ///   - - -
     ///   X O X
+    ///   - - -
+    ///   - X O
     /// ]);
     /// assert_eq!(game.empty_spaces().count(), 4);
     /// assert_eq!(
@@ -322,9 +322,9 @@ impl Board {
     /// use tic_tac_toe::{ttt, Board, Row, Col, Marker::*, Position};
     ///
     /// let game = ttt!([
-    ///   - X O
-    ///   - - -
     ///   X O X
+    ///   - - -
+    ///   - X O
     /// ]);
     /// assert_eq!(
     ///   game.spaces().collect::<Vec<_>>(),
@@ -361,9 +361,9 @@ impl Board {
     /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
     ///
     /// let game = ttt!([
-    ///   - X O
-    ///   - - -
     ///   X O X
+    ///   - - -
+    ///   - X O
     /// ]);
     /// assert_eq!(
     ///   game.taken_spaces().collect::<Vec<_>>(),
@@ -391,25 +391,25 @@ impl Board {
 
     /// // Once the first player goes, it's the second player's turn
     /// let game = ttt!([
+    ///   - - -
+    ///   - - -
     ///   X - -
-    ///   - - -
-    ///   - - -
     /// ]);
     /// assert_eq!(game.whose_turn(), O);
 
     /// // Once O goes, it's X's turn again
     /// let game = ttt!([
+    ///   - - -
+    ///   - - -
     ///   X O -
-    ///   - - -
-    ///   - - -
     /// ]);
     /// assert_eq!(game.whose_turn(), X);
 
     /// // The next player to go is always the one with the fewest spaces
     /// let game = ttt!([
+    ///   O O O
+    ///   O O O
     ///   - O O
-    ///   O O O
-    ///   O O O
     /// ]);
     /// assert_eq!(game.whose_turn(), X);
     /// ```

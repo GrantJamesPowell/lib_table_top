@@ -49,9 +49,9 @@ fn test_serde_action_and_error() {
 #[test]
 fn test_serde_ttt() {
     let game = ttt!([
-      X X X
-      O X O
       - - -
+      O X O
+      X X X
     ]);
 
     test_simple_serialization((
