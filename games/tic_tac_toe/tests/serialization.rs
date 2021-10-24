@@ -1,4 +1,4 @@
-use lttcore::{rng::SEED_42, ActionResponse, GameRunnerBuilder};
+use lttcore::{seed::SEED_42, ActionResponse, GameRunnerBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;
