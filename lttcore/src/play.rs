@@ -25,6 +25,12 @@ pub enum ActionResponse<T> {
     Resign,
 }
 
+impl<T> From<T> for ActionResponse<T> {
+    fn from(t: T) -> Self {
+        Self::Response(t)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct GameAdvance<T: Play> {
     pub spectator_update: <<T as Play>::SpectatorView as View>::Update,

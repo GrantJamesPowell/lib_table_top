@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Seed(#[serde(with = "hex")] [u8; 32]);
 
+pub const SEED_42: Seed = Seed([42; 32]);
+
 impl From<[u8; 32]> for Seed {
     fn from(bytes: [u8; 32]) -> Self {
         Self(bytes)
