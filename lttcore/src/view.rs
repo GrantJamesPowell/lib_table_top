@@ -2,8 +2,8 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::Debug;
 
-pub trait View: Clone + Debug + Serialize + DeserializeOwned {
-    type Update: Clone + Debug + Serialize + DeserializeOwned;
+pub trait View: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned {
+    type Update: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
 
     fn update(&mut self, _update: &Self::Update) -> Result<(), Box<dyn Error>> {
         Ok(())
