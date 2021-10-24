@@ -60,7 +60,6 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type SpectatorView = SpectatorView;
-    type Status = Status;
 
     fn action_requests(&self, settings: &Self::Settings) -> PlayerSet {
         match self.spectator_view(settings).status() {

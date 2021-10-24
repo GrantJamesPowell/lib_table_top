@@ -41,8 +41,6 @@ pub trait Play: Sized + Clone + Debug {
     type SettingsError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned =
         NoCustomSettingsError;
 
-    type Status: Clone + Debug + PartialEq + Eq;
-
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
 
