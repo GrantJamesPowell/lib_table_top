@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;
-use tic_tac_toe::{ttt, Board, Col, Row};
+use tic_tac_toe::{ttt, Action, ActionError, Board, Col, Row};
 
 #[test]
 fn test_serde_row_col() {
@@ -29,6 +29,21 @@ fn test_serde_board() {
 
     let deserialized: Board = serde_json::from_value(serialized).unwrap();
     assert_eq!(game.board(), &deserialized);
+}
+
+#[test]
+fn test_serde_action_and_error() {
+    let position = (Col::new(1), Row::new(2));
+    let action = Action { position };
+    test_simple_serialization((action, json!({"position": [1, 2] })));
+
+    let action_error = ActionError::SpaceIsTaken {
+        attempted: position,
+    };
+    test_simple_serialization((
+        action_error,
+        json!({"SpaceIsTaken": {"attempted": [1, 2] }}),
+    ));
 }
 
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
