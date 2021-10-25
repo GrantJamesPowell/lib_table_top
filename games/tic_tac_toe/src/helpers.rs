@@ -24,13 +24,11 @@ use lttcore::Player;
 #[macro_export]
 macro_rules! ttt {
     ([ $a:tt $b:tt $c:tt $d:tt $e:tt $f:tt $g:tt $h:tt $i:tt ]) => {
-        ::tic_tac_toe::TicTacToe::from(
-            ::tic_tac_toe::Board::from_ints([
-                [ttt!(@$g), ttt!(@$h), ttt!(@$i)],
-                [ttt!(@$d), ttt!(@$e), ttt!(@$f)],
-                [ttt!(@$a), ttt!(@$b), ttt!(@$c)],
-            ])
-        )
+        ::tic_tac_toe::TicTacToe::from_ints([
+            [ttt!(@$g), ttt!(@$h), ttt!(@$i)],
+            [ttt!(@$d), ttt!(@$e), ttt!(@$f)],
+            [ttt!(@$a), ttt!(@$b), ttt!(@$c)],
+        ])
     };
     (@-) => { 0 };
     (@X) => { 1 };

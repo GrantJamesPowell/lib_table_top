@@ -93,13 +93,7 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
                 let pos = (col_num, row_num);
                 let is_selected =
                     pos == (ui_state.selected_col.into(), ui_state.selected_row.into());
-                draw_square(
-                    frame,
-                    square,
-                    spectator_view.board().at(pos),
-                    pos,
-                    is_selected,
-                );
+                draw_square(frame, square, spectator_view.at(pos), pos, is_selected);
             }
         }
     }
