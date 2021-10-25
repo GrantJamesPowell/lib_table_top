@@ -42,7 +42,6 @@ impl TicTacToe {
     /// use lttcore::Play;
     /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, SpectatorViewUpdate::*};
     ///
-    /// let settings = Default::default();
     /// let mut game: TicTacToe = Default::default();
     /// assert_eq!(game.status(), InProgress{ next_up: X.into() });
     /// assert_eq!(game.resign(X), Resign(X.into()));
