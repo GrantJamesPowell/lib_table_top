@@ -1,8 +1,8 @@
 use crate::board::POSSIBLE_WINS;
-use crate::{helpers::opponent, Board, Position};
-use lttcore::{Player, PlayerSet, View};
+use crate::{helpers::opponent, Position, TicTacToe};
+use lttcore::{Player, View};
 use serde::{Deserialize, Serialize};
-use std::error::Error;
+use std::{error::Error, ops::Deref, ops::DerefMut};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -22,31 +22,31 @@ pub enum Status {
 use Status::*;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SpectatorView {
-    board: Board,
-    resigned: PlayerSet,
+pub struct SpectatorView(TicTacToe);
+
+impl Deref for SpectatorView {
+    type Target = TicTacToe;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for SpectatorView {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 impl SpectatorView {
-    pub fn board(&self) -> &Board {
-        &self.board
-    }
-
-    pub fn from_board(board: Board) -> Self {
-        Self {
-            board,
-            resigned: Default::default(),
-        }
-    }
-
-    pub fn from_board_and_resigned(board: Board, resigned: PlayerSet) -> Self {
-        Self { board, resigned }
+    pub fn from_ttt(ttt: TicTacToe) -> Self {
+        Self(ttt)
     }
 
     /// Returns the status of the current game
     /// ```
     /// use lttcore::{Play, Player};
-    /// use tic_tac_toe::{ttt, TicTacToe, Board, Row, Col, Status::*, Marker::*};
+    /// use tic_tac_toe::{ttt, TicTacToe, Row, Col, Status::*, Marker::*};
     /// let settings = Default::default();
     ///
     /// // In progress
@@ -86,7 +86,7 @@ impl SpectatorView {
     /// );
     /// ```
     pub fn status(&self) -> Status {
-        if let Some(loser) = self.resigned.players().next() {
+        if let Some(loser) = self.resigned().players().next() {
             return WinByResignation {
                 winner: opponent(loser),
             };
@@ -95,7 +95,7 @@ impl SpectatorView {
         POSSIBLE_WINS
             .iter()
             .filter_map(|&positions| {
-                let [a, b, c] = positions.map(|pos| self.board.at_position(pos));
+                let [a, b, c] = positions.map(|pos| self.at_position(pos));
 
                 if a == b && b == c {
                     a.map(|winner| Win { winner, positions })
@@ -105,11 +105,11 @@ impl SpectatorView {
             })
             .next()
             .unwrap_or_else(|| {
-                if !self.board.has_open_spaces() {
+                if !self.has_open_spaces() {
                     Draw
                 } else {
                     InProgress {
-                        next_up: self.board.whose_turn(),
+                        next_up: self.whose_turn(),
                     }
                 }
             })
@@ -127,9 +127,11 @@ impl View for SpectatorView {
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn Error>> {
         match update {
-            SpectatorViewUpdate::Resign(player) => self.resigned.add(*player),
+            SpectatorViewUpdate::Resign(player) => {
+                self.resign(*player);
+            }
             SpectatorViewUpdate::Claim(player, position) => {
-                self.board.claim_space(*player, *position)?;
+                self.claim_space(*player, *position)?;
             }
         }
         Ok(())
