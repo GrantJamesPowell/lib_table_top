@@ -60,6 +60,7 @@ fn test_serde_ttt_game_runner() {
         &game_runner,
         json!({
             "seed": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
+            "initial_state": Null,
             "history": [],
             "settings": Null,
             "turn_num": 0,
@@ -93,7 +94,8 @@ fn test_serde_ttt_game_runner() {
         &game_runner,
         json!({
             "seed": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
-             "history": [
+            "initial_state": Null,
+            "history": [
                 {"actions": [[0, {"Response": {"position": [1, 2]}}]]},
              ],
             "settings": Null,
@@ -119,10 +121,11 @@ fn test_serde_ttt_game_runner() {
         &game_runner,
         json!({
             "seed": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
-             "history": [
+            "initial_state": Null,
+            "history": [
                 {"actions": [[0, {"Response": {"position": [1, 2]}}]]},
                 {"actions": [[1, "Resign"]]}
-             ],
+            ],
             "settings": Null,
             "turn_num": 2,
             "state": {

@@ -19,12 +19,11 @@ type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 #[serde(bound = "")]
 pub struct GameRunner<T: Play> {
     seed: Arc<Seed>,
-    #[builder(default)]
     settings: Arc<<T as Play>::Settings>,
+    initial_state: Option<Arc<T>>,
+    turn_num: u64,
     #[builder(setter(skip))]
     state: T,
-    #[builder(setter(skip))]
-    turn_num: u64,
     #[builder(setter(skip))]
     history: Vector<HistoryEvent<T>>,
 }
@@ -158,8 +157,16 @@ impl<T: Play> GameRunnerBuilder<T> {
             .cloned()
             .unwrap_or_else(|| Arc::new(Seed::random()));
 
+        let initial_state: Option<Arc<T>> = self.initial_state.as_ref().cloned().unwrap_or(None);
+        let turn_num = self.turn_num.as_ref().cloned().unwrap_or(0);
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
-        let state = <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init());
+        let state = initial_state
+            .as_ref()
+            .map(|arc| arc.as_ref())
+            .cloned()
+            .unwrap_or_else(|| {
+                <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init())
+            });
         let history = Vector::new();
 
         Ok(GameRunner {
@@ -167,7 +174,8 @@ impl<T: Play> GameRunnerBuilder<T> {
             settings,
             state,
             history,
-            turn_num: 0,
+            initial_state,
+            turn_num,
         })
     }
 }
