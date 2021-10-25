@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-
 use crate::Player;
+use serde::{Deserialize, Serialize};
+use std::iter::FromIterator;
 
 /// High performance player set abstraction designd to be O(1) for
 /// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
@@ -135,8 +135,18 @@ impl PlayerSet {
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
-        let mut set: Self = Default::default();
-        set.add(p);
+        Some(p).into_iter().collect()
+    }
+}
+
+impl FromIterator<Player> for PlayerSet {
+    fn from_iter<I: IntoIterator<Item = Player>>(iter: I) -> Self {
+        let mut set = PlayerSet::new();
+
+        for player in iter {
+            set.add(player);
+        }
+
         set
     }
 }
@@ -144,6 +154,14 @@ impl From<Player> for PlayerSet {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_from_iter_for_player_set() {
+        let set: PlayerSet = [Player::new(0), Player::new(1)].into_iter().collect();
+        assert!(set.contains(0));
+        assert!(set.contains(1));
+        assert!(!set.contains(2));
+    }
 
     #[test]
     fn test_set_works_for_all_players() {
