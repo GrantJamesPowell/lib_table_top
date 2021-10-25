@@ -1,7 +1,8 @@
 use crate::{
+    helpers::opponent,
     Action,
     ActionError::{self, *},
-    Col, Position, Row, SpectatorView, SpectatorViewUpdate, Status,
+    Col, Position, Row, SpectatorView, SpectatorViewUpdate, POSSIBLE_WINS,
 };
 use lttcore::{
     number_of_players::TWO_PLAYER,
@@ -10,6 +11,23 @@ use lttcore::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Status {
+    /// There are still available positions to be claimed on the board
+    InProgress { next_up: Player },
+    /// All positions have been claimed and there is no winner
+    Draw,
+    /// Win by resignation
+    WinByResignation { winner: Player },
+    /// There *is* a winner via connecting three spaces
+    Win {
+        winner: Player,
+        positions: [Position; 3],
+    },
+}
+
+use Status::*;
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TicTacToe {
@@ -26,9 +44,9 @@ impl TicTacToe {
     ///
     /// let settings = Default::default();
     /// let mut game: TicTacToe = Default::default();
-    /// assert_eq!(game.spectator_view(&settings).status(), InProgress{ next_up: X.into() });
+    /// assert_eq!(game.status(), InProgress{ next_up: X.into() });
     /// assert_eq!(game.resign(X), Resign(X.into()));
-    /// assert_eq!(game.spectator_view(&settings).status(), WinByResignation { winner: O.into() });
+    /// assert_eq!(game.status(), WinByResignation { winner: O.into() });
     /// ```
     pub fn resign(&mut self, player: impl Into<Player>) -> SpectatorViewUpdate {
         let player = player.into();
@@ -38,6 +56,77 @@ impl TicTacToe {
 
     pub fn resigned(&self) -> &PlayerSet {
         &self.resigned
+    }
+
+    /// Returns the status of the current game
+    /// ```
+    /// use lttcore::{Play, Player};
+    /// use tic_tac_toe::{ttt, TicTacToe, Row, Col, Status::*, Marker::*};
+    ///
+    /// // In progress
+    /// let game: TicTacToe = Default::default();
+    /// assert_eq!(game.status(), InProgress{ next_up: X.into() });
+    ///
+    /// // A draw
+    /// let game: TicTacToe = ttt!([
+    ///   O X O
+    ///   X X O
+    ///   X O X
+    /// ]);
+    /// assert_eq!(game.status(), Draw);
+    ///
+    /// // If someone resigns
+    /// let mut game: TicTacToe = Default::default();
+    /// game.resign(X);
+    /// assert_eq!(game.status(), WinByResignation { winner: O.into() });
+    ///
+    /// // With a winning position
+    /// let game: TicTacToe = ttt!([
+    ///   - - -
+    ///   - - -
+    ///   X X X
+    /// ]);
+    ///
+    /// assert_eq!(
+    ///   game.status(),
+    ///   Win {
+    ///     winner: X.into(),
+    ///     positions: [
+    ///       (Col::new(0), Row::new(0)),
+    ///       (Col::new(0), Row::new(1)),
+    ///       (Col::new(0), Row::new(2))
+    ///     ]
+    ///   }
+    /// );
+    /// ```
+    pub fn status(&self) -> Status {
+        if let Some(loser) = self.resigned().players().next() {
+            return WinByResignation {
+                winner: opponent(loser),
+            };
+        }
+
+        POSSIBLE_WINS
+            .iter()
+            .filter_map(|&positions| {
+                let [a, b, c] = positions.map(|pos| self.at_position(pos));
+
+                if a == b && b == c {
+                    a.map(|winner| Win { winner, positions })
+                } else {
+                    None
+                }
+            })
+            .next()
+            .unwrap_or_else(|| {
+                if !self.has_open_spaces() {
+                    Draw
+                } else {
+                    InProgress {
+                        next_up: self.whose_turn(),
+                    }
+                }
+            })
     }
 
     /// Claims a space for a marker, returns an error if that space is taken
