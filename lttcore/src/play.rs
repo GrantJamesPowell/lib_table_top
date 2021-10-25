@@ -18,7 +18,7 @@ pub struct DebugMsg<T: Play> {
 
 pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
     Response(T),
     Resign,

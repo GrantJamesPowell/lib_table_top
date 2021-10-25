@@ -1,3 +1,4 @@
+use im::Vector;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
@@ -7,6 +8,8 @@ use crate::play::{ActionResponse, GameAdvance};
 use crate::{NumberOfPlayers, Play, Player, PlayerSet, Seed};
 
 use thiserror::Error;
+
+type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]
@@ -22,13 +25,21 @@ pub struct GameRunner<T: Play> {
     state: T,
     #[builder(setter(skip))]
     turn_num: u64,
+    #[builder(setter(skip))]
+    history: Vector<HistoryEvent<T>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound = "")]
+pub struct HistoryEvent<T: Play> {
+    actions: Actions<T>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Turn<T: Play> {
     turn_num: u64,
     action_requests: PlayerSet,
-    actions: SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>,
+    actions: Actions<T>,
 }
 
 impl<T: Play> Turn<T> {
@@ -118,12 +129,18 @@ impl<T: Play> GameRunner<T> {
 
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
-            turn.actions.into_iter(),
+            turn.actions.clone().into_iter(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
+        let mut history = self.history.clone();
+        history.push_back(HistoryEvent {
+            actions: turn.actions,
+        });
+
         Ok((
             Self {
+                history,
                 state: new_state,
                 turn_num: self.turn_num + 1,
                 ..self.clone()
@@ -143,11 +160,13 @@ impl<T: Play> GameRunnerBuilder<T> {
 
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
         let state = <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init());
+        let history = Vector::new();
 
         Ok(GameRunner {
             seed,
             settings,
             state,
+            history,
             turn_num: 0,
         })
     }
