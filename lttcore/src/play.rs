@@ -7,9 +7,6 @@ use std::fmt::Debug;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct NoCustomSettings;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NoCustomSettingsError;
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DebugMsg<T: Play> {
     pub attempted: <T as Play>::Action,
@@ -43,8 +40,6 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
 
     type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
         NoCustomSettings;
-    type SettingsError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned =
-        NoCustomSettingsError;
 
     type PlayerView: View = NoSecretPlayerInformation;
     type SpectatorView: View;
