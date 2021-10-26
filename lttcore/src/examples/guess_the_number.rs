@@ -31,11 +31,22 @@ pub enum ActionError {
 
 use ActionError::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(build_fn(validate = "Self::validate"))]
 pub struct Settings {
     min: u64,
     max: u64,
     num_players: NumberOfPlayers,
+}
+
+impl SettingsBuilder {
+    fn validate(&self) -> Result<(), String> {
+        if self.max <= self.min {
+            Err("min must be strictly less than max".into())
+        } else {
+            Ok(())
+        }
+    }
 }
 
 impl Settings {
@@ -54,20 +65,22 @@ impl Default for Settings {
     }
 }
 
-#[derive(Error, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SettingsError {
-    #[error("`min` must be less than `max`")]
-    MinMustBeLessThanMax,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorView(Settings, Option<Guesses>);
+pub struct SpectatorView {
+    settings: Settings,
+    guesses: Option<Guesses>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SpectatorViewUpdate(Guesses);
 
 impl View for SpectatorView {
     type Update = SpectatorViewUpdate;
+
+    fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
+        self.guesses = Some(update.0.clone());
+        Ok(())
+    }
 }
 
 impl Play for GuessTheNumber {
@@ -75,7 +88,6 @@ impl Play for GuessTheNumber {
     type ActionError = ActionError;
     type SpectatorView = SpectatorView;
     type Settings = Settings;
-    type SettingsError = SettingsError;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
@@ -89,7 +101,10 @@ impl Play for GuessTheNumber {
     }
 
     fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView {
-        SpectatorView(settings.clone(), self.guesses.clone())
+        SpectatorView {
+            settings: settings.clone(),
+            guesses: self.guesses.clone(),
+        }
     }
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
