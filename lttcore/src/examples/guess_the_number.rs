@@ -32,26 +32,42 @@ pub enum ActionError {
 use ActionError::*;
 
 #[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[builder(build_fn(validate = "Self::validate"))]
+#[builder(derive(Debug), build_fn(validate = "Self::validate"))]
 pub struct Settings {
+    #[builder(default = "0")]
     min: u64,
+    #[builder(default = "u64::MAX")]
     max: u64,
+    #[builder(default = "ONE_PLAYER")]
     num_players: NumberOfPlayers,
 }
 
 impl SettingsBuilder {
     fn validate(&self) -> Result<(), String> {
-        if self.max <= self.min {
-            Err("min must be strictly less than max".into())
-        } else {
-            Ok(())
+        match (self.min, self.max) {
+            (Some(min), Some(max)) if min >= max => {
+                Err("min must be strictly less than max".into())
+            }
+            _ => Ok(()),
         }
     }
 }
 
 impl Settings {
-    fn range(&self) -> RangeInclusive<u64> {
+    pub fn range(&self) -> RangeInclusive<u64> {
         self.min..=self.max
+    }
+
+    pub fn min(&self) -> u64 {
+        self.min
+    }
+
+    pub fn max(&self) -> u64 {
+        self.max
+    }
+
+    pub fn num_players(&self) -> NumberOfPlayers {
+        self.num_players
     }
 }
 
