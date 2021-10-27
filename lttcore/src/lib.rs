@@ -26,6 +26,9 @@ pub use play::{ActionResponse, Play};
 pub mod game_runner;
 pub use game_runner::{GameRunner, GameRunnerBuilder};
 
+pub mod turn;
+pub use turn::Turn;
+
 pub mod seed;
 pub use seed::Seed;
 
