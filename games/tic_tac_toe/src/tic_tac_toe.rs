@@ -49,7 +49,7 @@ impl TicTacToe {
     /// ```
     pub fn resign(&mut self, player: impl Into<Player>) -> PublicInfoUpdate {
         let player = player.into();
-        self.resigned.add(player);
+        self.resigned.insert(player);
         PublicInfoUpdate::Resign(player)
     }
 

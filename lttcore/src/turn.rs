@@ -15,14 +15,8 @@ impl<T: Play> Turn<T> {
     }
 
     pub fn pending_action_requests(&self) -> PlayerSet {
-        self.action_requests
-            .players()
-            .filter(|player| {
-                self.actions
-                    .binary_search_by_key(&player, |(p, _)| &*p)
-                    .is_err()
-            })
-            .collect()
+        let completed_players: PlayerSet = self.actions.iter().map(|(p, _)| *p).collect();
+        self.action_requests.difference(completed_players)
     }
 
     /// Add an action to the turn
