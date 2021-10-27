@@ -145,10 +145,31 @@ impl<T: Play> GameRunner<T> {
         }
     }
 
-    pub fn submit_turn(&self, turn: Turn<T>) -> Result<(Self, GameAdvance<T>), SubmitError> {
-        if !turn.is_ready_to_submit() || (turn.turn_num != self.turn_num) {
-            return Err(SubmitError::InvalidTurn);
-        }
+    /// Submit a turn to the game runner and advance the game
+    ///
+    /// Note: this does not mutate the existing game runner, but instead returns a new one
+    ///
+    /// # Panics
+    ///
+    /// This will panic if the turn doesn't have all the players accounted for
+    ///
+    /// ```should_panic
+    /// use std::panic::catch_unwind;
+    /// use lttcore::examples::GuessTheNumber;
+    /// use lttcore::GameRunnerBuilder;
+    ///
+    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
+    /// let turn = game.turn().unwrap();
+    /// game.submit_turn(turn);
+    /// ```
+    #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
+    pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameAdvance<T>) {
+        assert!(
+            turn.is_ready_to_submit(),
+            "turn {:?} was not ready to submit, it was missing {:?} players actions",
+            turn.number(),
+            turn.pending_action_requests().count()
+        );
 
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
@@ -161,7 +182,7 @@ impl<T: Play> GameRunner<T> {
             actions: turn.actions,
         });
 
-        Ok((
+        (
             Self {
                 history,
                 state: new_state,
@@ -169,7 +190,7 @@ impl<T: Play> GameRunner<T> {
                 ..self.clone()
             },
             game_advance,
-        ))
+        )
     }
 }
 
