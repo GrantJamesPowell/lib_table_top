@@ -1,4 +1,4 @@
-use crate::{view::NoSecretPlayerInformation, NumberOfPlayers, Player, PlayerSet, View};
+use crate::{view::NoSecretPlayerInfo, NumberOfPlayers, Player, PlayerSet, View};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
@@ -14,7 +14,8 @@ pub struct DebugMsg<T: Play> {
 }
 
 pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
-pub type PlayerUpdates<T> = SmallVec<[(Player, <<T as Play>::PlayerView as View>::Update); 2]>;
+pub type PlayerSecretInfoUpdates<T> =
+    SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
@@ -30,8 +31,8 @@ impl<T> From<T> for ActionResponse<T> {
 
 #[derive(Clone, Debug)]
 pub struct GameAdvance<T: Play> {
-    pub spectator_update: <<T as Play>::SpectatorView as View>::Update,
-    pub player_updates: PlayerUpdates<T>,
+    pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
+    pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 
@@ -42,12 +43,15 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
         NoCustomSettings;
 
-    type PlayerView: View = NoSecretPlayerInformation;
-    type SpectatorView: View;
+    type PublicInfo: View;
+    type PlayerSecretInfo: View = NoSecretPlayerInfo;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
-    fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView>;
-    fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView;
+    fn player_secret_info(
+        &self,
+        settings: &Self::Settings,
+    ) -> HashMap<Player, Self::PlayerSecretInfo>;
+    fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn action_requests(&self, settings: &Self::Settings) -> PlayerSet;
 

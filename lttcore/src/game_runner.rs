@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerUpdates};
+use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
 use crate::{NumberOfPlayers, Play, Player, Seed, Spectator, SpectatorUpdate, Turn};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
@@ -33,8 +33,8 @@ pub struct HistoryEvent<T: Play> {
 }
 
 pub struct GameRunnerAdvance<T: Play> {
-    pub player_updates: PlayerUpdates<T>,
     pub spectator_update: SpectatorUpdate<T>,
+    pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 
@@ -42,10 +42,10 @@ impl<T: Play> GameRunnerAdvance<T> {
     pub fn from_game_advance_and_turn_num(game_advance: GameAdvance<T>, turn_num: u64) -> Self {
         Self {
             debug_msgs: game_advance.debug_msgs,
-            player_updates: game_advance.player_updates,
+            player_secret_info_updates: game_advance.player_secret_info_updates,
             spectator_update: SpectatorUpdate {
                 turn_num,
-                update: game_advance.spectator_update,
+                public_info_update: game_advance.public_info_update,
             },
         }
     }
@@ -60,8 +60,8 @@ impl<T: Play> GameRunner<T> {
         &self.settings
     }
 
-    pub fn player_views(&self) -> HashMap<Player, <T as Play>::PlayerView> {
-        self.state.player_views(&self.settings)
+    pub fn player_secret_info(&self) -> HashMap<Player, <T as Play>::PlayerSecretInfo> {
+        self.state.player_secret_info(&self.settings)
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
@@ -72,7 +72,7 @@ impl<T: Play> GameRunner<T> {
         Spectator {
             turn_num: self.turn_num,
             settings: self.settings.clone(),
-            view: self.state.spectator_view(&self.settings),
+            public_info: self.state.public_info(&self.settings),
         }
     }
 

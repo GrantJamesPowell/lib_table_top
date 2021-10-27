@@ -76,7 +76,7 @@ impl Default for Settings {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorView(Option<GuessTheNumber>);
+pub struct PublicInfo(Option<GuessTheNumber>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SpectatorUpdate(GuessTheNumber);
@@ -87,7 +87,7 @@ impl From<GuessTheNumber> for SpectatorUpdate {
     }
 }
 
-impl View for SpectatorView {
+impl View for PublicInfo {
     type Update = SpectatorUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
@@ -99,13 +99,16 @@ impl View for SpectatorView {
 impl Play for GuessTheNumber {
     type Action = Guess;
     type ActionError = ActionError;
-    type SpectatorView = SpectatorView;
+    type PublicInfo = PublicInfo;
     type Settings = Settings;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
     }
-    fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView> {
+    fn player_secret_info(
+        &self,
+        settings: &Self::Settings,
+    ) -> HashMap<Player, Self::PlayerSecretInfo> {
         settings
             .num_players
             .players()
@@ -113,9 +116,9 @@ impl Play for GuessTheNumber {
             .collect()
     }
 
-    fn spectator_view(&self, _settings: &Self::Settings) -> Self::SpectatorView {
+    fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
         let game = self.guesses.is_some().then(|| self.clone());
-        SpectatorView(game)
+        PublicInfo(game)
     }
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
@@ -175,8 +178,8 @@ impl Play for GuessTheNumber {
             new_state.clone(),
             GameAdvance {
                 debug_msgs,
-                spectator_update: new_state.into(),
-                player_updates: Default::default(),
+                public_info_update: new_state.into(),
+                player_secret_info_updates: Default::default(),
             },
         )
     }

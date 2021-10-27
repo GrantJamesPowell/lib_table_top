@@ -46,7 +46,7 @@ fn test_playing_guess_the_number() {
     let (game_runner, advance) = game_runner.submit_turn(turn);
     assert!(advance.debug_msgs.is_empty());
     assert_eq!(
-        advance.spectator_update.update,
+        advance.spectator_update.public_info_update,
         game_runner.game().clone().into()
     );
     // The game is now over

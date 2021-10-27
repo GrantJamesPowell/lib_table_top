@@ -2,7 +2,7 @@ use crate::{
     helpers::opponent,
     Action,
     ActionError::{self, *},
-    Col, Position, Row, SpectatorView, SpectatorViewUpdate, POSSIBLE_WINS,
+    Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
     number_of_players::TWO_PLAYER,
@@ -40,17 +40,17 @@ impl TicTacToe {
     ///
     /// ```
     /// use lttcore::Play;
-    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, SpectatorViewUpdate::*};
+    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, PublicInfoUpdate::*};
     ///
     /// let mut game: TicTacToe = Default::default();
     /// assert_eq!(game.status(), InProgress{ next_up: X.into() });
     /// assert_eq!(game.resign(X), Resign(X.into()));
     /// assert_eq!(game.status(), WinByResignation { winner: O.into() });
     /// ```
-    pub fn resign(&mut self, player: impl Into<Player>) -> SpectatorViewUpdate {
+    pub fn resign(&mut self, player: impl Into<Player>) -> PublicInfoUpdate {
         let player = player.into();
         self.resigned.add(player);
-        SpectatorViewUpdate::Resign(player)
+        PublicInfoUpdate::Resign(player)
     }
 
     pub fn resigned(&self) -> &PlayerSet {
@@ -147,7 +147,7 @@ impl TicTacToe {
         &mut self,
         player: impl Into<Player>,
         position: Position,
-    ) -> Result<SpectatorViewUpdate, ActionError> {
+    ) -> Result<PublicInfoUpdate, ActionError> {
         let player = player.into();
 
         if self.at_position(position).is_some() {
@@ -158,14 +158,14 @@ impl TicTacToe {
 
         let (c, r) = position;
         self.board[c.as_usize()][r.as_usize()] = Some(player);
-        Ok(SpectatorViewUpdate::Claim(player, position))
+        Ok(PublicInfoUpdate::Claim(player, position))
     }
 
     /// Claims the next available space on the board.
     /// Designed to be deterministic to be used for defaulting moves
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Marker::*, SpectatorViewUpdate::*, Col, Row};
+    /// use tic_tac_toe::{ttt, Marker::*, PublicInfoUpdate::*, Col, Row};
     ///
     /// let mut game = ttt!([
     ///     - - -
@@ -203,7 +203,7 @@ impl TicTacToe {
     pub fn claim_next_available_space(
         &mut self,
         player: impl Into<Player>,
-    ) -> Result<SpectatorViewUpdate, ActionError> {
+    ) -> Result<PublicInfoUpdate, ActionError> {
         let position = self.empty_spaces().next().ok_or(AllSpacesTaken)?;
         self.claim_space(player, position)
     }
@@ -500,17 +500,17 @@ impl TicTacToe {
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
-    type SpectatorView = SpectatorView;
+    type PublicInfo = PublicInfo;
 
-    fn action_requests(&self, settings: &Self::Settings) -> PlayerSet {
-        match self.spectator_view(settings).status() {
+    fn action_requests(&self, _settings: &Self::Settings) -> PlayerSet {
+        match self.status() {
             Status::InProgress { next_up } => next_up.into(),
             _ => Default::default(),
         }
     }
 
-    fn spectator_view(&self, _settings: &Self::Settings) -> Self::SpectatorView {
-        SpectatorView::from_ttt(self.clone())
+    fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
+        PublicInfo::from_ttt(self.clone())
     }
 
     fn initial_state_for_settings(
@@ -524,10 +524,10 @@ impl Play for TicTacToe {
         TWO_PLAYER
     }
 
-    fn player_views(
+    fn player_secret_info(
         &self,
         _settings: &<Self as Play>::Settings,
-    ) -> HashMap<Player, Self::PlayerView> {
+    ) -> HashMap<Player, Self::PlayerSecretInfo> {
         TWO_PLAYER
             .players()
             .map(|player| (player, Default::default()))
@@ -549,7 +549,7 @@ impl Play for TicTacToe {
         let mut new_state = self.clone();
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
 
-        let spectator_update = {
+        let public_info_update = {
             match response {
                 Resign => new_state.resign(player),
                 Response(attempted @ Action { position }) => {
@@ -574,8 +574,8 @@ impl Play for TicTacToe {
             new_state,
             GameAdvance {
                 debug_msgs,
-                spectator_update,
-                player_updates: Default::default(),
+                public_info_update,
+                player_secret_info_updates: Default::default(),
             },
         )
     }

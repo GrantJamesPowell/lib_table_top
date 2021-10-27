@@ -11,11 +11,11 @@ pub trait View: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NoSecretPlayerInformation;
+pub struct NoSecretPlayerInfo;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NoSecretPlayerInformationUpdate;
+pub struct NoSecretPlayerInfoUpdate;
 
-impl View for NoSecretPlayerInformation {
-    type Update = NoSecretPlayerInformationUpdate;
+impl View for NoSecretPlayerInfo {
+    type Update = NoSecretPlayerInfoUpdate;
 }

@@ -5,6 +5,6 @@ pub trait Bot<T: Play> {
     fn run(
         player: Player,
         spectator: &Spectator<T>,
-        player_view: &<T as Play>::PlayerView,
+        secret_info: &<T as Play>::PlayerSecretInfo,
     ) -> Result<<T as Play>::Action, Box<dyn Error>>;
 }

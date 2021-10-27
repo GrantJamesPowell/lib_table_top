@@ -88,7 +88,7 @@ fn test_serde_ttt_game_runner() {
         &game_advance.spectator_update,
         json!({
             "turn_num": 1,
-            "update": {"Claim": [0, (1, 2)]}
+            "public_info_update": {"Claim": [0, (1, 2)]}
         }),
     );
 
@@ -121,7 +121,7 @@ fn test_serde_ttt_game_runner() {
         &game_advance.spectator_update,
         json!({
             "turn_num": 2,
-            "update": {"Resign": 1}
+            "public_info_update": {"Resign": 1}
         }),
     );
 

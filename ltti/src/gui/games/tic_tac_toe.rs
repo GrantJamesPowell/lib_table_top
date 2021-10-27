@@ -28,8 +28,8 @@ impl ActionRequestState<TicTacToe> for UIState {
         &mut self,
         event: KeyEvent,
         _player: Player,
-        _player_view: &<TicTacToe as Play>::PlayerView,
-        _spectator_view: &<TicTacToe as Play>::SpectatorView,
+        _player_view: &<TicTacToe as Play>::PlayerSecretInfo,
+        _public_info: &<TicTacToe as Play>::PublicInfo,
         _settings: &<TicTacToe as Play>::Settings,
         send_action: impl FnOnce(<TicTacToe as Play>::Action),
     ) {
@@ -53,8 +53,8 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
         frame: &mut Frame<B>,
         rect: Rect,
         _player: Player,
-        _player_view: &<Self as Play>::PlayerView,
-        spectator_view: &<Self as Play>::SpectatorView,
+        _player_secret_information: &<Self as Play>::PlayerSecretInfo,
+        public_info: &<Self as Play>::PublicInfo,
         _settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     ) {
@@ -74,7 +74,7 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
             .split(inner_rect);
 
         frame.render_widget(board, rect);
-        frame.render_widget(status(spectator_view.status()), layout[1]);
+        frame.render_widget(status(public_info.status()), layout[1]);
 
         let cols = Layout::default()
             .direction(Horizontal)
@@ -93,7 +93,7 @@ impl<B: Backend> ActionRequestInterface<B> for TicTacToe {
                 let pos = (col_num, row_num);
                 let is_selected =
                     pos == (ui_state.selected_col.into(), ui_state.selected_row.into());
-                draw_square(frame, square, spectator_view.at(pos), pos, is_selected);
+                draw_square(frame, square, public_info.at(pos), pos, is_selected);
             }
         }
     }

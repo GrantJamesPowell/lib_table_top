@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use std::{error::Error, ops::Deref};
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct SpectatorView(TicTacToe);
+pub struct PublicInfo(TicTacToe);
 
-impl Deref for SpectatorView {
+impl Deref for PublicInfo {
     type Target = TicTacToe;
 
     fn deref(&self) -> &Self::Target {
@@ -14,27 +14,27 @@ impl Deref for SpectatorView {
     }
 }
 
-impl SpectatorView {
+impl PublicInfo {
     pub fn from_ttt(ttt: TicTacToe) -> Self {
         Self(ttt)
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SpectatorViewUpdate {
+pub enum PublicInfoUpdate {
     Resign(Player),
     Claim(Player, Position),
 }
 
-impl View for SpectatorView {
-    type Update = SpectatorViewUpdate;
+impl View for PublicInfo {
+    type Update = PublicInfoUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn Error>> {
         match update {
-            SpectatorViewUpdate::Resign(player) => {
+            PublicInfoUpdate::Resign(player) => {
                 self.0.resign(*player);
             }
-            SpectatorViewUpdate::Claim(player, position) => {
+            PublicInfoUpdate::Claim(player, position) => {
                 self.0.claim_space(*player, *position)?;
             }
         }

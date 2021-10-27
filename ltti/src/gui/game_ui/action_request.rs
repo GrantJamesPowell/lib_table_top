@@ -10,8 +10,8 @@ pub trait ActionRequestState<T: Play> {
         &mut self,
         event: KeyEvent,
         player: Player,
-        player_view: &<T as Play>::PlayerView,
-        spectator_view: &<T as Play>::SpectatorView,
+        player_secret_info: &<T as Play>::PlayerSecretInfo,
+        public_info: &<T as Play>::PublicInfo,
         settings: &<T as Play>::Settings,
         send_action: impl FnOnce(<T as Play>::Action),
     );
@@ -24,8 +24,8 @@ pub trait ActionRequestInterface<B: Backend>: Play {
         frame: &mut Frame<B>,
         rect: Rect,
         player: Player,
-        player_view: &<Self as Play>::PlayerView,
-        spectator_view: &<Self as Play>::SpectatorView,
+        player_secret_info: &<Self as Play>::PlayerSecretInfo,
+        public_info: &<Self as Play>::PublicInfo,
         settings: &<Self as Play>::Settings,
         ui_state: &Self::UIState,
     );
