@@ -32,6 +32,13 @@ pub struct HistoryEvent<T: Play> {
     actions: Actions<T>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound = "")]
+pub struct Spectator<T: Play> {
+    settings: Arc<<T as Play>::Settings>,
+    view: <T as Play>::SpectatorView,
+}
+
 impl<T: Play> GameRunner<T> {
     pub fn game(&self) -> &T {
         &self.state
@@ -49,8 +56,11 @@ impl<T: Play> GameRunner<T> {
         <T as Play>::number_of_players_for_settings(&self.settings)
     }
 
-    pub fn spectator_view(&self) -> <T as Play>::SpectatorView {
-        self.state.spectator_view(&self.settings)
+    pub fn spectator(&self) -> Spectator<T> {
+        Spectator {
+            settings: self.settings.clone(),
+            view: self.state.spectator_view(&self.settings),
+        }
     }
 
     pub fn turn(&self) -> Option<Turn<T>> {

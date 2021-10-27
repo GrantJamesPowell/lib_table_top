@@ -76,10 +76,7 @@ impl Default for Settings {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorView {
-    settings: Settings,
-    game: Option<GuessTheNumber>,
-}
+pub struct SpectatorView(Option<GuessTheNumber>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SpectatorUpdate(GuessTheNumber);
@@ -94,7 +91,7 @@ impl View for SpectatorView {
     type Update = SpectatorUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
-        self.game = Some(update.0.clone());
+        self.0 = Some(update.0.clone());
         Ok(())
     }
 }
@@ -116,11 +113,9 @@ impl Play for GuessTheNumber {
             .collect()
     }
 
-    fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView {
-        SpectatorView {
-            settings: settings.clone(),
-            game: self.guesses.as_ref().and(self.clone().into()),
-        }
+    fn spectator_view(&self, _settings: &Self::Settings) -> Self::SpectatorView {
+        let game = self.guesses.is_some().then(|| self.clone());
+        SpectatorView(game)
     }
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
