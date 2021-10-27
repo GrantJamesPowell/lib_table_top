@@ -50,6 +50,11 @@ impl PlayerSet {
             .unwrap()
     }
 
+    /// Alias for `count`
+    pub fn len(&self) -> u8 {
+        self.count()
+    }
+
     /// Returns if a player is in set
     ///
     /// ```
@@ -136,6 +141,71 @@ impl PlayerSet {
     pub fn remove(&mut self, player: impl Into<Player>) {
         let player = player.into();
         self.0[section(player)] &= !(1usize << offset(player)) as u64
+    }
+
+    /// The PlayerSet representing the union, i.e. the players that are in self, other, or both
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet};
+    ///
+    /// let set1: PlayerSet = [1,2,3].into_iter().map(Player::new).collect();
+    /// let set2: PlayerSet = [2,3,4].into_iter().map(Player::new).collect();
+    ///
+    /// let result = set1.union(set2);
+    /// let expected: PlayerSet = [1, 2, 3, 4].into_iter().map(Player::new).collect();
+    /// assert_eq!(result, expected);
+    /// ```
+    pub fn union(&self, other: Self) -> Self {
+        Self(self.0.zip(other.0).map(|(x, y)| x | y))
+    }
+
+    /// The PlayerSet representing the intersection, i.e. the players that are in self and also in other
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet};
+    ///
+    /// let set1: PlayerSet = [1,2,3].into_iter().map(Player::new).collect();
+    /// let set2: PlayerSet = [2,3,4].into_iter().map(Player::new).collect();
+    ///
+    /// let result = set1.intersection(set2);
+    /// let expected: PlayerSet = [2,3].into_iter().map(Player::new).collect();
+    /// assert_eq!(result, expected);
+    /// ```
+    pub fn intersection(&self, other: Self) -> Self {
+        Self(self.0.zip(other.0).map(|(x, y)| x & y))
+    }
+
+    /// The PlayerSet representing the difference, i.e., the players that are in self but not in other.
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet};
+    ///
+    /// let set1: PlayerSet = [1,2,3].into_iter().map(Player::new).collect();
+    /// let set2: PlayerSet = [2,3,4].into_iter().map(Player::new).collect();
+    ///
+    /// let result = set1.difference(set2);
+    /// let expected: PlayerSet = [1].into_iter().map(Player::new).collect();
+    /// assert_eq!(result, expected);
+    /// ```
+    pub fn difference(&self, other: Self) -> Self {
+        Self(self.0.zip(other.0).map(|(x, y)| x & !y))
+    }
+
+    /// The PlayerSet representing the symmetric difference, i.e., the players in self or other but
+    /// not both
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet};
+    ///
+    /// let set1: PlayerSet = [1,2,3].into_iter().map(Player::new).collect();
+    /// let set2: PlayerSet = [2,3,4].into_iter().map(Player::new).collect();
+    ///
+    /// let result = set1.symmetric_difference(set2);
+    /// let expected: PlayerSet = [1, 4].into_iter().map(Player::new).collect();
+    /// assert_eq!(result, expected);
+    ///
+    pub fn symmetric_difference(&self, other: Self) -> Self {
+        Self(self.0.zip(other.0).map(|(x, y)| x ^ y))
     }
 }
 
