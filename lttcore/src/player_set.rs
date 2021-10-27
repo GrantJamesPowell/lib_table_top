@@ -22,6 +22,12 @@ impl PlayerSet {
         Default::default()
     }
 
+    /// The same as `new` or `Default::default` but declares intent that the programmer wants this
+    /// to be empty
+    pub fn empty() -> Self {
+        Default::default()
+    }
+
     /// Return the count of players in the set
     /// ```
     /// use lttcore::PlayerSet;

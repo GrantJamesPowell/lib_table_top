@@ -42,6 +42,10 @@ pub struct Turn<T: Play> {
 }
 
 impl<T: Play> Turn<T> {
+    pub fn number(&self) -> u64 {
+        self.turn_num
+    }
+
     pub fn pending_action_requests(&self) -> PlayerSet {
         self.action_requests
             .players()
