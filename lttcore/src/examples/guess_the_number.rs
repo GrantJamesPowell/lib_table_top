@@ -17,11 +17,15 @@ pub struct GuessTheNumber {
 }
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
-pub struct Action {
-    pub guess: u64,
+pub struct Guess(u64);
+
+impl From<u64> for Guess {
+    fn from(n: u64) -> Self {
+        Guess(n)
+    }
 }
 
-type Guesses = SmallVec<[ActionResponse<Action>; 8]>;
+pub type Guesses = SmallVec<[ActionResponse<Guess>; 8]>;
 
 #[derive(Error, Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ActionError {
@@ -78,10 +82,16 @@ pub struct SpectatorView {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorViewUpdate(Guesses);
+pub struct SpectatorUpdate(pub Guesses);
+
+impl From<Guesses> for SpectatorUpdate {
+    fn from(guesses: Guesses) -> Self {
+        Self(guesses)
+    }
+}
 
 impl View for SpectatorView {
-    type Update = SpectatorViewUpdate;
+    type Update = SpectatorUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
         self.guesses = Some(update.0.clone());
@@ -90,7 +100,7 @@ impl View for SpectatorView {
 }
 
 impl Play for GuessTheNumber {
-    type Action = Action;
+    type Action = Guess;
     type ActionError = ActionError;
     type SpectatorView = SpectatorView;
     type Settings = Settings;
@@ -121,7 +131,10 @@ impl Play for GuessTheNumber {
     }
 
     fn action_requests(&self, settings: &Self::Settings) -> PlayerSet {
-        settings.num_players.player_set()
+        match self.guesses {
+            Some(_) => PlayerSet::empty(),
+            None => settings.num_players.player_set(),
+        }
     }
 
     fn advance(
@@ -134,7 +147,7 @@ impl Play for GuessTheNumber {
         let mut actions_vec = Vec::with_capacity(settings.num_players.get() as usize);
 
         for action @ (player, response) in actions {
-            if let Response(attempted @ Action { guess }) = response {
+            if let Response(attempted @ Guess(guess)) = response {
                 if !settings.range().contains(&guess) {
                     debug_msgs.push((
                         player,
@@ -165,7 +178,7 @@ impl Play for GuessTheNumber {
             },
             GameAdvance {
                 debug_msgs,
-                spectator_update: SpectatorViewUpdate(guesses),
+                spectator_update: SpectatorUpdate(guesses),
                 player_updates: Default::default(),
             },
         )

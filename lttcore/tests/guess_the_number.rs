@@ -1,7 +1,10 @@
 use lttcore::examples::guess_the_number::{
-    GuessTheNumber, Settings, SettingsBuilder, SettingsBuilderError,
+    Guess, GuessTheNumber, Guesses, Settings, SettingsBuilder, SettingsBuilderError,
+    SpectatorUpdate,
 };
-use lttcore::number_of_players::ONE_PLAYER;
+use lttcore::number_of_players::{EIGHT_PLAYER, ONE_PLAYER};
+use lttcore::seed::SEED_42;
+use lttcore::{ActionResponse, GameRunner, GameRunnerBuilder, Player};
 
 #[test]
 fn test_building_default_settings() {
@@ -18,4 +21,38 @@ fn test_it_rejects_settings_where_range_is_empty() {
         .map_err(|err| err.to_string());
 
     assert_eq!(err, Err("range must not be empty".to_string()));
+}
+
+#[test]
+fn test_playing_guess_the_number() {
+    let settings = SettingsBuilder::default()
+        .num_players(EIGHT_PLAYER)
+        .build()
+        .unwrap();
+    let game_runner = GameRunnerBuilder::<GuessTheNumber>::default()
+        .settings(settings)
+        .seed(SEED_42)
+        .build()
+        .unwrap();
+
+    let spec_view = game_runner.spectator_view();
+    let mut turn = game_runner.turn().unwrap();
+
+    for player in turn.pending_action_requests() {
+        let guess: Guess = player.as_u64().into();
+        turn.add_action(player, guess).unwrap();
+    }
+
+    assert!(turn.is_ready_to_submit());
+    let (game_runner, advance) = game_runner.submit_turn(turn).unwrap();
+    assert!(advance.debug_msgs.is_empty());
+    let expected_update: Guesses = EIGHT_PLAYER
+        .players()
+        .map(|p: Player| -> Guess { p.as_u64().into() })
+        .map(|g: Guess| -> ActionResponse<Guess> { g.into() })
+        .collect();
+
+    assert_eq!(advance.spectator_update, expected_update.into());
+    // The game is now over
+    assert!(game_runner.turn().is_none());
 }
