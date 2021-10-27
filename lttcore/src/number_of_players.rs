@@ -40,9 +40,9 @@ impl NumberOfPlayers {
     /// use lttcore::{Player, PlayerSet, NumberOfPlayers, number_of_players::THREE_PLAYER};
     ///
     /// let mut expected = PlayerSet::new();
-    /// expected.add(0);
-    /// expected.add(1);
-    /// expected.add(2);
+    /// expected.insert(0);
+    /// expected.insert(1);
+    /// expected.insert(2);
     ///
     /// assert_eq!(
     ///   THREE_PLAYER.player_set(),
@@ -52,7 +52,7 @@ impl NumberOfPlayers {
     pub fn player_set(&self) -> PlayerSet {
         let mut set = PlayerSet::new();
         for player in self.players() {
-            set.add(player);
+            set.insert(player);
         }
         set
     }

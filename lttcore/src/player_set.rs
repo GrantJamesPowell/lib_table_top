@@ -34,11 +34,11 @@ impl PlayerSet {
     ///
     /// let mut set: PlayerSet = Default::default();
     /// assert_eq!(set.count(), 0);
-    /// set.add(0);
+    /// set.insert(0);
     /// assert_eq!(set.count(), 1);
-    /// set.add(1);
+    /// set.insert(1);
     /// assert_eq!(set.count(), 2);
-    /// set.add(1);
+    /// set.insert(1);
     /// assert_eq!(set.count(), 2);
     /// ```
     pub fn count(&self) -> u8 {
@@ -59,7 +59,7 @@ impl PlayerSet {
     /// let player: Player = 1.into();
     ///
     /// assert!(!set.contains(player));
-    /// set.add(player);
+    /// set.insert(player);
     /// assert!(set.contains(player));
     /// ```
     pub fn contains(&self, player: impl Into<Player>) -> bool {
@@ -74,7 +74,7 @@ impl PlayerSet {
     ///
     /// let mut set: PlayerSet = Default::default();
     /// assert!(set.is_empty());
-    /// set.add(1);
+    /// set.insert(1);
     /// assert!(!set.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -91,7 +91,7 @@ impl PlayerSet {
     /// assert!(set.players().next().is_none());
     ///
     /// let player: Player = 1.into();
-    /// set.add(player);
+    /// set.insert(player);
     ///
     /// assert_eq!(
     ///   set.players().collect::<Vec<_>>(),
@@ -111,10 +111,10 @@ impl PlayerSet {
     /// let player: Player = 1.into();
     ///
     /// assert!(!set.contains(player));
-    /// set.add(player);
+    /// set.insert(player);
     /// assert!(set.contains(player));
     /// ```
-    pub fn add(&mut self, player: impl Into<Player>) {
+    pub fn insert(&mut self, player: impl Into<Player>) {
         let player = player.into();
         self.0[section(player)] |= (1usize << offset(player)) as u64
     }
@@ -128,7 +128,7 @@ impl PlayerSet {
     /// let player: Player = 1.into();
     ///
     /// assert!(!set.contains(player));
-    /// set.add(player);
+    /// set.insert(player);
     /// assert!(set.contains(player));
     /// set.remove(player);
     /// assert!(!set.contains(player));
@@ -188,7 +188,7 @@ impl FromIterator<Player> for PlayerSet {
         let mut set = PlayerSet::new();
 
         for player in iter {
-            set.add(player);
+            set.insert(player);
         }
 
         set
@@ -225,7 +225,7 @@ mod tests {
         for player in Player::all() {
             let mut set = PlayerSet::new();
             assert!(!set.contains(player));
-            set.add(player);
+            set.insert(player);
             assert!(set.contains(player));
             set.remove(player);
             assert!(!set.contains(player));
@@ -234,7 +234,7 @@ mod tests {
         let mut set = PlayerSet::new();
 
         for player in Player::all() {
-            set.add(player);
+            set.insert(player);
         }
 
         for player in Player::all() {
