@@ -42,12 +42,15 @@ pub struct Turn<T: Play> {
 }
 
 impl<T: Play> Turn<T> {
-    pub fn pending_action_requests(&self) -> impl Iterator<Item = Player> + '_ {
-        self.action_requests.players().filter(|player| {
-            self.actions
-                .binary_search_by_key(&player, |(p, _)| &*p)
-                .is_err()
-        })
+    pub fn pending_action_requests(&self) -> PlayerSet {
+        self.action_requests
+            .players()
+            .filter(|player| {
+                self.actions
+                    .binary_search_by_key(&player, |(p, _)| &*p)
+                    .is_err()
+            })
+            .collect()
     }
 
     pub fn add_action(
@@ -75,7 +78,7 @@ impl<T: Play> Turn<T> {
     }
 
     pub fn is_ready_to_submit(&self) -> bool {
-        self.pending_action_requests().next().is_none()
+        self.pending_action_requests().is_empty()
     }
 }
 
