@@ -1,5 +1,5 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
-use lttcore::play::{NoCustomSettings, NoCustomSettingsError};
+use lttcore::play::NoCustomSettings;
 use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
@@ -184,7 +184,6 @@ fn test_serialize_draw_pile() {
 #[test]
 fn test_serialize_no_custom_settings_and_error() {
     test_simple_serialization((NoCustomSettings, Null));
-    test_simple_serialization((NoCustomSettingsError, Null));
 }
 
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))

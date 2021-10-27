@@ -552,12 +552,12 @@ impl Play for TicTacToe {
         let spectator_update = {
             match response {
                 Resign => new_state.resign(player),
-                Response(attempted_action @ Action { position }) => {
+                Response(attempted @ Action { position }) => {
                     match new_state.claim_space(player, position) {
                         Ok(update) => update,
                         Err(err) => {
                             let msg = DebugMsg {
-                                attempted_action,
+                                attempted,
                                 error: err,
                             };
                             debug_msgs.push((player, msg));

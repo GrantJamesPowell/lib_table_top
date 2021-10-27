@@ -8,9 +8,23 @@ use std::iter::FromIterator;
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlayerSet([u64; 4]);
 
+fn section(player: Player) -> usize {
+    player.as_usize().checked_div(64).unwrap()
+}
+
+fn offset(player: Player) -> usize {
+    player.as_usize() % 64
+}
+
 impl PlayerSet {
     /// Returns a new, empty player set
     pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// The same as `new` or `Default::default` but declares intent that the programmer wants this
+    /// to be empty
+    pub fn empty() -> Self {
         Default::default()
     }
 
@@ -50,7 +64,7 @@ impl PlayerSet {
     /// ```
     pub fn contains(&self, player: impl Into<Player>) -> bool {
         let player = player.into();
-        (self.0[Self::section(player)] & (1usize << Self::offset(player)) as u64) > 0
+        (self.0[section(player)] & (1usize << offset(player)) as u64) > 0
     }
 
     /// If a PlayerSet is empty
@@ -84,8 +98,8 @@ impl PlayerSet {
     ///   vec![player]
     /// );
     /// ```
-    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
-        Player::all().filter(|&player| self.contains(player))
+    pub fn players(&self) -> impl Iterator<Item = Player> {
+        self.clone().into_iter()
     }
 
     /// Adds the player to the set, is a noop if player is already in set
@@ -102,7 +116,7 @@ impl PlayerSet {
     /// ```
     pub fn add(&mut self, player: impl Into<Player>) {
         let player = player.into();
-        self.0[Self::section(player)] |= (1usize << Self::offset(player)) as u64
+        self.0[section(player)] |= (1usize << offset(player)) as u64
     }
 
     /// Remove a player from the set, is a noop if player is not in the set
@@ -121,15 +135,45 @@ impl PlayerSet {
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) {
         let player = player.into();
-        self.0[Self::section(player)] &= !(1usize << Self::offset(player)) as u64
+        self.0[section(player)] &= !(1usize << offset(player)) as u64
     }
+}
 
-    fn section(player: Player) -> usize {
-        player.as_usize().checked_div(64).unwrap()
+#[derive(Clone, Debug)]
+pub struct IntoIter {
+    index: Option<u8>,
+    set: PlayerSet,
+}
+
+impl IntoIterator for PlayerSet {
+    type Item = Player;
+    type IntoIter = IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            index: Some(0),
+            set: self,
+        }
     }
+}
 
-    fn offset(player: Player) -> usize {
-        player.as_usize() % 64
+impl Iterator for IntoIter {
+    type Item = Player;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.index.take() {
+            None => None,
+            Some(idx) => {
+                for i in idx..=u8::MAX {
+                    if self.set.contains(i) {
+                        self.index = i.checked_add(1);
+                        return Some(i.into());
+                    }
+                }
+
+                None
+            }
+        }
     }
 }
 
@@ -161,6 +205,19 @@ mod tests {
         assert!(set.contains(0));
         assert!(set.contains(1));
         assert!(!set.contains(2));
+    }
+
+    #[test]
+    fn test_into_iter_for_player_set() {
+        let players: Vec<Player> = [0, 1, 2, u8::MAX].into_iter().map(Player::new).collect();
+        let player_set: PlayerSet = players.iter().cloned().collect();
+        let mut result: Vec<Player> = Default::default();
+
+        for player in player_set {
+            result.push(player);
+        }
+
+        assert_eq!(result, players);
     }
 
     #[test]

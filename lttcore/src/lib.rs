@@ -31,3 +31,4 @@ pub use seed::Seed;
 
 pub mod bots;
 pub mod common;
+pub mod examples;
