@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, GameAdvance};
-use crate::{NumberOfPlayers, Play, Player, Seed, Turn};
+use crate::{NumberOfPlayers, Play, Player, Seed, Spectator, Turn};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 
@@ -32,13 +32,6 @@ pub struct HistoryEvent<T: Play> {
     actions: Actions<T>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(bound = "")]
-pub struct Spectator<T: Play> {
-    settings: Arc<<T as Play>::Settings>,
-    view: <T as Play>::SpectatorView,
-}
-
 impl<T: Play> GameRunner<T> {
     pub fn game(&self) -> &T {
         &self.state
@@ -58,6 +51,7 @@ impl<T: Play> GameRunner<T> {
 
     pub fn spectator(&self) -> Spectator<T> {
         Spectator {
+            turn_num: self.turn_num,
             settings: self.settings.clone(),
             view: self.state.spectator_view(&self.settings),
         }

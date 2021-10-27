@@ -24,13 +24,16 @@ pub mod play;
 pub use play::{ActionResponse, Play};
 
 pub mod game_runner;
-pub use game_runner::{GameRunner, GameRunnerBuilder, Spectator};
+pub use game_runner::{GameRunner, GameRunnerBuilder};
 
 pub mod turn;
 pub use turn::Turn;
 
 pub mod seed;
 pub use seed::Seed;
+
+pub mod spectator;
+pub use spectator::Spectator;
 
 pub mod bots;
 pub mod common;
