@@ -4,8 +4,8 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::play::{ActionResponse, GameAdvance};
-use crate::{NumberOfPlayers, Play, Player, Seed, Spectator, Turn};
+use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerUpdates};
+use crate::{NumberOfPlayers, Play, Player, Seed, Spectator, SpectatorUpdate, Turn};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 
@@ -30,6 +30,25 @@ pub struct GameRunner<T: Play> {
 #[serde(bound = "")]
 pub struct HistoryEvent<T: Play> {
     actions: Actions<T>,
+}
+
+pub struct GameRunnerAdvance<T: Play> {
+    pub player_updates: PlayerUpdates<T>,
+    pub spectator_update: SpectatorUpdate<T>,
+    pub debug_msgs: DebugMsgs<T>,
+}
+
+impl<T: Play> GameRunnerAdvance<T> {
+    pub fn from_game_advance_and_turn_num(game_advance: GameAdvance<T>, turn_num: u64) -> Self {
+        Self {
+            debug_msgs: game_advance.debug_msgs,
+            player_updates: game_advance.player_updates,
+            spectator_update: SpectatorUpdate {
+                turn_num,
+                update: game_advance.spectator_update,
+            },
+        }
+    }
 }
 
 impl<T: Play> GameRunner<T> {
@@ -88,7 +107,7 @@ impl<T: Play> GameRunner<T> {
     /// game.submit_turn(turn);
     /// ```
     #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
-    pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameAdvance<T>) {
+    pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameRunnerAdvance<T>) {
         assert!(
             turn.is_ready_to_submit(),
             "turn {:?} was not ready to submit, it was missing {:?} players actions",
@@ -103,6 +122,7 @@ impl<T: Play> GameRunner<T> {
         );
 
         let mut history = self.history.clone();
+
         history.push_back(HistoryEvent {
             actions: turn.actions,
         });
@@ -114,7 +134,7 @@ impl<T: Play> GameRunner<T> {
                 turn_num: self.turn_num + 1,
                 ..self.clone()
             },
-            game_advance,
+            GameRunnerAdvance::from_game_advance_and_turn_num(game_advance, self.turn_num + 1),
         )
     }
 }

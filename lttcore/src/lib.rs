@@ -33,7 +33,7 @@ pub mod seed;
 pub use seed::Seed;
 
 pub mod spectator;
-pub use spectator::Spectator;
+pub use spectator::{Spectator, SpectatorUpdate};
 
 pub mod bots;
 pub mod common;

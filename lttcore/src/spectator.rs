@@ -11,6 +11,8 @@ pub struct Spectator<T: Play> {
     pub view: <T as Play>::SpectatorView,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound = "")]
 pub struct SpectatorUpdate<T: Play> {
     pub turn_num: u64,
     pub update: <<T as Play>::SpectatorView as View>::Update,
