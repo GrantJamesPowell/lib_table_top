@@ -105,7 +105,10 @@ impl Play for GuessTheNumber {
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
     }
-    fn player_views(&self, settings: &Self::Settings) -> HashMap<Player, Self::PlayerView> {
+    fn player_secret_info(
+        &self,
+        settings: &Self::Settings,
+    ) -> HashMap<Player, Self::PlayerSecretInfo> {
         settings
             .num_players
             .players()
@@ -176,7 +179,7 @@ impl Play for GuessTheNumber {
             GameAdvance {
                 debug_msgs,
                 spectator_update: new_state.into(),
-                player_updates: Default::default(),
+                player_secret_info_updates: Default::default(),
             },
         )
     }

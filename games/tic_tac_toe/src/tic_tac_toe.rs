@@ -524,10 +524,10 @@ impl Play for TicTacToe {
         TWO_PLAYER
     }
 
-    fn player_views(
+    fn player_secret_info(
         &self,
         _settings: &<Self as Play>::Settings,
-    ) -> HashMap<Player, Self::PlayerView> {
+    ) -> HashMap<Player, Self::PlayerSecretInfo> {
         TWO_PLAYER
             .players()
             .map(|player| (player, Default::default()))
@@ -575,7 +575,7 @@ impl Play for TicTacToe {
             GameAdvance {
                 debug_msgs,
                 spectator_update,
-                player_updates: Default::default(),
+                player_secret_info_updates: Default::default(),
             },
         )
     }
