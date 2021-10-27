@@ -40,7 +40,7 @@ fn test_playing_guess_the_number() {
 
     for player in turn.pending_action_requests() {
         let guess: Guess = player.as_u64().into();
-        turn.add_action(player, guess).unwrap();
+        turn.add_action(player, guess);
     }
 
     assert!(turn.is_ready_to_submit());

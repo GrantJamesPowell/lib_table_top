@@ -57,17 +57,36 @@ impl<T: Play> Turn<T> {
             .collect()
     }
 
+    /// Add an action to the turn
+    ///
+    /// # Panics
+    ///
+    /// This panics if the `Player` isn't in the turn
+    /// ```should_panic
+    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
+    /// use lttcore::{Player, GameRunnerBuilder};
+    ///
+    /// let player: Player = 255.into();
+    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
+    /// let mut turn = game.turn().unwrap();
+    ///
+    /// let guess: Guess = 42.into();
+    /// turn.add_action(player, guess);
+    /// ```
     pub fn add_action(
         &mut self,
         player: impl Into<Player>,
         action_response: impl Into<ActionResponse<<T as Play>::Action>>,
-    ) -> Result<(), SubmitError> {
+    ) {
         let player = player.into();
         let action_response = action_response.into();
 
-        if !self.action_requests.contains(player) {
-            return Err(SubmitError::InvalidPlayer);
-        }
+        assert!(
+            self.action_requests.contains(player),
+            "{:?} was added to turn {:?}, but player isn't in the turn",
+            player,
+            self.turn_num
+        );
 
         match self.actions.binary_search_by_key(&player, |(p, _)| *p) {
             Ok(existing_action_index) => {
@@ -77,8 +96,6 @@ impl<T: Play> Turn<T> {
                 self.actions.insert(index, (player, action_response));
             }
         }
-
-        return Ok(());
     }
 
     pub fn is_ready_to_submit(&self) -> bool {
