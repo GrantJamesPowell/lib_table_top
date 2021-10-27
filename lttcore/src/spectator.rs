@@ -8,14 +8,14 @@ use std::sync::Arc;
 pub struct Spectator<T: Play> {
     pub turn_num: u64,
     pub settings: Arc<<T as Play>::Settings>,
-    pub view: <T as Play>::SpectatorView,
+    pub public_info: <T as Play>::PublicInfo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct SpectatorUpdate<T: Play> {
     pub turn_num: u64,
-    pub update: <<T as Play>::SpectatorView as View>::Update,
+    pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
 }
 
 impl<T: Play> Spectator<T> {
@@ -27,7 +27,7 @@ impl<T: Play> Spectator<T> {
             self.turn_num,
         );
 
-        self.view.update(&update.update)?;
+        self.public_info.update(&update.public_info_update)?;
         self.turn_num = update.turn_num;
         Ok(())
     }

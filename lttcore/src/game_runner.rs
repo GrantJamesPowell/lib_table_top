@@ -33,8 +33,8 @@ pub struct HistoryEvent<T: Play> {
 }
 
 pub struct GameRunnerAdvance<T: Play> {
-    pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub spectator_update: SpectatorUpdate<T>,
+    pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 
@@ -45,7 +45,7 @@ impl<T: Play> GameRunnerAdvance<T> {
             player_secret_info_updates: game_advance.player_secret_info_updates,
             spectator_update: SpectatorUpdate {
                 turn_num,
-                update: game_advance.spectator_update,
+                public_info_update: game_advance.public_info_update,
             },
         }
     }
@@ -72,7 +72,7 @@ impl<T: Play> GameRunner<T> {
         Spectator {
             turn_num: self.turn_num,
             settings: self.settings.clone(),
-            view: self.state.spectator_view(&self.settings),
+            public_info: self.state.public_info(&self.settings),
         }
     }
 
