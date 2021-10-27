@@ -82,7 +82,7 @@ fn test_serde_ttt_game_runner() {
             position: (Col::new(1), Row::new(2)),
         },
     );
-    let (game_runner, game_advance) = game_runner.submit_turn(turn).unwrap();
+    let (game_runner, game_advance) = game_runner.submit_turn(turn);
 
     test_simple_serialization(
         &game_advance.spectator_update,
@@ -112,7 +112,7 @@ fn test_serde_ttt_game_runner() {
     let mut turn = game_runner.turn().unwrap();
     turn.add_action(O, ActionResponse::Resign);
 
-    let (game_runner, game_advance) = game_runner.submit_turn(turn).unwrap();
+    let (game_runner, game_advance) = game_runner.submit_turn(turn);
 
     test_simple_serialization(&game_advance.spectator_update, json!({"Resign": 1}));
 
