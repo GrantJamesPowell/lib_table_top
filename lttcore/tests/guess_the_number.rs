@@ -35,7 +35,6 @@ fn test_playing_guess_the_number() {
         .build()
         .unwrap();
 
-    let spec_view = game_runner.spectator_view();
     let mut turn = game_runner.turn().unwrap();
 
     for player in turn.pending_action_requests() {

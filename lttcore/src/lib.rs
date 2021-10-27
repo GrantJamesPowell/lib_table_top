@@ -24,7 +24,7 @@ pub mod play;
 pub use play::{ActionResponse, Play};
 
 pub mod game_runner;
-pub use game_runner::{GameRunner, GameRunnerBuilder};
+pub use game_runner::{GameRunner, GameRunnerBuilder, Spectator};
 
 pub mod turn;
 pub use turn::Turn;

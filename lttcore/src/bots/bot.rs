@@ -1,11 +1,10 @@
-use crate::{Play, Player};
+use crate::{Play, Player, Spectator};
 use std::error::Error;
 
 pub trait Bot<T: Play> {
     fn run(
         player: Player,
-        settings: &<T as Play>::Settings,
+        spectator: &Spectator<T>,
         player_view: &<T as Play>::PlayerView,
-        spectator_view: &<T as Play>::SpectatorView,
     ) -> Result<<T as Play>::Action, Box<dyn Error>>;
 }
