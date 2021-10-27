@@ -25,8 +25,11 @@ type Guesses = SmallVec<[ActionResponse<Action>; 8]>;
 
 #[derive(Error, Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ActionError {
-    #[error("Guess of {:?} is out of range {:?}-{:?}", guess, min, max)]
-    GuessOutOfRange { min: u64, max: u64, guess: u64 },
+    #[error("Guess of {:?} is out of range {:?}", guess, range)]
+    GuessOutOfRange {
+        guess: u64,
+        range: RangeInclusive<u64>,
+    },
 }
 
 use ActionError::*;
@@ -34,36 +37,27 @@ use ActionError::*;
 #[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[builder(derive(Debug), build_fn(validate = "Self::validate"))]
 pub struct Settings {
-    #[builder(default = "0")]
-    min: u64,
-    #[builder(default = "u64::MAX")]
-    max: u64,
+    #[builder(default = "0..=u64::MAX")]
+    range: RangeInclusive<u64>,
     #[builder(default = "ONE_PLAYER")]
     num_players: NumberOfPlayers,
 }
 
 impl SettingsBuilder {
     fn validate(&self) -> Result<(), String> {
-        match (self.min, self.max) {
-            (Some(min), Some(max)) if min >= max => {
-                Err("min must be strictly less than max".into())
+        if let Some(range) = &self.range {
+            if range.is_empty() {
+                return Err("range must not be empty".into());
             }
-            _ => Ok(()),
         }
+
+        Ok(())
     }
 }
 
 impl Settings {
     pub fn range(&self) -> RangeInclusive<u64> {
-        self.min..=self.max
-    }
-
-    pub fn min(&self) -> u64 {
-        self.min
-    }
-
-    pub fn max(&self) -> u64 {
-        self.max
+        self.range.clone()
     }
 
     pub fn num_players(&self) -> NumberOfPlayers {
@@ -73,11 +67,7 @@ impl Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self {
-            min: 0,
-            max: u64::MAX,
-            num_players: ONE_PLAYER,
-        }
+        SettingsBuilder::default().build().unwrap()
     }
 }
 
@@ -125,7 +115,7 @@ impl Play for GuessTheNumber {
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
         Self {
-            secret_number: rng.gen_range(settings.min..=settings.max),
+            secret_number: rng.gen_range(settings.range.clone()),
             guesses: None,
         }
     }
@@ -152,8 +142,7 @@ impl Play for GuessTheNumber {
                             attempted,
                             error: GuessOutOfRange {
                                 guess,
-                                min: settings.min,
-                                max: settings.max,
+                                range: settings.range.clone(),
                             },
                         },
                     ))
