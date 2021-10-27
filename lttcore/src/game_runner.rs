@@ -57,17 +57,36 @@ impl<T: Play> Turn<T> {
             .collect()
     }
 
+    /// Add an action to the turn
+    ///
+    /// # Panics
+    ///
+    /// This panics if the `Player` isn't in the turn
+    /// ```should_panic
+    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
+    /// use lttcore::{Player, GameRunnerBuilder};
+    ///
+    /// let player: Player = 255.into();
+    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
+    /// let mut turn = game.turn().unwrap();
+    ///
+    /// let guess: Guess = 42.into();
+    /// turn.add_action(player, guess);
+    /// ```
     pub fn add_action(
         &mut self,
         player: impl Into<Player>,
         action_response: impl Into<ActionResponse<<T as Play>::Action>>,
-    ) -> Result<(), SubmitError> {
+    ) {
         let player = player.into();
         let action_response = action_response.into();
 
-        if !self.action_requests.contains(player) {
-            return Err(SubmitError::InvalidPlayer);
-        }
+        assert!(
+            self.action_requests.contains(player),
+            "{:?} was added to turn {:?}, but player isn't in the turn",
+            player,
+            self.turn_num
+        );
 
         match self.actions.binary_search_by_key(&player, |(p, _)| *p) {
             Ok(existing_action_index) => {
@@ -77,8 +96,6 @@ impl<T: Play> Turn<T> {
                 self.actions.insert(index, (player, action_response));
             }
         }
-
-        return Ok(());
     }
 
     pub fn is_ready_to_submit(&self) -> bool {
@@ -128,10 +145,31 @@ impl<T: Play> GameRunner<T> {
         }
     }
 
-    pub fn submit_turn(&self, turn: Turn<T>) -> Result<(Self, GameAdvance<T>), SubmitError> {
-        if !turn.is_ready_to_submit() || (turn.turn_num != self.turn_num) {
-            return Err(SubmitError::InvalidTurn);
-        }
+    /// Submit a turn to the game runner and advance the game
+    ///
+    /// Note: this does not mutate the existing game runner, but instead returns a new one
+    ///
+    /// # Panics
+    ///
+    /// This will panic if the turn doesn't have all the players accounted for
+    ///
+    /// ```should_panic
+    /// use std::panic::catch_unwind;
+    /// use lttcore::examples::GuessTheNumber;
+    /// use lttcore::GameRunnerBuilder;
+    ///
+    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
+    /// let turn = game.turn().unwrap();
+    /// game.submit_turn(turn);
+    /// ```
+    #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
+    pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameAdvance<T>) {
+        assert!(
+            turn.is_ready_to_submit(),
+            "turn {:?} was not ready to submit, it was missing {:?} players actions",
+            turn.number(),
+            turn.pending_action_requests().count()
+        );
 
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
@@ -144,7 +182,7 @@ impl<T: Play> GameRunner<T> {
             actions: turn.actions,
         });
 
-        Ok((
+        (
             Self {
                 history,
                 state: new_state,
@@ -152,7 +190,7 @@ impl<T: Play> GameRunner<T> {
                 ..self.clone()
             },
             game_advance,
-        ))
+        )
     }
 }
 

@@ -40,18 +40,12 @@ fn test_playing_guess_the_number() {
 
     for player in turn.pending_action_requests() {
         let guess: Guess = player.as_u64().into();
-        turn.add_action(player, guess).unwrap();
+        turn.add_action(player, guess);
     }
 
     assert!(turn.is_ready_to_submit());
-    let (game_runner, advance) = game_runner.submit_turn(turn).unwrap();
+    let (game_runner, advance) = game_runner.submit_turn(turn);
     assert!(advance.debug_msgs.is_empty());
-    // let expected_update: Guesses = EIGHT_PLAYER
-    //     .players()
-    //     .map(|p: Player| -> Guess { p.as_u64().into() })
-    //     .map(|g: Guess| -> ActionResponse<Guess> { g.into() })
-    //     .collect();
-
     assert_eq!(advance.spectator_update, game_runner.game().clone().into());
     // The game is now over
     assert!(game_runner.turn().is_none());

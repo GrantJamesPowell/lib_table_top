@@ -81,8 +81,7 @@ fn test_serde_ttt_game_runner() {
         Action {
             position: (Col::new(1), Row::new(2)),
         },
-    )
-    .unwrap();
+    );
     let (game_runner, game_advance) = game_runner.submit_turn(turn).unwrap();
 
     test_simple_serialization(
@@ -111,7 +110,7 @@ fn test_serde_ttt_game_runner() {
         }),
     );
     let mut turn = game_runner.turn().unwrap();
-    turn.add_action(O, ActionResponse::Resign).unwrap();
+    turn.add_action(O, ActionResponse::Resign);
 
     let (game_runner, game_advance) = game_runner.submit_turn(turn).unwrap();
 
