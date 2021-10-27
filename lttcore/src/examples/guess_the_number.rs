@@ -78,15 +78,15 @@ impl Default for Settings {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct SpectatorView {
     settings: Settings,
-    guesses: Option<Guesses>,
+    game: Option<GuessTheNumber>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorUpdate(pub Guesses);
+pub struct SpectatorUpdate(GuessTheNumber);
 
-impl From<Guesses> for SpectatorUpdate {
-    fn from(guesses: Guesses) -> Self {
-        Self(guesses)
+impl From<GuessTheNumber> for SpectatorUpdate {
+    fn from(game: GuessTheNumber) -> Self {
+        Self(game)
     }
 }
 
@@ -94,7 +94,7 @@ impl View for SpectatorView {
     type Update = SpectatorUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
-        self.guesses = Some(update.0.clone());
+        self.game = Some(update.0.clone());
         Ok(())
     }
 }
@@ -119,7 +119,7 @@ impl Play for GuessTheNumber {
     fn spectator_view(&self, settings: &Self::Settings) -> Self::SpectatorView {
         SpectatorView {
             settings: settings.clone(),
-            guesses: self.guesses.clone(),
+            game: self.guesses.as_ref().and(self.clone().into()),
         }
     }
 
@@ -171,14 +171,16 @@ impl Play for GuessTheNumber {
             .map(|(_, response)| response)
             .collect();
 
+        let new_state = Self {
+            guesses: Some(guesses),
+            ..self.clone()
+        };
+
         (
-            Self {
-                guesses: Some(guesses.clone()),
-                ..self.clone()
-            },
+            new_state.clone(),
             GameAdvance {
                 debug_msgs,
-                spectator_update: SpectatorUpdate(guesses),
+                spectator_update: new_state.into(),
                 player_updates: Default::default(),
             },
         )
