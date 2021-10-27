@@ -14,6 +14,7 @@ pub struct DebugMsg<T: Play> {
 }
 
 pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
+pub type PlayerUpdates<T> = SmallVec<[(Player, <<T as Play>::PlayerView as View>::Update); 2]>;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
@@ -30,7 +31,7 @@ impl<T> From<T> for ActionResponse<T> {
 #[derive(Clone, Debug)]
 pub struct GameAdvance<T: Play> {
     pub spectator_update: <<T as Play>::SpectatorView as View>::Update,
-    pub player_updates: SmallVec<[(Player, <<T as Play>::PlayerView as View>::Update); 2]>,
+    pub player_updates: PlayerUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 

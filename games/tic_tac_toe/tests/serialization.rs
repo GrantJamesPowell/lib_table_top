@@ -86,7 +86,10 @@ fn test_serde_ttt_game_runner() {
 
     test_simple_serialization(
         &game_advance.spectator_update,
-        json!({"Claim": [0, (1, 2)]}),
+        json!({
+            "turn_num": 1,
+            "update": {"Claim": [0, (1, 2)]}
+        }),
     );
 
     test_simple_serialization(
@@ -114,7 +117,13 @@ fn test_serde_ttt_game_runner() {
 
     let (game_runner, game_advance) = game_runner.submit_turn(turn);
 
-    test_simple_serialization(&game_advance.spectator_update, json!({"Resign": 1}));
+    test_simple_serialization(
+        &game_advance.spectator_update,
+        json!({
+            "turn_num": 2,
+            "update": {"Resign": 1}
+        }),
+    );
 
     test_simple_serialization(
         &game_runner,
