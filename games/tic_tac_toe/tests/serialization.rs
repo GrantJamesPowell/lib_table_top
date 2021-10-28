@@ -1,8 +1,7 @@
-use lttcore::{seed::SEED_42, ActionResponse, GameRunnerBuilder};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;
-use tic_tac_toe::{ttt, Action, ActionError, Col, Marker::*, Row, TicTacToe};
+use tic_tac_toe::{ttt, Action, ActionError, Col, Row};
 
 #[test]
 fn test_serde_row_col() {

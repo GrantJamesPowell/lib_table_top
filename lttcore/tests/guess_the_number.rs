@@ -1,10 +1,7 @@
-use lttcore::examples::guess_the_number::{
-    Guess, GuessTheNumber, Guesses, Settings, SettingsBuilder, SettingsBuilderError,
-    SpectatorUpdate,
-};
+use lttcore::examples::guess_the_number::{Guess, GuessTheNumber, Settings, SettingsBuilder};
 use lttcore::number_of_players::{EIGHT_PLAYER, ONE_PLAYER};
 use lttcore::seed::SEED_42;
-use lttcore::{ActionResponse, GameRunner, GameRunnerBuilder, Player};
+use lttcore::GameRunnerBuilder;
 
 #[test]
 fn test_building_default_settings() {
