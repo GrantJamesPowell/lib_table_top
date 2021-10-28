@@ -18,56 +18,14 @@ impl<T: Play> From<PlayerSet> for ActionRequests<T> {
 }
 
 impl<T: Play> ActionRequests<T> {
-    /// Turns the `ActionRequests` into `Actions`
-    ///
-    /// ```
-    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
-    /// use lttcore::{ActionRequests, PlayerSet, Player, number_of_players::TWO_PLAYER};
-    ///
-    /// let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
-    /// let guess: Guess = 42.into();
-    /// let p1: Player = 1.into();
-    /// action_requests.add_action(p1, guess);
-    /// assert_eq!(action_requests.into_actions(), [(p1, guess.into())].into());
-    /// ```
     pub fn into_actions(self) -> Actions<T> {
         self.actions
     }
 
-    /// Returns the `PlayerSet` of all the players who have already submitted
-    ///
-    /// ```
-    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
-    /// use lttcore::{ActionRequests, PlayerSet, Player, number_of_players::TWO_PLAYER};
-    ///
-    /// let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
-    /// assert_eq!(action_requests.players_who_have_submitted(), PlayerSet::empty());
-    ///
-    /// let p1: Player = 1.into();
-    /// let guess: Guess = 42.into();
-    /// action_requests.add_action(p1, guess);
-    ///
-    /// assert_eq!(action_requests.players_who_have_submitted(), p1.into());
-    /// ```
     pub fn players_who_have_submitted(&self) -> PlayerSet {
         self.actions.iter().map(|(p, _)| *p).collect()
     }
 
-    /// Returns a `PlayerSet` of all the players who still need to submit their input
-    ///
-    /// ```
-    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
-    /// use lttcore::{ActionRequests, PlayerSet, Player, number_of_players::TWO_PLAYER};
-    ///
-    /// let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
-    /// assert_eq!(action_requests.unaccounted_for_players(), TWO_PLAYER.player_set());
-    ///
-    /// let guess: Guess = 42.into();
-    /// action_requests.add_action(0, guess);
-    ///
-    /// let p1: Player = 1.into();
-    /// assert_eq!(action_requests.unaccounted_for_players(), p1.into());
-    /// ```
     pub fn unaccounted_for_players(&self) -> PlayerSet {
         self.players_acting
             .difference(self.players_who_have_submitted())
@@ -115,5 +73,66 @@ impl<T: Play> ActionRequests<T> {
 
     pub fn is_ready_to_submit(&self) -> bool {
         self.unaccounted_for_players().is_empty()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::examples::{guess_the_number::Guess, GuessTheNumber};
+    use crate::{number_of_players::TWO_PLAYER, GameRunnerBuilder, Player, PlayerSet};
+
+    #[test]
+    fn test_you_can_turn_action_requests_into_actions() {
+        let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
+        let guess: Guess = 42.into();
+        let p1: Player = 1.into();
+        action_requests.add_action(p1, guess);
+        assert_eq!(action_requests.into_actions(), [(p1, guess.into())].into());
+    }
+
+    #[test]
+    fn test_you_can_get_already_submitted_players() {
+        let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
+        assert_eq!(
+            action_requests.players_who_have_submitted(),
+            PlayerSet::empty()
+        );
+
+        let p1: Player = 1.into();
+        let guess: Guess = 42.into();
+        action_requests.add_action(p1, guess);
+
+        assert_eq!(action_requests.players_who_have_submitted(), p1.into());
+    }
+
+    #[test]
+    fn test_you_can_get_players_who_still_need_to_submit_input() {
+        let mut action_requests: ActionRequests<GuessTheNumber> = TWO_PLAYER.player_set().into();
+        assert_eq!(
+            action_requests.unaccounted_for_players(),
+            TWO_PLAYER.player_set()
+        );
+
+        let guess: Guess = 42.into();
+        action_requests.add_action(0, guess);
+
+        let p1: Player = 1.into();
+        assert_eq!(action_requests.unaccounted_for_players(), p1.into());
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Player(255) was added to action_requests, but the player doesn't need to act this turn"
+    )]
+    fn test_it_panics_when_trying_to_add_a_player_whos_not_in_the_set() {
+        let player: Player = 255.into();
+        let game = GameRunnerBuilder::<GuessTheNumber>::default()
+            .build()
+            .unwrap();
+        let mut action_requests = game.action_requests();
+
+        let guess: Guess = 42.into();
+        action_requests.add_action(player, guess);
     }
 }
