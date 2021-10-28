@@ -2,12 +2,14 @@ use crate::{
     helpers::opponent,
     Action,
     ActionError::{self, *},
-    Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
+    Col,
+    Marker::*,
+    Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
     number_of_players::TWO_PLAYER,
     play::{DebugMsg, DebugMsgs, GameAdvance},
-    ActionResponse, NumberOfPlayers, Play, Player, PlayerSet,
+    ActionResponse, NumberOfPlayers, Play, Player, PlayerSet, Ranking, Rankings,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -532,6 +534,26 @@ impl Play for TicTacToe {
             .players()
             .map(|player| (player, Default::default()))
             .collect()
+    }
+
+    fn rankings(&self, _settings: &Self::Settings) -> Option<Rankings> {
+        use Status::*;
+
+        match self.status() {
+            InProgress { .. } => None,
+            Draw => {
+                let rankings: Rankings = [(None, [X, O].map(|x| x.player()).into())].into();
+                Some(rankings)
+            }
+            WinByResignation { winner } => {
+                // foo
+                None
+            }
+            Win { winner, .. } => {
+                // foo
+                None
+            }
+        }
     }
 
     fn advance(

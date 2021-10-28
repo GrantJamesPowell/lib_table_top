@@ -17,6 +17,9 @@ pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
 pub type PlayerSecretInfoUpdates<T> =
     SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;
 
+pub type Ranking = (Option<u64>, SmallVec<[Player; 2]>);
+pub type Rankings = SmallVec<[Ranking; 8]>;
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
     Response(T),
@@ -61,4 +64,8 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
         actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
         rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>);
+
+    fn rankings(&self, _settings: &Self::Settings) -> Option<Rankings> {
+        None
+    }
 }
