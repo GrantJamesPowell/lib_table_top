@@ -32,15 +32,15 @@ fn test_playing_guess_the_number() {
         .build()
         .unwrap();
 
-    let mut turn = game_runner.turn();
+    let mut action_requests = game_runner.action_requests();
 
-    for player in turn.unaccounted_for_players() {
+    for player in action_requests.unaccounted_for_players() {
         let guess: Guess = player.as_u64().into();
-        turn.add_action(player, guess);
+        action_requests.add_action(player, guess);
     }
 
-    assert!(turn.is_ready_to_submit());
-    let (game_runner, advance) = game_runner.submit_turn(turn);
+    assert!(action_requests.is_ready_to_submit());
+    let (game_runner, advance) = game_runner.submit_actions(action_requests.into_actions());
     assert!(advance.debug_msgs.is_empty());
     assert_eq!(
         advance.spectator_update.public_info_update,

@@ -5,7 +5,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
-use crate::{NumberOfPlayers, Play, Player, Scenario, Seed, Spectator, SpectatorUpdate, Turn};
+use crate::{
+    ActionRequests, NumberOfPlayers, Play, Player, Scenario, Seed, Spectator, SpectatorUpdate,
+};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 
@@ -107,37 +109,12 @@ impl<T: Play> GameRunner<T> {
         }
     }
 
-    pub fn turn(&self) -> Turn<T> {
+    pub fn action_requests(&self) -> ActionRequests<T> {
         self.state.which_players_input_needed(&self.settings).into()
     }
 
-    /// Submit a turn to the game runner and advance the game
-    ///
-    /// Note: this does not mutate the existing game runner, but instead returns a new one
-    ///
-    /// # Panics
-    ///
-    /// This will panic if the turn doesn't have all the players accounted for
-    ///
-    /// ```should_panic
-    /// use std::panic::catch_unwind;
-    /// use lttcore::examples::GuessTheNumber;
-    /// use lttcore::GameRunnerBuilder;
-    ///
-    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
-    /// let turn = game.turn();
-    /// game.submit_turn(turn);
-    /// ```
     #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
-    pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameRunnerAdvance<T>) {
-        assert!(
-            turn.is_ready_to_submit(),
-            "turn was not ready to submit, it was missing {:?} players actions",
-            turn.unaccounted_for_players().len()
-        );
-
-        let actions = turn.into_actions();
-
+    pub fn submit_actions(&self, actions: Actions<T>) -> (Self, GameRunnerAdvance<T>) {
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
             actions.clone().into_iter(),
