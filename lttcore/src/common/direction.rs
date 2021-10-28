@@ -36,6 +36,7 @@ pub enum Compass {
     North,
     East,
     South,
+    /// Kayne
     West,
 }
 

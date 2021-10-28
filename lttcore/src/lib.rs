@@ -25,19 +25,10 @@ pub mod play;
 pub use play::{ActionResponse, Play};
 
 pub mod game_runner;
-pub use game_runner::{GameRunner, GameRunnerBuilder};
-
-pub mod action_requests;
-pub use action_requests::ActionRequests;
+pub use game_runner::{GameRunner, GameRunnerBuilder, Scenario};
 
 pub mod seed;
 pub use seed::Seed;
-
-pub mod spectator;
-pub use spectator::{Spectator, SpectatorUpdate};
-
-pub mod scenario;
-pub use scenario::Scenario;
 
 pub mod bots;
 pub mod common;

@@ -4,12 +4,12 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::game_runner::{ActionRequests, Spectator, SpectatorUpdate};
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
-use crate::{
-    ActionRequests, NumberOfPlayers, Play, Player, Scenario, Seed, Spectator, SpectatorUpdate,
-};
+use crate::{NumberOfPlayers, Play, Player, Scenario, Seed};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
+pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]

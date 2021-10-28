@@ -1,4 +1,4 @@
-use crate::{Play, Player, Spectator};
+use crate::{game_runner::Spectator, Play, Player};
 use std::error::Error;
 
 pub trait Bot {
