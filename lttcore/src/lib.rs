@@ -36,6 +36,9 @@ pub use seed::Seed;
 pub mod spectator;
 pub use spectator::{Spectator, SpectatorUpdate};
 
+pub mod scenario;
+pub use scenario::Scenario;
+
 pub mod bots;
 pub mod common;
 pub mod examples;
