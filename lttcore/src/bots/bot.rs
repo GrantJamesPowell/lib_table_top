@@ -1,10 +1,13 @@
 use crate::{Play, Player, Spectator};
 use std::error::Error;
 
-pub trait Bot<T: Play> {
+pub trait Bot {
+    type Game: Play;
+
     fn run(
         player: Player,
-        spectator: &Spectator<T>,
-        secret_info: &<T as Play>::PlayerSecretInfo,
-    ) -> Result<<T as Play>::Action, Box<dyn Error>>;
+        spectator: &Spectator<Self::Game>,
+        secret_info: &<Self::Game as Play>::PlayerSecretInfo,
+        rng: &mut impl rand::Rng,
+    ) -> Result<<Self::Game as Play>::Action, Box<dyn Error>>;
 }
