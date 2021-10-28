@@ -2,6 +2,7 @@
 
 mod action;
 mod board;
+mod bots;
 pub mod helpers;
 mod marker;
 mod public_info;

@@ -15,8 +15,8 @@ impl<T: Play> Turn<T> {
     }
 
     pub fn pending_action_requests(&self) -> PlayerSet {
-        let completed_players: PlayerSet = self.actions.iter().map(|(p, _)| *p).collect();
-        self.action_requests.difference(completed_players)
+        let completed: PlayerSet = self.actions.iter().map(|(p, _)| *p).collect();
+        self.action_requests.difference(completed)
     }
 
     /// Add an action to the turn
