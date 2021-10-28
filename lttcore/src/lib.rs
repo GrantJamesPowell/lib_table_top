@@ -9,6 +9,9 @@
 #[macro_use]
 extern crate derive_builder;
 
+pub mod scenario;
+pub use scenario::Scenario;
+
 pub mod player;
 pub use player::Player;
 
