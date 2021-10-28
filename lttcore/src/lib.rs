@@ -25,7 +25,7 @@ pub mod play;
 pub use play::{ActionResponse, Play};
 
 pub mod game_runner;
-pub use game_runner::{GameRunner, GameRunnerBuilder, Scenario};
+pub use game_runner::{ActionRequest, GameRunner, GameRunnerBuilder, Observer, Scenario};
 
 pub mod seed;
 pub use seed::Seed;

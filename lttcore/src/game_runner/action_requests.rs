@@ -31,22 +31,6 @@ impl<T: Play> ActionRequests<T> {
             .difference(self.players_who_have_submitted())
     }
 
-    /// Add an action to the action_requests
-    ///
-    /// # Panics
-    ///
-    /// This panics if the `Player` isn't in the action_requests
-    /// ```should_panic
-    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
-    /// use lttcore::{Player, GameRunnerBuilder};
-    ///
-    /// let player: Player = 255.into();
-    /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
-    /// let mut action_requests = game.action_requests();
-    ///
-    /// let guess: Guess = 42.into();
-    /// action_requests.add_action(player, guess);
-    /// ```
     pub fn add_action(
         &mut self,
         player: impl Into<Player>,
@@ -71,7 +55,7 @@ impl<T: Play> ActionRequests<T> {
         }
     }
 
-    pub fn is_ready_to_submit(&self) -> bool {
+    pub fn is_ready_to_advance(&self) -> bool {
         self.unaccounted_for_players().is_empty()
     }
 }

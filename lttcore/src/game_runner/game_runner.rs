@@ -4,7 +4,7 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::game_runner::{ActionRequests, Spectator, SpectatorUpdate};
+use crate::game_runner::{ActionRequests, SpectatorUpdate};
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
 use crate::{NumberOfPlayers, Play, Player, Scenario, Seed};
 
@@ -80,6 +80,10 @@ impl<T: Play> GameRunner<T> {
         &self.state
     }
 
+    pub fn turn_num(&self) -> u64 {
+        self.turn_num
+    }
+
     pub fn settings(&self) -> &<T as Play>::Settings {
         &self.settings
     }
@@ -99,14 +103,6 @@ impl<T: Play> GameRunner<T> {
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
         <T as Play>::number_of_players_for_settings(&self.settings)
-    }
-
-    pub fn spectator(&self) -> Spectator<T> {
-        Spectator {
-            turn_num: self.turn_num,
-            settings: self.settings.clone(),
-            public_info: self.state.public_info(&self.settings),
-        }
     }
 
     pub fn action_requests(&self) -> ActionRequests<T> {
