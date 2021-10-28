@@ -108,13 +108,7 @@ impl<T: Play> GameRunner<T> {
     }
 
     pub fn turn(&self) -> Turn<T> {
-        let action_requests = self.state.which_players_input_needed(&self.settings);
-
-        Turn {
-            action_requests,
-            actions: Default::default(),
-            turn_num: self.turn_num,
-        }
+        self.state.which_players_input_needed(&self.settings).into()
     }
 
     /// Submit a turn to the game runner and advance the game
@@ -138,22 +132,21 @@ impl<T: Play> GameRunner<T> {
     pub fn submit_turn(&self, turn: Turn<T>) -> (Self, GameRunnerAdvance<T>) {
         assert!(
             turn.is_ready_to_submit(),
-            "turn {:?} was not ready to submit, it was missing {:?} players actions",
-            turn.number(),
-            turn.pending_action_requests().count()
+            "turn was not ready to submit, it was missing {:?} players actions",
+            turn.unaccounted_for_players().len()
         );
+
+        let actions = turn.into_actions();
 
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
-            turn.actions.clone().into_iter(),
+            actions.clone().into_iter(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
         let mut history = self.history.clone();
 
-        history.push_back(HistoryEvent {
-            actions: turn.actions,
-        });
+        history.push_back(HistoryEvent { actions });
 
         (
             Self {

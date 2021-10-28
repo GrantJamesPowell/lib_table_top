@@ -4,19 +4,73 @@ use crate::{Play, Player, PlayerSet};
 
 #[derive(Debug, Clone)]
 pub struct Turn<T: Play> {
-    pub(crate) turn_num: u64,
-    pub(crate) action_requests: PlayerSet,
-    pub(crate) actions: Actions<T>,
+    players_acting: PlayerSet,
+    actions: Actions<T>,
+}
+
+impl<T: Play> From<PlayerSet> for Turn<T> {
+    fn from(players_acting: PlayerSet) -> Self {
+        Self {
+            players_acting,
+            actions: Default::default(),
+        }
+    }
 }
 
 impl<T: Play> Turn<T> {
-    pub fn number(&self) -> u64 {
-        self.turn_num
+    /// Turns the `Turn` into `Actions`
+    ///
+    /// ```
+    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
+    /// use lttcore::{Turn, PlayerSet, Player, number_of_players::TWO_PLAYER};
+    ///
+    /// let mut turn: Turn<GuessTheNumber> = TWO_PLAYER.player_set().into();
+    /// let guess: Guess = 42.into();
+    /// let p1: Player = 1.into();
+    /// turn.add_action(p1, guess);
+    /// assert_eq!(turn.into_actions(), [(p1, guess.into())].into());
+    /// ```
+    pub fn into_actions(self) -> Actions<T> {
+        self.actions
     }
 
-    pub fn pending_action_requests(&self) -> PlayerSet {
-        let completed_players: PlayerSet = self.actions.iter().map(|(p, _)| *p).collect();
-        self.action_requests.difference(completed_players)
+    /// Returns the `PlayerSet` of all the players who have already submitted
+    ///
+    /// ```
+    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
+    /// use lttcore::{Turn, PlayerSet, Player, number_of_players::TWO_PLAYER};
+    ///
+    /// let mut turn: Turn<GuessTheNumber> = TWO_PLAYER.player_set().into();
+    /// assert_eq!(turn.players_who_have_submitted(), PlayerSet::empty());
+    ///
+    /// let p1: Player = 1.into();
+    /// let guess: Guess = 42.into();
+    /// turn.add_action(p1, guess);
+    ///
+    /// assert_eq!(turn.players_who_have_submitted(), p1.into());
+    /// ```
+    pub fn players_who_have_submitted(&self) -> PlayerSet {
+        self.actions.iter().map(|(p, _)| *p).collect()
+    }
+
+    /// Returns a `PlayerSet` of all the players who still need to submit their input
+    ///
+    /// ```
+    /// use lttcore::examples::{GuessTheNumber, guess_the_number::Guess};
+    /// use lttcore::{Turn, PlayerSet, Player, number_of_players::TWO_PLAYER};
+    ///
+    /// let mut turn: Turn<GuessTheNumber> = TWO_PLAYER.player_set().into();
+    /// assert_eq!(turn.unaccounted_for_players(), TWO_PLAYER.player_set());
+    ///
+    /// let guess: Guess = 42.into();
+    /// turn.add_action(0, guess);
+    ///
+    /// let p1: Player = 1.into();
+    /// assert_eq!(turn.unaccounted_for_players(), p1.into());
+    /// ```
+    pub fn unaccounted_for_players(&self) -> PlayerSet {
+        self.players_acting
+            .difference(self.players_who_have_submitted())
     }
 
     /// Add an action to the turn
@@ -44,10 +98,9 @@ impl<T: Play> Turn<T> {
         let action_response = action_response.into();
 
         assert!(
-            self.action_requests.contains(player),
-            "{:?} was added to turn {:?}, but player isn't in the turn",
+            self.players_acting.contains(player),
+            "{:?} was added to turn, but the player doesn't need to act this turn",
             player,
-            self.turn_num
         );
 
         match self.actions.binary_search_by_key(&player, |(p, _)| *p) {
@@ -61,6 +114,6 @@ impl<T: Play> Turn<T> {
     }
 
     pub fn is_ready_to_submit(&self) -> bool {
-        self.pending_action_requests().is_empty()
+        self.unaccounted_for_players().is_empty()
     }
 }

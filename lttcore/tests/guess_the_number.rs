@@ -37,7 +37,7 @@ fn test_playing_guess_the_number() {
 
     let mut turn = game_runner.turn();
 
-    for player in turn.pending_action_requests() {
+    for player in turn.unaccounted_for_players() {
         let guess: Guess = player.as_u64().into();
         turn.add_action(player, guess);
     }
