@@ -108,7 +108,7 @@ impl<T: Play> GameRunner<T> {
     }
 
     pub fn turn(&self) -> Turn<T> {
-        let action_requests = self.state.action_requests(&self.settings);
+        let action_requests = self.state.which_players_input_needed(&self.settings);
 
         Turn {
             action_requests,

@@ -53,7 +53,7 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     ) -> HashMap<Player, Self::PlayerSecretInfo>;
     fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
-    fn action_requests(&self, settings: &Self::Settings) -> PlayerSet;
+    fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
 
     fn advance(
         &self,

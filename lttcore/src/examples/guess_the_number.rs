@@ -128,7 +128,7 @@ impl Play for GuessTheNumber {
         }
     }
 
-    fn action_requests(&self, settings: &Self::Settings) -> PlayerSet {
+    fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet {
         match self.guesses {
             Some(_) => PlayerSet::empty(),
             None => settings.num_players.player_set(),

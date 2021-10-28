@@ -502,7 +502,7 @@ impl Play for TicTacToe {
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
 
-    fn action_requests(&self, _settings: &Self::Settings) -> PlayerSet {
+    fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
         match self.status() {
             Status::InProgress { next_up } => next_up.into(),
             _ => Default::default(),
