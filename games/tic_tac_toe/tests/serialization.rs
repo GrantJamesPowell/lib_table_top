@@ -75,7 +75,7 @@ fn test_serde_ttt_game_runner() {
         }),
     );
 
-    let mut turn = game_runner.turn().unwrap();
+    let mut turn = game_runner.turn();
     turn.add_action(
         X,
         Action {
@@ -112,7 +112,7 @@ fn test_serde_ttt_game_runner() {
             }
         }),
     );
-    let mut turn = game_runner.turn().unwrap();
+    let mut turn = game_runner.turn();
     turn.add_action(O, ActionResponse::Resign);
 
     let (game_runner, game_advance) = game_runner.submit_turn(turn);

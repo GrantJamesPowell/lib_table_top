@@ -35,7 +35,7 @@ fn test_playing_guess_the_number() {
         .build()
         .unwrap();
 
-    let mut turn = game_runner.turn().unwrap();
+    let mut turn = game_runner.turn();
 
     for player in turn.pending_action_requests() {
         let guess: Guess = player.as_u64().into();
@@ -49,6 +49,4 @@ fn test_playing_guess_the_number() {
         advance.spectator_update.public_info_update,
         game_runner.game().clone().into()
     );
-    // The game is now over
-    assert!(game_runner.turn().is_none());
 }

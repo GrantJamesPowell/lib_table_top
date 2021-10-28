@@ -107,16 +107,13 @@ impl<T: Play> GameRunner<T> {
         }
     }
 
-    pub fn turn(&self) -> Option<Turn<T>> {
+    pub fn turn(&self) -> Turn<T> {
         let action_requests = self.state.action_requests(&self.settings);
 
-        match action_requests.count() {
-            0 => None,
-            _ => Some(Turn {
-                action_requests,
-                actions: Default::default(),
-                turn_num: self.turn_num,
-            }),
+        Turn {
+            action_requests,
+            actions: Default::default(),
+            turn_num: self.turn_num,
         }
     }
 
@@ -134,7 +131,7 @@ impl<T: Play> GameRunner<T> {
     /// use lttcore::GameRunnerBuilder;
     ///
     /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
-    /// let turn = game.turn().unwrap();
+    /// let turn = game.turn();
     /// game.submit_turn(turn);
     /// ```
     #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]

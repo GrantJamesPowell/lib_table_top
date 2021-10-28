@@ -30,7 +30,7 @@ impl<T: Play> Turn<T> {
     ///
     /// let player: Player = 255.into();
     /// let game = GameRunnerBuilder::<GuessTheNumber>::default().build().unwrap();
-    /// let mut turn = game.turn().unwrap();
+    /// let mut turn = game.turn();
     ///
     /// let guess: Guess = 42.into();
     /// turn.add_action(player, guess);
