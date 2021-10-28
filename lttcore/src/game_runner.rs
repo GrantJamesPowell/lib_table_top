@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
-use crate::{NumberOfPlayers, Play, Player, Seed, Spectator, SpectatorUpdate, Turn};
+use crate::{NumberOfPlayers, Play, Player, Scenario, Seed, Spectator, SpectatorUpdate, Turn};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 
@@ -51,6 +51,28 @@ impl<T: Play> GameRunnerAdvance<T> {
     }
 }
 
+impl<T: Play> From<Scenario<T>> for GameRunner<T> {
+    fn from(
+        Scenario {
+            turn_num,
+            settings,
+            initial_state,
+            seed,
+        }: Scenario<T>,
+    ) -> Self {
+        let state: T = initial_state.as_ref().clone();
+
+        Self {
+            seed,
+            state,
+            settings,
+            turn_num,
+            initial_state: Some(initial_state),
+            history: Default::default(),
+        }
+    }
+}
+
 impl<T: Play> GameRunner<T> {
     pub fn game(&self) -> &T {
         &self.state
@@ -58,6 +80,15 @@ impl<T: Play> GameRunner<T> {
 
     pub fn settings(&self) -> &<T as Play>::Settings {
         &self.settings
+    }
+
+    pub fn scenario(&self) -> Scenario<T> {
+        Scenario {
+            turn_num: self.turn_num,
+            settings: self.settings.clone(),
+            initial_state: Arc::new(self.state.clone()),
+            seed: self.seed.clone(),
+        }
     }
 
     pub fn player_secret_info(&self) -> HashMap<Player, <T as Play>::PlayerSecretInfo> {
