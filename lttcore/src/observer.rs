@@ -9,9 +9,9 @@ pub struct Observer<'a, T: Play> {
 }
 
 pub struct ObserverUpdate<T: Play> {
-    turn_num: u64,
-    action_requests: PlayerSet,
-    public_info_update: <<T as Play>::PublicInfo as View>::Update,
+    pub turn_num: u64,
+    pub action_requests: PlayerSet,
+    pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
 }
 
 pub trait Observe<T: Play> {

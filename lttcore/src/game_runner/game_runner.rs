@@ -4,9 +4,8 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::game_runner::{ActionRequests, Spectator, SpectatorUpdate};
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
-use crate::{NumberOfPlayers, Play, Player, Scenario, Seed};
+use crate::{NumberOfPlayers, ObserverUpdate, Play, Player, PlayerSet, Scenario, Seed};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
@@ -35,18 +34,19 @@ pub struct HistoryEvent<T: Play> {
 }
 
 pub struct GameRunnerAdvance<T: Play> {
-    pub spectator_update: SpectatorUpdate<T>,
+    pub observer_update: ObserverUpdate<T>,
     pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 
 impl<T: Play> GameRunnerAdvance<T> {
-    pub fn from_game_advance_and_turn_num(game_advance: GameAdvance<T>, turn_num: u64) -> Self {
+    fn from(game_advance: GameAdvance<T>, turn_num: u64, action_requests: PlayerSet) -> Self {
         Self {
             debug_msgs: game_advance.debug_msgs,
             player_secret_info_updates: game_advance.player_secret_info_updates,
-            spectator_update: SpectatorUpdate {
+            observer_update: ObserverUpdate {
                 turn_num,
+                action_requests,
                 public_info_update: game_advance.public_info_update,
             },
         }
@@ -105,16 +105,8 @@ impl<T: Play> GameRunner<T> {
         <T as Play>::number_of_players_for_settings(&self.settings)
     }
 
-    pub fn spectator(&self) -> Spectator<T> {
-        Spectator {
-            turn_num: self.turn_num,
-            settings: self.settings.clone(),
-            public_info: self.state.public_info(&self.settings),
-        }
-    }
-
-    pub fn action_requests(&self) -> ActionRequests<T> {
-        self.state.which_players_input_needed(&self.settings).into()
+    pub fn which_players_input_needed(&self) -> PlayerSet {
+        self.state.which_players_input_needed(&self.settings)
     }
 
     #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
@@ -129,15 +121,20 @@ impl<T: Play> GameRunner<T> {
 
         history.push_back(HistoryEvent { actions });
 
-        (
-            Self {
-                history,
-                state: new_state,
-                turn_num: self.turn_num + 1,
-                ..self.clone()
-            },
-            GameRunnerAdvance::from_game_advance_and_turn_num(game_advance, self.turn_num + 1),
-        )
+        let new_game_runner = Self {
+            history,
+            state: new_state,
+            turn_num: self.turn_num + 1,
+            ..self.clone()
+        };
+
+        let game_advance = GameRunnerAdvance::from(
+            game_advance,
+            self.turn_num + 1,
+            new_game_runner.which_players_input_needed(),
+        );
+
+        (new_game_runner, game_advance)
     }
 }
 
