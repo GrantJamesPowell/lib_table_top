@@ -9,6 +9,6 @@ pub struct Omniscience<'a, T: Play> {
     pub game_state: &'a T,
 }
 
-pub trait Omniscient<'a, T: Play> {
+pub trait Omniscient<T: Play> {
     fn omniscience(&self) -> Omniscience<'_, T>;
 }
