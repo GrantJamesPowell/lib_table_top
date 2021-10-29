@@ -9,6 +9,14 @@
 #[macro_use]
 extern crate derive_builder;
 
+mod game_host;
+mod game_observer;
+mod game_player;
+
+pub use game_host::GameHost;
+pub use game_observer::GameObserver;
+pub use game_player::GamePlayer;
+
 pub mod player;
 pub use player::Player;
 
