@@ -1,6 +1,7 @@
 use crate::action_request::ActionRequestSource;
 use crate::{ActionRequest, Observe, Observer, Play, Player};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GamePlayer<T: Play> {
     turn_num: u64,
     player: Player,
