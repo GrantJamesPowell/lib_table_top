@@ -9,44 +9,33 @@
 #[macro_use]
 extern crate derive_builder;
 
-mod game_host;
-mod game_observer;
-mod game_player;
-
-pub use game_host::GameHost;
-pub use game_observer::GameObserver;
-pub use game_player::GamePlayer;
-
-pub mod player;
-pub use player::Player;
-
-pub mod player_set;
-pub use player_set::PlayerSet;
-
-pub mod number_of_players;
-pub use number_of_players::NumberOfPlayers;
-
-pub mod view;
-pub use view::View;
-
 pub mod action_request;
-pub use action_request::ActionRequest;
-
-mod observer;
-pub use observer::{Observe, Observer};
-
-pub mod omniscience;
-pub use omniscience::Omniscience;
-
-pub mod play;
-pub use play::{ActionResponse, Play};
-
-pub mod game_runner;
-pub use game_runner::{GameRunner, GameRunnerBuilder, Scenario};
-
-pub mod seed;
-pub use seed::Seed;
-
 pub mod bots;
 pub mod common;
 pub mod examples;
+pub mod game_host;
+pub mod game_observer;
+pub mod game_player;
+pub mod game_runner;
+pub mod number_of_players;
+pub mod observer;
+pub mod omniscience;
+pub mod play;
+pub mod player;
+pub mod player_set;
+pub mod seed;
+pub mod view;
+
+pub use action_request::ActionRequest;
+pub use game_host::GameHost;
+pub use game_observer::GameObserver;
+pub use game_player::GamePlayer;
+pub use game_runner::{GameRunner, GameRunnerBuilder, Scenario};
+pub use number_of_players::NumberOfPlayers;
+pub use observer::{Observe, Observer};
+pub use omniscience::Omniscience;
+pub use play::{ActionResponse, Play};
+pub use player::Player;
+pub use player_set::PlayerSet;
+pub use seed::Seed;
+pub use view::View;
