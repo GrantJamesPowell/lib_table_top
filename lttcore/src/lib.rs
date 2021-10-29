@@ -21,6 +21,15 @@ pub use number_of_players::NumberOfPlayers;
 pub mod view;
 pub use view::View;
 
+mod action_request;
+pub use action_request::ActionRequest;
+
+mod observer;
+pub use observer::{Observe, Observer};
+
+pub mod omniscience;
+pub use omniscience::Omniscience;
+
 pub mod play;
 pub use play::{ActionResponse, Play};
 
