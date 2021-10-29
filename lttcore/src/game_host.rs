@@ -1,4 +1,4 @@
-use crate::{GameRunner, Play, Player, Observer, Observe};
+use crate::{GameRunner, Observe, Observer, Play, Player};
 use std::collections::HashMap;
 
 pub struct GameHost<T: Play> {
