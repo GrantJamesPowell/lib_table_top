@@ -1,4 +1,5 @@
-use crate::{GameRunner, Observe, Observer, Play, Player};
+use crate::action_request::ActionRequestSource;
+use crate::{ActionRequest, GameRunner, Observe, Observer, Play, Player};
 use std::collections::HashMap;
 
 pub struct GameHost<T: Play> {
@@ -15,5 +16,11 @@ impl<T: Play> Observe<T> for GameHost<T> {
             settings: &self.game_runner.settings(),
             public_info: &self.public_info,
         }
+    }
+}
+
+impl<T: Play> ActionRequestSource<T> for GameHost<T> {
+    fn next_action_request(&self) -> Option<ActionRequest<'_, T>> {
+        todo!()
     }
 }

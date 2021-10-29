@@ -1,4 +1,5 @@
-use crate::{Observe, Observer, Play, Player};
+use crate::action_request::ActionRequestSource;
+use crate::{ActionRequest, Observe, Observer, Play, Player};
 
 pub struct GamePlayer<T: Play> {
     turn_num: u64,
@@ -15,5 +16,11 @@ impl<T: Play> Observe<T> for GamePlayer<T> {
             settings: &self.settings,
             public_info: &self.public_info,
         }
+    }
+}
+
+impl<T: Play> ActionRequestSource<T> for GamePlayer<T> {
+    fn next_action_request(&self) -> Option<ActionRequest<'_, T>> {
+        todo!()
     }
 }
