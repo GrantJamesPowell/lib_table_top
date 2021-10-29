@@ -9,6 +9,8 @@
 #[macro_use]
 extern crate derive_builder;
 
+mod action_collector;
+
 pub mod action_request;
 pub mod bots;
 pub mod common;
