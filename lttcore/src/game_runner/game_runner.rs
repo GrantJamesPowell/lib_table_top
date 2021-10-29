@@ -76,6 +76,10 @@ impl<T: Play> From<Scenario<T>> for GameRunner<T> {
 }
 
 impl<T: Play> GameRunner<T> {
+    pub fn turn_num(&self) -> u64 {
+        self.turn_num
+    }
+
     pub fn game(&self) -> &T {
         &self.state
     }
