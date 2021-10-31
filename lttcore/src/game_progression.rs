@@ -1,14 +1,11 @@
 use im::Vector;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::play::{ActionResponse, EnumeratedGameAdvance};
+use crate::play::{Actions, EnumeratedGameAdvance};
 use crate::{NumberOfPlayers, Play, Player, PlayerSet, Scenario, Seed};
-
-pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
-pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]

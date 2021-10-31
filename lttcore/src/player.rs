@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
-
-
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Player(u8);
 
