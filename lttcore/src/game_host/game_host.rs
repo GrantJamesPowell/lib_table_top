@@ -8,9 +8,7 @@ use std::sync::Arc;
 
 pub struct GameHost<T: Play> {
     game_progression: GameProgression<T>,
-    public_info: <T as Play>::PublicInfo,
     action_collector: ActionCollector<T>,
-    player_secret_info: HashMap<Player, <T as Play>::PlayerSecretInfo>,
 }
 
 impl<T: Play> Observe<T> for GameHost<T> {
@@ -19,7 +17,7 @@ impl<T: Play> Observe<T> for GameHost<T> {
             action_requests: self.action_collector.all_players(),
             turn_num: self.game_progression.turn_num(),
             settings: Cow::Borrowed(&self.game_progression.settings()),
-            public_info: Cow::Borrowed(&self.public_info),
+            public_info: Cow::Owned(self.game_progression.public_info()),
         }
     }
 }
@@ -27,26 +25,18 @@ impl<T: Play> Observe<T> for GameHost<T> {
 impl<T: Play> Omniscient<T> for GameHost<T> {
     fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
         OmniscientPov {
-            turn_num: self.game_progression.turn_num(),
-            game_state: Cow::Borrowed(self.game_progression.state()),
-            player_secret_info: Cow::Borrowed(&self.player_secret_info),
-            public_info: Cow::Borrowed(&self.public_info),
-            settings: Cow::Borrowed(self.game_progression.settings()),
+            game_progression: Cow::Borrowed(&self.game_progression),
         }
     }
 }
 
 impl<T: Play> From<GameProgression<T>> for GameHost<T> {
     fn from(game_progression: GameProgression<T>) -> Self {
-        let public_info = game_progression.public_info();
-        let player_secret_info = game_progression.player_secret_info();
         let action_collector: ActionCollector<T> =
             game_progression.which_players_input_needed().into();
 
         Self {
             game_progression,
-            public_info,
-            player_secret_info,
             action_collector,
         }
     }
@@ -71,12 +61,14 @@ impl<T: Play> GameHost<T> {
             turn_num: self.game_progression.turn_num(),
             action_requests: self.action_collector.all_players(),
             settings: Arc::clone(self.game_progression.settings_arc()),
-            public_info: self.public_info.clone(),
+            public_info: self.game_progression().public_info(),
         }
     }
 
     pub fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
         let turn_num = self.game_progression.turn_num();
+        let public_info = self.game_progression.public_info();
+        let mut player_secret_info = self.game_progression.player_secret_info();
 
         self.game_progression
             .players()
@@ -86,8 +78,10 @@ impl<T: Play> GameHost<T> {
                 turn_num,
                 action_requests: self.action_collector.all_players(),
                 settings: Arc::clone(self.game_progression.settings_arc()),
-                public_info: self.public_info.clone(),
-                secret_info: self.player_secret_info[&player].clone(),
+                public_info: public_info.clone(),
+                secret_info: player_secret_info
+                    .remove(&player)
+                    .expect("game progression did not return secret info for a player"),
             })
     }
 
@@ -104,15 +98,9 @@ impl<T: Play> GameHost<T> {
                 .submit_actions(self.action_collector.take_actions());
 
             self.game_progression = new_progression;
-            self.apply_game_advance(&game_advance);
-
             Some(game_advance)
         } else {
             None
         }
-    }
-
-    fn apply_game_advance(&mut self, _update: &EnumeratedGameAdvance<T>) {
-        todo!()
     }
 }
