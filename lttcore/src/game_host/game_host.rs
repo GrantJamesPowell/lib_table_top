@@ -1,4 +1,5 @@
 use super::action_collector::ActionCollector;
+use crate::play::EnumeratedGameAdvance;
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
 use crate::{ActionResponse, GameObserver, GamePlayer, GameProgression, Play, Player};
 use std::collections::HashMap;
@@ -56,15 +57,15 @@ impl<T: Play> GameHost<T> {
         game_progression.into()
     }
 
-    fn into_game_progression(self) -> GameProgression<T> {
+    pub fn into_game_progression(self) -> GameProgression<T> {
         self.game_progression
     }
 
-    fn game_progression(&self) -> &GameProgression<T> {
+    pub fn game_progression(&self) -> &GameProgression<T> {
         &self.game_progression
     }
 
-    fn game_observer(&self) -> GameObserver<T> {
+    pub fn game_observer(&self) -> GameObserver<T> {
         GameObserver {
             turn_num: self.game_progression.turn_num(),
             action_requests: self.action_collector.all_players(),
@@ -73,7 +74,7 @@ impl<T: Play> GameHost<T> {
         }
     }
 
-    fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
+    pub fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
         let turn_num = self.game_progression.turn_num();
 
         self.game_progression
@@ -89,21 +90,28 @@ impl<T: Play> GameHost<T> {
             })
     }
 
-    fn submit_action_response(
+    pub fn submit_action_response(
         &mut self,
         player: Player,
         action_response: impl Into<ActionResponse<<T as Play>::Action>>,
-    ) -> Option<()> {
+    ) -> Option<EnumeratedGameAdvance<T>> {
         self.action_collector.add_action(player, action_response);
 
         if self.action_collector.is_ready() {
-            let (_new_progression, _game_advance) = self
+            let (new_progression, game_advance) = self
                 .game_progression
                 .submit_actions(self.action_collector.take_actions());
 
-            Some(())
+            self.game_progression = new_progression;
+            self.apply_game_advance(&game_advance);
+
+            Some(game_advance)
         } else {
             None
         }
+    }
+
+    fn apply_game_advance(&mut self, _update: &EnumeratedGameAdvance<T>) {
+        todo!()
     }
 }
