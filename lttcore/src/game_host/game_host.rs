@@ -1,19 +1,20 @@
+use super::action_collector::ActionCollector;
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
-use crate::{GameObserver, GamePlayer, GameProgression, Play, Player, PlayerSet};
+use crate::{GameObserver, GamePlayer, GameProgression, Play, Player};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct GameHost<T: Play> {
     game_progression: GameProgression<T>,
     public_info: <T as Play>::PublicInfo,
-    action_requests: PlayerSet,
+    action_collector: ActionCollector<T>,
     player_secret_info: HashMap<Player, <T as Play>::PlayerSecretInfo>,
 }
 
 impl<T: Play> Observe<T> for GameHost<T> {
     fn observer_pov(&self) -> ObserverPov<'_, T> {
         ObserverPov {
-            action_requests: self.action_requests,
+            action_requests: self.action_collector.all_players(),
             turn_num: self.game_progression.turn_num(),
             settings: &self.game_progression.settings(),
             public_info: &self.public_info,
@@ -37,13 +38,14 @@ impl<T: Play> From<GameProgression<T>> for GameHost<T> {
     fn from(game_progression: GameProgression<T>) -> Self {
         let public_info = game_progression.public_info();
         let player_secret_info = game_progression.player_secret_info();
-        let action_requests = game_progression.which_players_input_needed();
+        let action_collector: ActionCollector<T> =
+            game_progression.which_players_input_needed().into();
 
         Self {
             game_progression,
             public_info,
             player_secret_info,
-            action_requests,
+            action_collector,
         }
     }
 }
@@ -65,7 +67,7 @@ impl<T: Play> GameHost<T> {
     fn game_observer(&self) -> GameObserver<T> {
         GameObserver {
             turn_num: self.game_progression.turn_num(),
-            action_requests: self.action_requests,
+            action_requests: self.action_collector.all_players(),
             settings: Arc::clone(self.game_progression.settings_arc()),
             public_info: self.public_info.clone(),
         }
@@ -80,7 +82,7 @@ impl<T: Play> GameHost<T> {
             .map(move |player| GamePlayer {
                 player,
                 turn_num,
-                action_requests: self.action_requests,
+                action_requests: self.action_collector.all_players(),
                 settings: Arc::clone(self.game_progression.settings_arc()),
                 public_info: self.public_info.clone(),
                 secret_info: self.player_secret_info[&player].clone(),

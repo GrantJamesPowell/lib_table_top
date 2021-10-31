@@ -22,6 +22,10 @@ impl<T: Play> ActionCollector<T> {
         self.actions
     }
 
+    pub fn all_players(&self) -> PlayerSet {
+        self.players_acting
+    }
+
     pub fn players_who_have_submitted(&self) -> PlayerSet {
         self.actions.iter().map(|(p, _)| *p).collect()
     }
