@@ -49,6 +49,11 @@ impl<T: Play> From<GameRunner<T>> for GameHost<T> {
 }
 
 impl<T: Play> GameHost<T> {
+    pub fn new(game_runner: impl Into<GameRunner<T>>) -> Self {
+        let game_runner = game_runner.into();
+        game_runner.into()
+    }
+
     fn into_game_runner(self) -> GameRunner<T> {
         self.game_runner
     }
