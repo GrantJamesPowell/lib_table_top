@@ -174,10 +174,13 @@ impl Play for GuessTheNumber {
             ..self.clone()
         };
 
+        let next_players_input_needed = new_state.which_players_input_needed(settings);
+
         (
             new_state.clone(),
             GameAdvance {
                 debug_msgs,
+                next_players_input_needed,
                 public_info_update: new_state.into(),
                 player_secret_info_updates: Default::default(),
             },

@@ -18,8 +18,12 @@ impl<T: Play> From<PlayerSet> for ActionCollector<T> {
 }
 
 impl<T: Play> ActionCollector<T> {
-    pub fn into_actions(self) -> Actions<T> {
-        self.actions
+    pub fn take_actions(&mut self) -> Actions<T> {
+        std::mem::take(&mut self.actions)
+    }
+
+    pub fn all_players(&self) -> PlayerSet {
+        self.players_acting
     }
 
     pub fn players_who_have_submitted(&self) -> PlayerSet {
@@ -55,7 +59,7 @@ impl<T: Play> ActionCollector<T> {
         }
     }
 
-    pub fn is_ready_to_submit(&self) -> bool {
+    pub fn is_ready(&self) -> bool {
         self.unaccounted_for_players().is_empty()
     }
 }
@@ -67,12 +71,12 @@ mod tests {
     use crate::{number_of_players::TWO_PLAYER, GameProgressionBuilder, Player, PlayerSet};
 
     #[test]
-    fn test_you_can_turn_action_collector_into_actions() {
+    fn test_you_can_turn_action_collector_take_actions() {
         let mut action_collector: ActionCollector<GuessTheNumber> = TWO_PLAYER.player_set().into();
         let guess: Guess = 42.into();
         let p1: Player = 1.into();
         action_collector.add_action(p1, guess);
-        assert_eq!(action_collector.into_actions(), [(p1, guess.into())].into());
+        assert_eq!(action_collector.take_actions(), [(p1, guess.into())].into());
     }
 
     #[test]
