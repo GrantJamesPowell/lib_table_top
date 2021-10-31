@@ -1,10 +1,10 @@
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
-use crate::{GameObserver, GamePlayer, GameRunner, Play, Player, PlayerSet};
+use crate::{GameObserver, GamePlayer, GameProgression, Play, Player, PlayerSet};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct GameHost<T: Play> {
-    game_runner: GameRunner<T>,
+    game_progression: GameProgression<T>,
     public_info: <T as Play>::PublicInfo,
     action_requests: PlayerSet,
     player_secret_info: HashMap<Player, <T as Play>::PlayerSecretInfo>,
@@ -14,8 +14,8 @@ impl<T: Play> Observe<T> for GameHost<T> {
     fn observer_pov(&self) -> ObserverPov<'_, T> {
         ObserverPov {
             action_requests: self.action_requests,
-            turn_num: self.game_runner.turn_num(),
-            settings: &self.game_runner.settings(),
+            turn_num: self.game_progression.turn_num(),
+            settings: &self.game_progression.settings(),
             public_info: &self.public_info,
         }
     }
@@ -24,23 +24,23 @@ impl<T: Play> Observe<T> for GameHost<T> {
 impl<T: Play> Omniscient<T> for GameHost<T> {
     fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
         OmniscientPov {
-            game_state: self.game_runner.state(),
+            game_state: self.game_progression.state(),
             player_secret_info: &self.player_secret_info,
             public_info: &self.public_info,
-            settings: self.game_runner.settings(),
-            turn_num: self.game_runner.turn_num(),
+            settings: self.game_progression.settings(),
+            turn_num: self.game_progression.turn_num(),
         }
     }
 }
 
-impl<T: Play> From<GameRunner<T>> for GameHost<T> {
-    fn from(game_runner: GameRunner<T>) -> Self {
-        let public_info = game_runner.public_info();
-        let player_secret_info = game_runner.player_secret_info();
-        let action_requests = game_runner.which_players_input_needed();
+impl<T: Play> From<GameProgression<T>> for GameHost<T> {
+    fn from(game_progression: GameProgression<T>) -> Self {
+        let public_info = game_progression.public_info();
+        let player_secret_info = game_progression.player_secret_info();
+        let action_requests = game_progression.which_players_input_needed();
 
         Self {
-            game_runner,
+            game_progression,
             public_info,
             player_secret_info,
             action_requests,
@@ -49,39 +49,39 @@ impl<T: Play> From<GameRunner<T>> for GameHost<T> {
 }
 
 impl<T: Play> GameHost<T> {
-    pub fn new(game_runner: impl Into<GameRunner<T>>) -> Self {
-        let game_runner = game_runner.into();
-        game_runner.into()
+    pub fn new(game_progression: impl Into<GameProgression<T>>) -> Self {
+        let game_progression = game_progression.into();
+        game_progression.into()
     }
 
-    fn into_game_runner(self) -> GameRunner<T> {
-        self.game_runner
+    fn into_game_progression(self) -> GameProgression<T> {
+        self.game_progression
     }
 
-    fn game_runner(&self) -> &GameRunner<T> {
-        &self.game_runner
+    fn game_progression(&self) -> &GameProgression<T> {
+        &self.game_progression
     }
 
     fn game_observer(&self) -> GameObserver<T> {
         GameObserver {
-            turn_num: self.game_runner.turn_num(),
+            turn_num: self.game_progression.turn_num(),
             action_requests: self.action_requests,
-            settings: Arc::clone(self.game_runner.settings_arc()),
+            settings: Arc::clone(self.game_progression.settings_arc()),
             public_info: self.public_info.clone(),
         }
     }
 
     fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
-        let turn_num = self.game_runner.turn_num();
+        let turn_num = self.game_progression.turn_num();
 
-        self.game_runner
+        self.game_progression
             .players()
             .into_iter()
             .map(move |player| GamePlayer {
                 player,
                 turn_num,
                 action_requests: self.action_requests,
-                settings: Arc::clone(self.game_runner.settings_arc()),
+                settings: Arc::clone(self.game_progression.settings_arc()),
                 public_info: self.public_info.clone(),
                 secret_info: self.player_secret_info[&player].clone(),
             })

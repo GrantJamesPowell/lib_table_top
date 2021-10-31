@@ -17,7 +17,7 @@ pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 // It looks like this is required because serde is trying to provide redundant bounds to T, but
 // since T and all of T's assoc'd types are deserialize, I think everything is gravy
 #[serde(bound = "")]
-pub struct GameRunner<T: Play> {
+pub struct GameProgression<T: Play> {
     seed: Arc<Seed>,
     settings: Arc<<T as Play>::Settings>,
     initial_state: Option<Arc<T>>,
@@ -34,13 +34,13 @@ pub struct HistoryEvent<T: Play> {
     actions: Actions<T>,
 }
 
-pub struct GameRunnerAdvance<T: Play> {
+pub struct GameProgressionAdvance<T: Play> {
     pub observer_update: ObserverUpdate<T>,
     pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
 }
 
-impl<T: Play> GameRunnerAdvance<T> {
+impl<T: Play> GameProgressionAdvance<T> {
     fn from(game_advance: GameAdvance<T>, turn_num: u64, action_requests: PlayerSet) -> Self {
         Self {
             debug_msgs: game_advance.debug_msgs,
@@ -54,7 +54,7 @@ impl<T: Play> GameRunnerAdvance<T> {
     }
 }
 
-impl<T: Play> From<Scenario<T>> for GameRunner<T> {
+impl<T: Play> From<Scenario<T>> for GameProgression<T> {
     fn from(
         Scenario {
             turn_num,
@@ -76,7 +76,7 @@ impl<T: Play> From<Scenario<T>> for GameRunner<T> {
     }
 }
 
-impl<T: Play> GameRunner<T> {
+impl<T: Play> GameProgression<T> {
     pub fn turn_num(&self) -> u64 {
         self.turn_num
     }
@@ -122,8 +122,8 @@ impl<T: Play> GameRunner<T> {
         self.state.which_players_input_needed(&self.settings)
     }
 
-    #[must_use = "advancing the game does not mutate the existing game runner, but instead returns a new one"]
-    pub fn submit_actions(&self, actions: Actions<T>) -> (Self, GameRunnerAdvance<T>) {
+    #[must_use = "advancing the game does not mutate the existing game progression, but instead returns a new one"]
+    pub fn submit_actions(&self, actions: Actions<T>) -> (Self, GameProgressionAdvance<T>) {
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
             actions.clone().into_iter(),
@@ -134,25 +134,25 @@ impl<T: Play> GameRunner<T> {
 
         history.push_back(HistoryEvent { actions });
 
-        let new_game_runner = Self {
+        let new_game_progression = Self {
             history,
             state: new_state,
             turn_num: self.turn_num + 1,
             ..self.clone()
         };
 
-        let game_advance = GameRunnerAdvance::from(
+        let game_advance = GameProgressionAdvance::from(
             game_advance,
             self.turn_num + 1,
-            new_game_runner.which_players_input_needed(),
+            new_game_progression.which_players_input_needed(),
         );
 
-        (new_game_runner, game_advance)
+        (new_game_progression, game_advance)
     }
 }
 
-impl<T: Play> GameRunnerBuilder<T> {
-    pub fn build(&self) -> Result<GameRunner<T>, GameRunnerBuilderError> {
+impl<T: Play> GameProgressionBuilder<T> {
+    pub fn build(&self) -> Result<GameProgression<T>, GameProgressionBuilderError> {
         let seed = self
             .seed
             .as_ref()
@@ -171,7 +171,7 @@ impl<T: Play> GameRunnerBuilder<T> {
             });
         let history = Vector::new();
 
-        Ok(GameRunner {
+        Ok(GameProgression {
             seed,
             settings,
             state,

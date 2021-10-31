@@ -30,7 +30,8 @@ use crossterm::{
 };
 
 use lttcore::{
-    play::NoCustomSettings, ActionResponse::*, GameRunner, GameRunnerBuilder, Play, Player, View,
+    play::NoCustomSettings, ActionResponse::*, GameProgression, GameProgressionBuilder, Play,
+    Player, View,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -44,15 +45,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //    events_sender,
     //));
 
-    //let mut game_runner: GameRunner<TicTacToe> = GameRunnerBuilder::default()
+    //let mut game_progression: GameProgression<TicTacToe> = GameProgressionBuilder::default()
     //    .settings(NoCustomSettings)
     //    .build()
     //    .unwrap();
 
-    //let mut player_views = game_runner.player_views();
-    //let mut spectator_view = game_runner.spectator_view();
+    //let mut player_views = game_progression.player_views();
+    //let mut spectator_view = game_progression.spectator_view();
 
-    //let mut turn = game_runner.turn();
+    //let mut turn = game_progression.turn();
 
     //let (action_sender, action_receiver) = mpsc::channel();
 
@@ -63,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //            current_turn.add_action(player, action)?;
 
     //            if current_turn.is_ready_to_submit() {
-    //                let (new_state, game_advance) = game_runner.submit_turn(current_turn).unwrap();
+    //                let (new_state, game_advance) = game_progression.submit_turn(current_turn).unwrap();
     //                spectator_view.update(&game_advance.spectator_update);
 
     //                for (player, player_update) in &game_advance.player_updates {
@@ -72,8 +73,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //                        .map(|view| view.update(player_update));
     //                }
 
-    //                game_runner = new_state;
-    //                turn = game_runner.turn();
+    //                game_progression = new_state;
+    //                turn = game_progression.turn();
     //            }
     //        }
     //    }
@@ -93,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //                    current_player,
     //                    &player_views.get(&current_player).unwrap(),
     //                    &spectator_view,
-    //                    game_runner.settings(),
+    //                    game_progression.settings(),
     //                    &ui_state,
     //                    );
     //            })?;
@@ -104,7 +105,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //                    current_player.clone(),
     //                    (&player_views).get(&current_player).unwrap(),
     //                    &spectator_view,
-    //                    game_runner.settings(),
+    //                    game_progression.settings(),
     //                    |action| action_sender.clone().send((current_player, Response(action))).unwrap(),
     //                )
 

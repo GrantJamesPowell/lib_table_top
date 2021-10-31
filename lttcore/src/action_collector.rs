@@ -1,4 +1,4 @@
-use crate::game_runner::Actions;
+use crate::game_progression::Actions;
 use crate::play::ActionResponse;
 use crate::{Play, Player, PlayerSet};
 
@@ -64,7 +64,7 @@ impl<T: Play> ActionCollector<T> {
 mod tests {
     use super::*;
     use crate::examples::{guess_the_number::Guess, GuessTheNumber};
-    use crate::{number_of_players::TWO_PLAYER, GameRunnerBuilder, Player, PlayerSet};
+    use crate::{number_of_players::TWO_PLAYER, GameProgressionBuilder, Player, PlayerSet};
 
     #[test]
     fn test_you_can_turn_action_collector_into_actions() {
@@ -111,7 +111,7 @@ mod tests {
     )]
     fn test_it_panics_when_trying_to_add_a_player_whos_not_in_the_set() {
         let player: Player = 255.into();
-        let game = GameRunnerBuilder::<GuessTheNumber>::default()
+        let game = GameProgressionBuilder::<GuessTheNumber>::default()
             .build()
             .unwrap();
         let mut action_collector: ActionCollector<GuessTheNumber> =
