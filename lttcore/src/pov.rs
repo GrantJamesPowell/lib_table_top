@@ -1,7 +1,6 @@
 use crate::{GameProgression, Play, Player, PlayerSet, View};
 use std::borrow::Cow;
 
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObserverPov<'a, T: Play> {
     pub turn_num: u64,

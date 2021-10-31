@@ -50,6 +50,14 @@ impl<T: Play> From<Scenario<T>> for GameProgression<T> {
 }
 
 impl<T: Play> GameProgression<T> {
+    pub fn from_settings(settings: impl Into<T::Settings>) -> Self {
+        let settings = settings.into();
+        GameProgressionBuilder::default()
+            .settings(settings)
+            .build()
+            .unwrap()
+    }
+
     pub fn turn_num(&self) -> u64 {
         self.turn_num
     }
