@@ -3,7 +3,6 @@ use crate::play::EnumeratedGameAdvance;
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
 use crate::{ActionResponse, GameObserver, GamePlayer, GameProgression, Play, Player};
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct GameHost<T: Play> {

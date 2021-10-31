@@ -1,5 +1,4 @@
-use crate::game_progression::Actions;
-use crate::play::ActionResponse;
+use crate::play::{ActionResponse, Actions};
 use crate::{Play, Player, PlayerSet};
 
 #[derive(Debug, Clone)]
