@@ -88,6 +88,10 @@ impl<T: Play> GameRunner<T> {
         &self.settings
     }
 
+    pub fn settings_arc(&self) -> &Arc<<T as Play>::Settings> {
+        &self.settings
+    }
+
     pub fn scenario(&self) -> Scenario<T> {
         Scenario {
             turn_num: self.turn_num,
@@ -103,6 +107,10 @@ impl<T: Play> GameRunner<T> {
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
         <T as Play>::number_of_players_for_settings(&self.settings)
+    }
+
+    pub fn players(&self) -> PlayerSet {
+        self.number_of_players().player_set()
     }
 
     pub fn which_players_input_needed(&self) -> PlayerSet {

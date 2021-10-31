@@ -6,6 +6,7 @@ use crate::{
     Omniscience, Play, Player, PlayerSet, View,
 };
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct GameHost<T: Play> {
     game_runner: GameRunner<T>,
@@ -51,19 +52,36 @@ impl<T: Play> From<GameRunner<T>> for GameHost<T> {
 
 impl<T: Play> GameHost<T> {
     fn into_game_runner(self) -> GameRunner<T> {
-        todo!()
+        self.game_runner
     }
 
-    fn game_runner(&self) -> GameRunner<T> {
-        todo!()
+    fn game_runner(&self) -> &GameRunner<T> {
+        &self.game_runner
     }
 
     fn game_observer(&self) -> GameObserver<T> {
-        todo!()
+        GameObserver {
+            turn_num: self.game_runner.turn_num(),
+            action_requests: self.action_requests,
+            settings: Arc::clone(self.game_runner.settings_arc()),
+            public_info: self.public_info.clone(),
+        }
     }
 
     fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
-        None.iter().cloned()
+        let turn_num = self.game_runner.turn_num();
+
+        self.game_runner
+            .players()
+            .into_iter()
+            .map(move |player| GamePlayer {
+                player,
+                turn_num,
+                action_requests: self.action_requests,
+                settings: Arc::clone(self.game_runner.settings_arc()),
+                public_info: self.public_info.clone(),
+                secret_info: self.player_secret_info[&player].clone(),
+            })
     }
 
     fn submit_action_response(
