@@ -1,5 +1,5 @@
-use crate::action_request::ActionRequestSource;
-use crate::{ActionRequest, Observe, Observer, Play, Player, PlayerSet};
+use crate::pov::{Observe, ObserverPov};
+use crate::{Play, Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -15,18 +15,12 @@ pub struct GamePlayer<T: Play> {
 }
 
 impl<T: Play> Observe<T> for GamePlayer<T> {
-    fn observe(&self) -> Observer<'_, T> {
-        Observer {
+    fn observer_pov(&self) -> ObserverPov<'_, T> {
+        ObserverPov {
             turn_num: self.turn_num,
             action_requests: self.action_requests,
             settings: &self.settings,
             public_info: &self.public_info,
         }
-    }
-}
-
-impl<T: Play> ActionRequestSource<T> for GamePlayer<T> {
-    fn next_action_request(&self) -> Option<ActionRequest<'_, T>> {
-        todo!()
     }
 }

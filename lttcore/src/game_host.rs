@@ -1,10 +1,6 @@
-use crate::action_request::ActionRequestSource;
-use crate::omniscience::Omniscient;
-use crate::play::{DebugMsgs, PlayerSecretInfoUpdates};
-use crate::{
-    ActionRequest, ActionResponse, GameObserver, GamePlayer, GameRunner, Observe, Observer,
-    Omniscience, Play, Player, PlayerSet, View,
-};
+
+use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
+use crate::{GameObserver, GamePlayer, GameRunner, Play, Player, PlayerSet};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -15,15 +11,9 @@ pub struct GameHost<T: Play> {
     player_secret_info: HashMap<Player, <T as Play>::PlayerSecretInfo>,
 }
 
-pub struct GameHostUpdates<T: Play> {
-    public_info_update: <<T as Play>::PublicInfo as View>::Update,
-    secret_info_updates: PlayerSecretInfoUpdates<T>,
-    debug_msgs: DebugMsgs<T>,
-}
-
 impl<T: Play> Observe<T> for GameHost<T> {
-    fn observe(&self) -> Observer<'_, T> {
-        Observer {
+    fn observer_pov(&self) -> ObserverPov<'_, T> {
+        ObserverPov {
             action_requests: self.action_requests,
             turn_num: self.game_runner.turn_num(),
             settings: &self.game_runner.settings(),
@@ -32,14 +22,8 @@ impl<T: Play> Observe<T> for GameHost<T> {
     }
 }
 
-impl<T: Play> ActionRequestSource<T> for GameHost<T> {
-    fn next_action_request(&self) -> Option<ActionRequest<'_, T>> {
-        todo!()
-    }
-}
-
 impl<T: Play> Omniscient<T> for GameHost<T> {
-    fn omniscience(&self) -> Omniscience<'_, T> {
+    fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
         todo!()
     }
 }
@@ -84,11 +68,11 @@ impl<T: Play> GameHost<T> {
             })
     }
 
-    fn submit_action_response(
-        &mut self,
-        _player: Player,
-        _action_response: impl Into<ActionResponse<<T as Play>::Action>>,
-    ) -> Option<GameHostUpdates<T>> {
-        todo!()
-    }
+    // fn submit_action_response(
+    //     &mut self,
+    //     _player: Player,
+    //     _action_response: impl Into<ActionResponse<<T as Play>::Action>>,
+    // ) -> Option<GameHostUpdates<T>> {
+    //     todo!()
+    // }
 }

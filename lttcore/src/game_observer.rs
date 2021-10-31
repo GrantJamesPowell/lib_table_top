@@ -1,4 +1,5 @@
-use crate::{Observe, Observer, Play, PlayerSet};
+use crate::pov::{Observe, ObserverPov};
+use crate::{Play, PlayerSet};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -12,8 +13,8 @@ pub struct GameObserver<T: Play> {
 }
 
 impl<T: Play> Observe<T> for GameObserver<T> {
-    fn observe(&self) -> Observer<'_, T> {
-        Observer {
+    fn observer_pov(&self) -> ObserverPov<'_, T> {
+        ObserverPov {
             turn_num: self.turn_num,
             action_requests: self.action_requests,
             settings: &self.settings,

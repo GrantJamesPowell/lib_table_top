@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfoUpdates};
-use crate::{NumberOfPlayers, ObserverUpdate, Play, Player, PlayerSet, Scenario, Seed};
+use crate::pov::ObserverUpdate;
+use crate::{NumberOfPlayers, Play, Player, PlayerSet, Scenario, Seed};
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
