@@ -1,4 +1,4 @@
-use crate::pov::{Observe, ObserverPov};
+use crate::pov::{Observe, ObserverPov, PlayerPov};
 use crate::{Play, Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -23,5 +23,26 @@ impl<T: Play> Observe<T> for GamePlayer<T> {
             settings: Cow::Borrowed(&self.settings),
             public_info: Cow::Borrowed(&self.public_info),
         }
+    }
+}
+
+impl<T: Play> GamePlayer<T> {
+    pub fn player(&self) -> Player {
+        self.player
+    }
+
+    pub fn player_pov(&self) -> PlayerPov<'_, T> {
+        PlayerPov {
+            turn_num: self.turn_num,
+            action_requests: self.action_requests,
+            player: self.player,
+            settings: Cow::Borrowed(&self.settings),
+            public_info: Cow::Borrowed(&self.public_info),
+            secret_info: Cow::Borrowed(&self.secret_info),
+        }
+    }
+
+    pub fn is_player_input_needed(&self) -> bool {
+        self.action_requests.contains(self.player)
     }
 }

@@ -12,6 +12,7 @@ pub struct ObserverPov<'a, T: Play> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerPov<'a, T: Play> {
     pub turn_num: u64,
+    pub action_requests: PlayerSet,
     pub player: Player,
     pub settings: Cow<'a, <T as Play>::Settings>,
     pub secret_info: Cow<'a, <T as Play>::PlayerSecretInfo>,

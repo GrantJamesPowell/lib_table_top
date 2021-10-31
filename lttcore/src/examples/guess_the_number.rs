@@ -47,6 +47,14 @@ pub struct Settings {
     num_players: NumberOfPlayers,
 }
 
+impl TryFrom<RangeInclusive<u64>> for Settings {
+    type Error = SettingsBuilderError;
+
+    fn try_from(range: RangeInclusive<u64>) -> Result<Self, SettingsBuilderError> {
+        SettingsBuilder::default().range(range).build()
+    }
+}
+
 impl SettingsBuilder {
     fn validate(&self) -> Result<(), String> {
         if let Some(range) = &self.range {
@@ -76,22 +84,39 @@ impl Default for Settings {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct PublicInfo(Option<GuessTheNumber>);
+pub enum PublicInfo {
+    InProgress,
+    Completed {
+        secret_number: u64,
+        guesses: Guesses,
+    },
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct SpectatorUpdate(GuessTheNumber);
+pub struct PublicInfoUpdate {
+    pub secret_number: u64,
+    pub guesses: Guesses,
+}
 
-impl From<GuessTheNumber> for SpectatorUpdate {
-    fn from(game: GuessTheNumber) -> Self {
-        Self(game)
+impl From<PublicInfoUpdate> for PublicInfo {
+    fn from(
+        PublicInfoUpdate {
+            secret_number,
+            guesses,
+        }: PublicInfoUpdate,
+    ) -> Self {
+        PublicInfo::Completed {
+            secret_number,
+            guesses,
+        }
     }
 }
 
 impl View for PublicInfo {
-    type Update = SpectatorUpdate;
+    type Update = PublicInfoUpdate;
 
     fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
-        self.0 = Some(update.0.clone());
+        let _ = std::mem::replace(self, update.clone().into());
         Ok(())
     }
 }
@@ -117,8 +142,13 @@ impl Play for GuessTheNumber {
     }
 
     fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
-        let game = self.guesses.is_some().then(|| self.clone());
-        PublicInfo(game)
+        match self.guesses {
+            None => PublicInfo::InProgress,
+            Some(ref guesses) => PublicInfo::Completed {
+                secret_number: self.secret_number,
+                guesses: guesses.clone(),
+            },
+        }
     }
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
@@ -170,19 +200,20 @@ impl Play for GuessTheNumber {
             .collect();
 
         let new_state = Self {
-            guesses: Some(guesses),
+            guesses: Some(guesses.clone()),
             ..self.clone()
         };
-
-        let next_players_input_needed = new_state.which_players_input_needed(settings);
 
         (
             new_state.clone(),
             GameAdvance {
                 debug_msgs,
-                next_players_input_needed,
-                public_info_update: new_state.into(),
+                next_players_input_needed: new_state.which_players_input_needed(settings),
                 player_secret_info_updates: Default::default(),
+                public_info_update: PublicInfoUpdate {
+                    guesses,
+                    secret_number: self.secret_number,
+                },
             },
         )
     }

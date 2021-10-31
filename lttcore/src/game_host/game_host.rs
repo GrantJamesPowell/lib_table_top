@@ -42,8 +42,8 @@ impl<T: Play> From<GameProgression<T>> for GameHost<T> {
 }
 
 impl<T: Play> GameHost<T> {
-    pub fn new(game_progression: impl Into<GameProgression<T>>) -> Self {
-        let game_progression: GameProgression<T> = game_progression.into();
+    pub fn from_settings(settings: impl Into<<T as Play>::Settings>) -> Self {
+        let game_progression = GameProgression::from_settings(settings.into());
         game_progression.into()
     }
 
