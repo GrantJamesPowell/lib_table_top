@@ -2,6 +2,7 @@ use super::action_collector::ActionCollector;
 use crate::play::EnumeratedGameAdvance;
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
 use crate::{ActionResponse, GameObserver, GamePlayer, GameProgression, Play, Player};
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -17,8 +18,8 @@ impl<T: Play> Observe<T> for GameHost<T> {
         ObserverPov {
             action_requests: self.action_collector.all_players(),
             turn_num: self.game_progression.turn_num(),
-            settings: &self.game_progression.settings(),
-            public_info: &self.public_info,
+            settings: Cow::Borrowed(&self.game_progression.settings()),
+            public_info: Cow::Borrowed(&self.public_info),
         }
     }
 }
@@ -26,11 +27,11 @@ impl<T: Play> Observe<T> for GameHost<T> {
 impl<T: Play> Omniscient<T> for GameHost<T> {
     fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
         OmniscientPov {
-            game_state: self.game_progression.state(),
-            player_secret_info: &self.player_secret_info,
-            public_info: &self.public_info,
-            settings: self.game_progression.settings(),
             turn_num: self.game_progression.turn_num(),
+            game_state: Cow::Borrowed(self.game_progression.state()),
+            player_secret_info: Cow::Borrowed(&self.player_secret_info),
+            public_info: Cow::Borrowed(&self.public_info),
+            settings: Cow::Borrowed(self.game_progression.settings()),
         }
     }
 }
