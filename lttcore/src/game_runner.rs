@@ -93,6 +93,10 @@ impl<T: Play> GameRunner<T> {
         &self.settings
     }
 
+    pub fn public_info(&self) -> <T as Play>::PublicInfo {
+        self.state.public_info(&self.settings)
+    }
+
     pub fn scenario(&self) -> Scenario<T> {
         Scenario {
             turn_num: self.turn_num,

@@ -34,8 +34,17 @@ impl<T: Play> Omniscient<T> for GameHost<T> {
 }
 
 impl<T: Play> From<GameRunner<T>> for GameHost<T> {
-    fn from(_game_runner: GameRunner<T>) -> Self {
-        todo!()
+    fn from(game_runner: GameRunner<T>) -> Self {
+        let public_info = game_runner.public_info();
+        let player_secret_info = game_runner.player_secret_info();
+        let action_requests = game_runner.which_players_input_needed();
+
+        Self {
+            game_runner,
+            public_info,
+            player_secret_info,
+            action_requests,
+        }
     }
 }
 
