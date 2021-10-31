@@ -536,7 +536,7 @@ impl Play for TicTacToe {
 
     fn advance(
         &self,
-        _settings: &Self::Settings,
+        settings: &Self::Settings,
         mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
         _rng: &mut impl rand::Rng,
     ) -> (Self, GameAdvance<Self>) {
@@ -570,11 +570,14 @@ impl Play for TicTacToe {
             }
         };
 
+        let next_players_input_needed = new_state.which_players_input_needed(settings);
+
         (
             new_state,
             GameAdvance {
                 debug_msgs,
                 public_info_update,
+                next_players_input_needed,
                 player_secret_info_updates: Default::default(),
             },
         )

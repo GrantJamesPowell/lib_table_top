@@ -1,6 +1,6 @@
 use super::action_collector::ActionCollector;
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
-use crate::{GameObserver, GamePlayer, GameProgression, Play, Player};
+use crate::{ActionResponse, GameObserver, GamePlayer, GameProgression, Play, Player};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -52,7 +52,7 @@ impl<T: Play> From<GameProgression<T>> for GameHost<T> {
 
 impl<T: Play> GameHost<T> {
     pub fn new(game_progression: impl Into<GameProgression<T>>) -> Self {
-        let game_progression = game_progression.into();
+        let game_progression: GameProgression<T> = game_progression.into();
         game_progression.into()
     }
 
@@ -89,11 +89,21 @@ impl<T: Play> GameHost<T> {
             })
     }
 
-    // fn submit_action_response(
-    //     &mut self,
-    //     _player: Player,
-    //     _action_response: impl Into<ActionResponse<<T as Play>::Action>>,
-    // ) -> Option<GameHostUpdates<T>> {
-    //     todo!()
-    // }
+    fn submit_action_response(
+        &mut self,
+        player: Player,
+        action_response: impl Into<ActionResponse<<T as Play>::Action>>,
+    ) -> Option<()> {
+        self.action_collector.add_action(player, action_response);
+
+        if self.action_collector.is_ready() {
+            let (_new_progression, _game_advance) = self
+                .game_progression
+                .submit_actions(self.action_collector.take_actions());
+
+            Some(())
+        } else {
+            None
+        }
+    }
 }

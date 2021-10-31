@@ -31,6 +31,7 @@ impl<T> From<T> for ActionResponse<T> {
 
 #[derive(Clone, Debug)]
 pub struct GameAdvance<T: Play> {
+    pub next_players_input_needed: PlayerSet,
     pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
     pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: DebugMsgs<T>,
