@@ -1,4 +1,3 @@
-
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
 use crate::{GameObserver, GamePlayer, GameRunner, Play, Player, PlayerSet};
 use std::collections::HashMap;
@@ -24,7 +23,13 @@ impl<T: Play> Observe<T> for GameHost<T> {
 
 impl<T: Play> Omniscient<T> for GameHost<T> {
     fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
-        todo!()
+        OmniscientPov {
+            game_state: self.game_runner.state(),
+            player_secret_info: &self.player_secret_info,
+            public_info: &self.public_info,
+            settings: self.game_runner.settings(),
+            turn_num: self.game_runner.turn_num(),
+        }
     }
 }
 

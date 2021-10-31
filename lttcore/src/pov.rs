@@ -22,7 +22,7 @@ pub struct PlayerPov<'a, T: Play> {
 pub struct OmniscientPov<'a, T: Play> {
     pub turn_num: u64,
     pub settings: &'a <T as Play>::Settings,
-    pub player_secret_info: HashMap<Player, &'a <T as Play>::PlayerSecretInfo>,
+    pub player_secret_info: &'a HashMap<Player, <T as Play>::PlayerSecretInfo>,
     pub public_info: &'a <T as Play>::PublicInfo,
     pub game_state: &'a T,
 }

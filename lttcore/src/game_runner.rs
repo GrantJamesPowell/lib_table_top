@@ -81,7 +81,7 @@ impl<T: Play> GameRunner<T> {
         self.turn_num
     }
 
-    pub fn game(&self) -> &T {
+    pub fn state(&self) -> &T {
         &self.state
     }
 
