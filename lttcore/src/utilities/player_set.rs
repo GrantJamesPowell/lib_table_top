@@ -1,3 +1,4 @@
+use crate::common::direction::LeftOrRight::{self, *};
 use crate::Player;
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
@@ -244,11 +245,99 @@ impl PlayerSet {
     pub fn symmetric_difference(&self, other: Self) -> Self {
         Self(self.0.zip(other.0).map(|(x, y)| x ^ y))
     }
+
+    /// Returns the next player to the right of the given player, wrapping around if required
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let set = player_set![10, 20, 30];
+    /// assert_eq!(set.next_player_right(20), Some(30.into()));
+    /// assert_eq!(set.next_player_right(30), Some(10.into()));
+    /// assert_eq!(set.next_player_right(10), Some(20.into()));
+    ///
+    /// // It the player isn't in the set it will find the next player right as if the player was
+    ///
+    /// assert_eq!(set.next_player_right(25), Some(30.into()));
+    ///
+    /// // A PlayerSet with only one player will yield that player
+    ///
+    /// let set = player_set![42];
+    /// assert_eq!(set.next_player_right(0), Some(42.into()));
+    /// assert_eq!(set.next_player_right(42), Some(42.into()));
+    /// assert_eq!(set.next_player_right(42), Some(42.into()));
+    /// assert_eq!(set.next_player_right(u8::MAX), Some(42.into()));
+    ///
+    /// // An empty set will yield `None`
+    ///
+    /// let set = player_set![];
+    /// assert!(set.next_player_right(0).is_none());
+    /// ```
+    ///
+    pub fn next_player_right(&self, player: impl Into<Player>) -> Option<Player> {
+        let player = player.into();
+        let mut iter = IntoIter {
+            start: player.as_u8().wrapping_add(1),
+            end: player.as_u8(),
+            set: *self,
+        };
+        iter.next()
+    }
+
+    /// Returns the next player to the left of the given player, wrapping around if required
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let set = player_set![10, 20, 30];
+    /// assert_eq!(set.next_player_left(20), Some(10.into()));
+    /// assert_eq!(set.next_player_left(30), Some(20.into()));
+    /// assert_eq!(set.next_player_left(10), Some(30.into()));
+    ///
+    /// // It the player isn't in the set it will find the next player right as if the player was
+    ///
+    /// assert_eq!(set.next_player_left(25), Some(20.into()));
+    ///
+    /// // A PlayerSet with only one player will yield that player
+    ///
+    /// let set = player_set![42];
+    /// assert_eq!(set.next_player_left(0), Some(42.into()));
+    /// assert_eq!(set.next_player_left(42), Some(42.into()));
+    /// assert_eq!(set.next_player_left(42), Some(42.into()));
+    /// assert_eq!(set.next_player_left(u8::MAX), Some(42.into()));
+    ///
+    /// // An empty set will yield `None`
+    ///
+    /// let set = player_set![];
+    /// assert!(set.next_player_left(0).is_none());
+    /// ```
+    pub fn next_player_left(&self, player: impl Into<Player>) -> Option<Player> {
+        let player = player.into();
+        let mut iter = IntoIter {
+            start: player.as_u8(),
+            end: player.as_u8().wrapping_sub(1),
+            set: *self,
+        };
+        iter.next_back()
+    }
+
+    /// Convenience wrapper around `next_player_left` and `next_player_right`
+    pub fn next_player_in_direction(
+        &self,
+        player: impl Into<Player>,
+        direction: LeftOrRight,
+    ) -> Option<Player> {
+        match direction {
+            Left => self.next_player_left(player),
+            Right => self.next_player_left(player),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct IntoIter {
-    index: Option<u8>,
+    start: u8,
+    end: u8,
     set: PlayerSet,
 }
 
@@ -258,8 +347,9 @@ impl IntoIterator for PlayerSet {
 
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            index: Some(0),
             set: self,
+            start: 0,
+            end: u8::MAX,
         }
     }
 }
@@ -267,22 +357,46 @@ impl IntoIterator for PlayerSet {
 impl Iterator for IntoIter {
     type Item = Player;
 
+    // It's not pretty... but it works
     fn next(&mut self) -> Option<Self::Item> {
-        match self.index.take() {
-            None => None,
-            Some(idx) => {
-                for i in idx..=u8::MAX {
-                    if self.set.contains(i) {
-                        self.index = i.checked_add(1);
-                        return Some(i.into());
-                    }
+        while self.start != self.end {
+            if self.set.contains(self.start) {
+                let player: Player = self.start.into();
+                self.start = self.start.wrapping_add(1);
+                return Some(player);
+            } else {
+                self.start = self.start.wrapping_add(1);
+                if self.start == self.end && self.set.contains(self.end) {
+                    return Some(self.end.into());
                 }
-
-                None
             }
         }
+
+        return None;
     }
 }
+
+impl std::iter::DoubleEndedIterator for IntoIter {
+    // It's not pretty... but it works
+    fn next_back(&mut self) -> Option<Self::Item> {
+        while self.end != self.start {
+            if self.set.contains(self.end) {
+                let player: Player = self.end.into();
+                self.end = self.end.wrapping_sub(1);
+                return Some(player);
+            } else {
+                self.end = self.end.wrapping_sub(1);
+                if self.end == self.start && self.set.contains(self.start) {
+                    return Some(self.start.into());
+                }
+            }
+        }
+
+        return None;
+    }
+}
+
+impl std::iter::FusedIterator for IntoIter {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
@@ -325,6 +439,28 @@ mod tests {
         }
 
         assert_eq!(result, players);
+    }
+
+    #[test]
+    fn test_next_and_next_back_for_player_set_into_iter() {
+        let set: PlayerSet = [1, 2, 3, 8, 9, 10, u8::MAX]
+            .into_iter()
+            .map(Player::new)
+            .collect();
+
+        let mut iter = set.into_iter();
+
+        assert_eq!(iter.next(), Some(1.into()));
+        assert_eq!(iter.next(), Some(2.into()));
+        assert_eq!(iter.next_back(), Some(u8::MAX.into()));
+        assert_eq!(iter.next_back(), Some(10.into()));
+        assert_eq!(iter.next_back(), Some(9.into()));
+        assert_eq!(iter.next(), Some(3.into()));
+        assert_eq!(iter.next(), Some(8.into()));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
     }
 
     #[test]
