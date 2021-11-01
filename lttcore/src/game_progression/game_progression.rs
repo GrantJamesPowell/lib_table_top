@@ -1,12 +1,9 @@
 use im::Vector;
 use serde::{Deserialize, Serialize};
 
-use std::collections::HashMap;
+use crate::play::{Actions, EnumeratedGameAdvance, PlayerSecretInfos};
+use crate::{ActionResponse, NumberOfPlayers, Play, Player, PlayerSet, Seed};
 use std::sync::Arc;
-
-use crate::play::{Actions, EnumeratedGameAdvance};
-
-use crate::{NumberOfPlayers, Play, Player, PlayerSet, Seed};
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]
@@ -57,7 +54,7 @@ impl<T: Play> GameProgression<T> {
         self.state.public_info(&self.settings)
     }
 
-    pub fn player_secret_info(&self) -> HashMap<Player, <T as Play>::PlayerSecretInfo> {
+    pub fn player_secret_info(&self) -> PlayerSecretInfos<T> {
         self.state.player_secret_info(&self.settings)
     }
 
@@ -73,31 +70,26 @@ impl<T: Play> GameProgression<T> {
         self.state.which_players_input_needed(&self.settings)
     }
 
-    #[must_use = "advancing the game does not mutate the existing game progression, but instead returns a new one"]
-    pub fn submit_actions(&self, actions: Actions<T>) -> (Self, EnumeratedGameAdvance<T>) {
+    pub fn submit_actions(
+        &mut self,
+        actions: impl Iterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
+    ) -> EnumeratedGameAdvance<T> {
+        let actions: Actions<T> = actions.collect();
+
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
             actions.clone().into_iter(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
-        let mut history = self.history.clone();
+        self.history.push_back(HistoryEvent { actions });
+        self.state = new_state;
+        self.turn_num += 1;
 
-        history.push_back(HistoryEvent { actions });
-
-        let new_game_progression = Self {
-            history,
-            state: new_state,
-            turn_num: self.turn_num + 1,
-            ..self.clone()
-        };
-
-        let game_advance = EnumeratedGameAdvance {
+        EnumeratedGameAdvance {
             game_advance,
-            turn_num: new_game_progression.turn_num(),
-        };
-
-        (new_game_progression, game_advance)
+            turn_num: self.turn_num(),
+        }
     }
 }
 

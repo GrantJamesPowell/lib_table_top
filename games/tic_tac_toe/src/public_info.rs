@@ -1,7 +1,7 @@
 use crate::{Position, TicTacToe};
 use lttcore::{Player, View};
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref};
+use std::ops::Deref;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicInfo(TicTacToe);
