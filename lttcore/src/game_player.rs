@@ -1,7 +1,7 @@
 use crate::pov::{Observe, ObserverPov, PlayerPov};
 use crate::{Play, Player, PlayerSet};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -20,8 +20,8 @@ impl<T: Play> Observe<T> for GamePlayer<T> {
         ObserverPov {
             turn_num: self.turn_num,
             action_requests: self.action_requests,
-            settings: Cow::Borrowed(&self.settings),
-            public_info: Cow::Borrowed(&self.public_info),
+            settings: &self.settings,
+            public_info: &self.public_info,
         }
     }
 }
@@ -36,9 +36,9 @@ impl<T: Play> GamePlayer<T> {
             turn_num: self.turn_num,
             action_requests: self.action_requests,
             player: self.player,
-            settings: Cow::Borrowed(&self.settings),
-            public_info: Cow::Borrowed(&self.public_info),
-            secret_info: Cow::Borrowed(&self.secret_info),
+            settings: &self.settings,
+            public_info: &self.public_info,
+            secret_info: &self.secret_info,
         }
     }
 

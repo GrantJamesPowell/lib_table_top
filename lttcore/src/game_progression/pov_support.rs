@@ -1,26 +1,5 @@
-use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
 use crate::{GameObserver, GamePlayer, GameProgression, Play};
-use std::borrow::Cow;
 use std::sync::Arc;
-
-impl<T: Play> Observe<T> for GameProgression<T> {
-    fn observer_pov(&self) -> ObserverPov<'_, T> {
-        ObserverPov {
-            turn_num: self.turn_num,
-            action_requests: self.which_players_input_needed(),
-            settings: Cow::Borrowed(&self.settings()),
-            public_info: Cow::Owned(self.public_info()),
-        }
-    }
-}
-
-impl<T: Play> Omniscient<T> for GameProgression<T> {
-    fn omniscient_pov(&self) -> OmniscientPov<'_, T> {
-        OmniscientPov {
-            game_progression: Cow::Borrowed(&self),
-        }
-    }
-}
 
 impl<T: Play> GameProgression<T> {
     pub fn game_observer(&self) -> GameObserver<T> {
