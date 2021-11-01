@@ -115,9 +115,8 @@ impl From<PublicInfoUpdate> for PublicInfo {
 impl View for PublicInfo {
     type Update = PublicInfoUpdate;
 
-    fn update(&mut self, update: &Self::Update) -> Result<(), Box<dyn std::error::Error>> {
+    fn update(&mut self, update: &Self::Update) {
         let _ = std::mem::replace(self, update.clone().into());
-        Ok(())
     }
 }
 
