@@ -30,7 +30,7 @@ use crossterm::{
 };
 
 use lttcore::{
-    play::NoCustomSettings, ActionResponse::*, GameProgression, GameProgressionBuilder, Play,
+    play::ActionResponse::*, play::NoCustomSettings, GameProgression, GameProgressionBuilder, Play,
     Player, View,
 };
 

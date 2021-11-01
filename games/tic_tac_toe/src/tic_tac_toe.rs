@@ -5,9 +5,9 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::{DebugMsg, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
-    ActionResponse, NumberOfPlayers, Play, Player, PlayerSet,
+    NumberOfPlayers, Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

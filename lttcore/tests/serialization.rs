@@ -1,6 +1,8 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::play::NoCustomSettings;
-use lttcore::{number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed};
+use lttcore::{
+    utilities::number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed,
+};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;

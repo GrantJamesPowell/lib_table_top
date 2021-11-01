@@ -1,7 +1,6 @@
 use crate::{
-    play::{DebugMsg, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
     utilities::number_of_players::ONE_PLAYER,
-    ActionResponse::{self, *},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
@@ -174,7 +173,7 @@ impl Play for GuessTheNumber {
         let mut actions_vec = Vec::with_capacity(settings.num_players.get() as usize);
 
         for action @ (player, response) in actions {
-            if let Response(attempted @ Guess(guess)) = response {
+            if let ActionResponse::Response(attempted @ Guess(guess)) = response {
                 if !settings.range().contains(&guess) {
                     debug_msgs.push((
                         player,

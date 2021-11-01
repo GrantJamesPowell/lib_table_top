@@ -1,6 +1,5 @@
 use lttcore::examples::guess_the_number::{Settings, SettingsBuilder};
-
-use lttcore::number_of_players::ONE_PLAYER;
+use lttcore::utilities::number_of_players::ONE_PLAYER;
 
 #[test]
 fn test_building_default_settings() {
