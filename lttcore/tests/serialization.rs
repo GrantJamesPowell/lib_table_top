@@ -1,8 +1,14 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
+use lttcore::examples::guess_the_number::{
+    ActionError::*, Guess, PublicInfo, PublicInfoUpdate, Settings, SettingsBuilder,
+};
+use lttcore::examples::GuessTheNumber;
 use lttcore::play::NoCustomSettings;
+use lttcore::seed::SEED_42;
 use lttcore::{
     utilities::number_of_players::FOUR_PLAYER, NumberOfPlayers, Player, PlayerSet, Seed,
 };
+use lttcore::{GamePlayer, GameProgression};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;
@@ -186,6 +192,58 @@ fn test_serialize_draw_pile() {
 #[test]
 fn test_serialize_no_custom_settings_and_error() {
     test_simple_serialization((NoCustomSettings, Null));
+}
+
+#[test]
+fn test_serializing_game_player_and_observer_and_updates() {
+    let settings: Settings = (1..=10).try_into().unwrap();
+    let mut game: GameProgression<GuessTheNumber> =
+        GameProgression::from_settings_and_seed(settings, SEED_42);
+
+    let serialized = serde_json::to_value(&game).unwrap();
+    assert_eq!(
+        serialized,
+        json!({
+            "seed":"2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
+            "settings":{
+                "range": {
+                    "start": 1,
+                    "end":10
+                },
+                "num_players": 1
+            },
+            "initial_state": Null,
+            "turn_num": 0,
+            "state":{
+                "secret_number": 8,
+                "guesses": Null},
+                "history":[]
+        })
+    );
+
+    let game_player = game.game_players().next().unwrap();
+    let serialized = serde_json::to_value(&game_player).unwrap();
+    assert_eq!(
+        serialized,
+        json!({
+          "game_observer": {
+            "turn_num": 0,
+            "action_requests": [1, 0, 0, 0],
+            "settings": {
+              "range": {
+                "start": 1,
+                "end": 10
+              },
+              "num_players": 1
+            },
+            "public_info": "InProgress"
+          },
+          "player": 0,
+          "secret_info": Null
+        })
+    );
+    let deserialized: GamePlayer<GuessTheNumber> = serde_json::from_value(serialized).unwrap();
+    assert_eq!(deserialized, game_player);
 }
 
 fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
