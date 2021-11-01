@@ -1,7 +1,5 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
-use lttcore::examples::guess_the_number::{
-    ActionError::*, Guess, PublicInfo, PublicInfoUpdate, Settings, SettingsBuilder,
-};
+use lttcore::examples::guess_the_number::Settings;
 use lttcore::examples::GuessTheNumber;
 use lttcore::play::settings::NoCustomSettings;
 use lttcore::seed::SEED_42;
@@ -195,7 +193,7 @@ fn test_serialize_no_custom_settings_and_error() {
 #[test]
 fn test_serializing_game_player_and_observer_and_updates() {
     let settings: Settings = (1..=10).try_into().unwrap();
-    let mut game: GameProgression<GuessTheNumber> =
+    let game: GameProgression<GuessTheNumber> =
         GameProgression::from_settings_and_seed(settings, SEED_42);
 
     let serialized = serde_json::to_value(&game).unwrap();

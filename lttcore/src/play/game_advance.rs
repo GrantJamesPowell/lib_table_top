@@ -18,7 +18,7 @@ pub struct EnumeratedGameAdvance<T: Play> {
 }
 
 impl<T: Play> EnumeratedGameAdvance<T> {
-    fn observer_update(&self) -> ObserverUpdate<'_, T> {
+    pub fn observer_update(&self) -> ObserverUpdate<'_, T> {
         ObserverUpdate {
             turn_num: self.turn_num,
             action_requests: self.game_advance.next_players_input_needed,
@@ -26,7 +26,7 @@ impl<T: Play> EnumeratedGameAdvance<T> {
         }
     }
 
-    fn player_update(&self, player: impl Into<Player>) -> PlayerUpdate<'_, T> {
+    pub fn player_update(&self, player: impl Into<Player>) -> PlayerUpdate<'_, T> {
         let player = player.into();
         let observer_update = self.observer_update();
         let secret_info_update = self

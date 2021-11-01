@@ -1,13 +1,11 @@
 use lttcore::examples::guess_the_number::{
-    ActionError::*, Guess, PublicInfo, PublicInfoUpdate, Settings, SettingsBuilder,
+    ActionError::*, Guess, PublicInfo, Settings, SettingsBuilder,
 };
 use lttcore::examples::GuessTheNumber;
-use lttcore::play::{
-    ActionResponse, Actions, DebugMsg, DebugMsgs, EnumeratedGameAdvance, GameAdvance,
-};
+use lttcore::play::view::NoSecretPlayerInfo;
+use lttcore::play::{Actions, DebugMsg, DebugMsgs};
 use lttcore::seed::SEED_42;
 use lttcore::utilities::number_of_players::{ONE_PLAYER, TWO_PLAYER};
-use lttcore::view::NoSecretPlayerInfo;
 use lttcore::{GamePlayer, GameProgression, Player};
 
 #[test]
@@ -38,13 +36,13 @@ fn test_it_shows_the_player_the_correct_things() {
     let mut game: GameProgression<GuessTheNumber> =
         GameProgression::from_settings_and_seed(settings, SEED_42);
 
-    let players: Vec<GamePlayer<GuessTheNumber>> = game.game_players().collect();
+    let mut players: Vec<GamePlayer<GuessTheNumber>> = game.game_players().collect();
 
     assert_eq!(players.len(), 2);
 
     let mut actions: Actions<GuessTheNumber> = Default::default();
 
-    for player in players {
+    for player in &players {
         assert!(player.is_player_input_needed());
         let pov = player.player_pov();
         assert_eq!(pov.turn_num, 0.into());
@@ -56,21 +54,20 @@ fn test_it_shows_the_player_the_correct_things() {
         actions.push((player.player(), guess.into()))
     }
 
-    let EnumeratedGameAdvance {
-        turn_num,
-        game_advance:
-            GameAdvance {
-                next_players_input_needed,
-                public_info_update,
-                player_secret_info_updates,
-                debug_msgs,
-            },
-    } = game.submit_actions(actions);
-
-    assert_eq!(turn_num, 1.into());
-    // The game only lasts one "turn"
-    assert!(next_players_input_needed.is_empty());
-    assert!(player_secret_info_updates.is_empty());
+    let game_advance = game.submit_actions(actions);
+    assert_eq!(game_advance.turn_num, 1.into());
+    assert!(game_advance
+        .game_advance
+        .next_players_input_needed
+        .is_empty());
+    assert!(game_advance
+        .game_advance
+        .next_players_input_needed
+        .is_empty());
+    assert!(game_advance
+        .game_advance
+        .player_secret_info_updates
+        .is_empty());
 
     let expected_debug_msgs: DebugMsgs<GuessTheNumber> = [(
         Player::new(0),
@@ -85,17 +82,14 @@ fn test_it_shows_the_player_the_correct_things() {
     .into_iter()
     .collect();
 
-    assert_eq!(debug_msgs, expected_debug_msgs);
-    assert_eq!(
-        public_info_update,
-        PublicInfoUpdate {
-            secret_number: 8,
-            guesses: [
-                ActionResponse::Response(Guess(0)),
-                ActionResponse::Response(Guess(1)),
-            ]
-            .into_iter()
-            .collect()
-        }
-    )
+    assert_eq!(expected_debug_msgs, game_advance.game_advance.debug_msgs);
+
+    for player in &mut players {
+        let update = game_advance.player_update(player.player());
+        player.update(update);
+    }
+
+    for player in &players {
+        assert!(!player.is_player_input_needed());
+    }
 }
