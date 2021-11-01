@@ -2,6 +2,24 @@ use crate::Player;
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
 
+/// Helper function to define `PlayerSet` literals
+///
+/// ```
+/// use lttcore::{player_set, Player, PlayerSet};
+///
+/// let my_empty_ps = player_set![];
+/// assert_eq!(my_empty_ps, PlayerSet::new());
+///
+/// let expected: PlayerSet = [4,5,6].into_iter().map(Player::new).collect();
+/// assert_eq!(expected, player_set![4, 5, 6])
+/// ```
+#[macro_export]
+macro_rules! player_set {
+    ( $( $expr:expr ),* ) => {
+        [$($expr,)*].into_iter().map(::lttcore::Player::new).collect::<::lttcore::PlayerSet>()
+    };
+}
+
 /// High performance player set abstraction designd to be O(1) for
 /// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
 /// `Copy` which makes it super ergonomic to use
