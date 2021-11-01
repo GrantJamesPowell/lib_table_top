@@ -248,7 +248,8 @@ impl PlayerSet {
 
 #[derive(Clone, Debug)]
 pub struct IntoIter {
-    index: Option<u8>,
+    start: u8,
+    end: u8,
     set: PlayerSet,
 }
 
@@ -258,8 +259,9 @@ impl IntoIterator for PlayerSet {
 
     fn into_iter(self) -> Self::IntoIter {
         IntoIter {
-            index: Some(0),
             set: self,
+            start: 0,
+            end: u8::MAX,
         }
     }
 }
@@ -267,22 +269,46 @@ impl IntoIterator for PlayerSet {
 impl Iterator for IntoIter {
     type Item = Player;
 
+    // It's not pretty... but it works
     fn next(&mut self) -> Option<Self::Item> {
-        match self.index.take() {
-            None => None,
-            Some(idx) => {
-                for i in idx..=u8::MAX {
-                    if self.set.contains(i) {
-                        self.index = i.checked_add(1);
-                        return Some(i.into());
-                    }
+        while self.start != self.end {
+            if self.set.contains(self.start) {
+                let player: Player = self.start.into();
+                self.start = self.start.wrapping_add(1);
+                return Some(player);
+            } else {
+                self.start = self.start.wrapping_add(1);
+                if self.start == self.end && self.set.contains(self.end) {
+                    return Some(self.end.into());
                 }
-
-                None
             }
         }
+
+        return None;
     }
 }
+
+impl std::iter::DoubleEndedIterator for IntoIter {
+    // It's not pretty... but it works
+    fn next_back(&mut self) -> Option<Self::Item> {
+        while self.end != self.start {
+            if self.set.contains(self.end) {
+                let player: Player = self.end.into();
+                self.end = self.end.wrapping_sub(1);
+                return Some(player);
+            } else {
+                self.end = self.end.wrapping_sub(1);
+                if self.end == self.start && self.set.contains(self.start) {
+                    return Some(self.start.into());
+                }
+            }
+        }
+
+        return None;
+    }
+}
+
+impl std::iter::FusedIterator for IntoIter {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
@@ -325,6 +351,28 @@ mod tests {
         }
 
         assert_eq!(result, players);
+    }
+
+    #[test]
+    fn test_next_and_next_back_for_player_set_into_iter() {
+        let set: PlayerSet = [1, 2, 3, 8, 9, 10, u8::MAX]
+            .into_iter()
+            .map(Player::new)
+            .collect();
+
+        let mut iter = set.into_iter();
+
+        assert_eq!(iter.next(), Some(1.into()));
+        assert_eq!(iter.next(), Some(2.into()));
+        assert_eq!(iter.next_back(), Some(u8::MAX.into()));
+        assert_eq!(iter.next_back(), Some(10.into()));
+        assert_eq!(iter.next_back(), Some(9.into()));
+        assert_eq!(iter.next(), Some(3.into()));
+        assert_eq!(iter.next(), Some(8.into()));
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
+        assert_eq!(iter.next(), None);
+        assert_eq!(iter.next_back(), None);
     }
 
     #[test]
