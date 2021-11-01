@@ -1,3 +1,4 @@
+use crate::common::direction::LeftOrRight::{self, *};
 use crate::Player;
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
@@ -243,6 +244,93 @@ impl PlayerSet {
     /// ```
     pub fn symmetric_difference(&self, other: Self) -> Self {
         Self(self.0.zip(other.0).map(|(x, y)| x ^ y))
+    }
+
+    /// Returns the next player to the right of the given player, wrapping around if required
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let set = player_set![10, 20, 30];
+    /// assert_eq!(set.next_player_right(20), Some(30.into()));
+    /// assert_eq!(set.next_player_right(30), Some(10.into()));
+    /// assert_eq!(set.next_player_right(10), Some(20.into()));
+    ///
+    /// // It the player isn't in the set it will find the next player right as if the player was
+    ///
+    /// assert_eq!(set.next_player_right(25), Some(30.into()));
+    ///
+    /// // A PlayerSet with only one player will yield that player
+    ///
+    /// let set = player_set![42];
+    /// assert_eq!(set.next_player_right(0), Some(42.into()));
+    /// assert_eq!(set.next_player_right(42), Some(42.into()));
+    /// assert_eq!(set.next_player_right(42), Some(42.into()));
+    /// assert_eq!(set.next_player_right(u8::MAX), Some(42.into()));
+    ///
+    /// // An empty set will yield `None`
+    ///
+    /// let set = player_set![];
+    /// assert!(set.next_player_right(0).is_none());
+    /// ```
+    ///
+    pub fn next_player_right(&self, player: impl Into<Player>) -> Option<Player> {
+        let player = player.into();
+        let mut iter = IntoIter {
+            start: player.as_u8().wrapping_add(1),
+            end: player.as_u8(),
+            set: *self,
+        };
+        iter.next()
+    }
+
+    /// Returns the next player to the left of the given player, wrapping around if required
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let set = player_set![10, 20, 30];
+    /// assert_eq!(set.next_player_left(20), Some(10.into()));
+    /// assert_eq!(set.next_player_left(30), Some(20.into()));
+    /// assert_eq!(set.next_player_left(10), Some(30.into()));
+    ///
+    /// // It the player isn't in the set it will find the next player right as if the player was
+    ///
+    /// assert_eq!(set.next_player_left(25), Some(20.into()));
+    ///
+    /// // A PlayerSet with only one player will yield that player
+    ///
+    /// let set = player_set![42];
+    /// assert_eq!(set.next_player_left(0), Some(42.into()));
+    /// assert_eq!(set.next_player_left(42), Some(42.into()));
+    /// assert_eq!(set.next_player_left(42), Some(42.into()));
+    /// assert_eq!(set.next_player_left(u8::MAX), Some(42.into()));
+    ///
+    /// // An empty set will yield `None`
+    ///
+    /// let set = player_set![];
+    /// assert!(set.next_player_left(0).is_none());
+    /// ```
+    pub fn next_player_left(&self, player: impl Into<Player>) -> Option<Player> {
+        let player = player.into();
+        let mut iter = IntoIter {
+            start: player.as_u8(),
+            end: player.as_u8().wrapping_sub(1),
+            set: *self,
+        };
+        iter.next_back()
+    }
+
+    /// Convenience wrapper around `next_player_left` and `next_player_right`
+    pub fn next_player_in_direction(
+        &self,
+        player: impl Into<Player>,
+        direction: LeftOrRight,
+    ) -> Option<Player> {
+        match direction {
+            Left => self.next_player_left(player),
+            Right => self.next_player_left(player),
+        }
     }
 }
 
