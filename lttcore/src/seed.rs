@@ -23,9 +23,9 @@ impl Seed {
         self.rng_for_turn(u64::MAX)
     }
 
-    pub fn rng_for_turn(&self, turn: u64) -> impl rand::Rng {
+    pub fn rng_for_turn(&self, turn: impl Into<u64>) -> impl rand::Rng {
         let mut rng = ChaCha20Rng::from_seed(self.0);
-        rng.set_stream(turn);
+        rng.set_stream(turn.into());
         rng
     }
 }

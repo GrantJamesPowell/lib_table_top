@@ -1,5 +1,5 @@
 use crate::pov::{Observe, ObserverPov};
-use crate::{Play, PlayerSet};
+use crate::{Play, PlayerSet, TurnNum};
 use serde::{Deserialize, Serialize};
 
 use std::sync::Arc;
@@ -7,7 +7,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GameObserver<T: Play> {
-    pub(crate) turn_num: u64,
+    pub(crate) turn_num: TurnNum,
     pub(crate) action_requests: PlayerSet,
     pub(crate) settings: Arc<<T as Play>::Settings>,
     pub(crate) public_info: <T as Play>::PublicInfo,

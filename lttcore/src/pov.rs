@@ -1,8 +1,8 @@
-use crate::{Play, Player, PlayerSet, View};
+use crate::{Play, Player, PlayerSet, TurnNum, View};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObserverPov<'a, T: Play> {
-    pub turn_num: u64,
+    pub turn_num: TurnNum,
     pub action_requests: PlayerSet,
     pub settings: &'a <T as Play>::Settings,
     pub public_info: &'a <T as Play>::PublicInfo,
@@ -10,7 +10,7 @@ pub struct ObserverPov<'a, T: Play> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerPov<'a, T: Play> {
-    pub turn_num: u64,
+    pub turn_num: TurnNum,
     pub action_requests: PlayerSet,
     pub player: Player,
     pub settings: &'a <T as Play>::Settings,
@@ -19,7 +19,7 @@ pub struct PlayerPov<'a, T: Play> {
 }
 
 pub struct ObserverUpdate<T: Play> {
-    pub turn_num: u64,
+    pub turn_num: TurnNum,
     pub action_requests: PlayerSet,
     pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
 }

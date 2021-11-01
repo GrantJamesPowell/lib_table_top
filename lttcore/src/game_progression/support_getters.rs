@@ -1,9 +1,9 @@
 use crate::play::PlayerSecretInfos;
-use crate::{GameProgression, NumberOfPlayers, Play, PlayerSet};
+use crate::{GameProgression, NumberOfPlayers, Play, PlayerSet, TurnNum};
 use std::sync::Arc;
 
 impl<T: Play> GameProgression<T> {
-    pub fn turn_num(&self) -> u64 {
+    pub fn turn_num(&self) -> TurnNum {
         self.turn_num
     }
 
