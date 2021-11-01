@@ -7,48 +7,26 @@ use std::sync::Arc;
 
 use crate::play::{Actions, EnumeratedGameAdvance};
 use crate::pov::{Observe, ObserverPov, Omniscient, OmniscientPov};
-use crate::{GameObserver, GamePlayer, NumberOfPlayers, Play, Player, PlayerSet, Scenario, Seed};
+use crate::{GameObserver, GamePlayer, NumberOfPlayers, Play, Player, PlayerSet, Seed};
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]
 #[serde(bound = "")]
 pub struct GameProgression<T: Play> {
-    seed: Arc<Seed>,
-    settings: Arc<<T as Play>::Settings>,
-    initial_state: Option<Arc<T>>,
-    turn_num: u64,
+    pub(super) seed: Arc<Seed>,
+    pub(super) settings: Arc<<T as Play>::Settings>,
+    pub(super) initial_state: Option<Arc<T>>,
+    pub(super) turn_num: u64,
     #[builder(setter(skip))]
-    state: T,
+    pub(super) state: T,
     #[builder(setter(skip))]
-    history: Vector<HistoryEvent<T>>,
+    pub(super) history: Vector<HistoryEvent<T>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct HistoryEvent<T: Play> {
     actions: Actions<T>,
-}
-
-impl<T: Play> From<Scenario<T>> for GameProgression<T> {
-    fn from(
-        Scenario {
-            turn_num,
-            settings,
-            initial_state,
-            seed,
-        }: Scenario<T>,
-    ) -> Self {
-        let state: T = initial_state.as_ref().clone();
-
-        Self {
-            seed,
-            state,
-            settings,
-            turn_num,
-            initial_state: Some(initial_state),
-            history: Default::default(),
-        }
-    }
 }
 
 impl<T: Play> Observe<T> for GameProgression<T> {
@@ -121,15 +99,6 @@ impl<T: Play> GameProgression<T> {
                 .remove(&player)
                 .expect("game progression did not return secret info for a player"),
         })
-    }
-
-    pub fn scenario(&self) -> Scenario<T> {
-        Scenario {
-            turn_num: self.turn_num,
-            settings: self.settings.clone(),
-            initial_state: Arc::new(self.state.clone()),
-            seed: self.seed.clone(),
-        }
     }
 
     pub fn player_secret_info(&self) -> HashMap<Player, <T as Play>::PlayerSecretInfo> {
