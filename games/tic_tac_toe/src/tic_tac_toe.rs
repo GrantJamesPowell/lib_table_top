@@ -5,8 +5,8 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    number_of_players::TWO_PLAYER,
     play::{DebugMsg, DebugMsgs, GameAdvance},
+    utilities::number_of_players::TWO_PLAYER,
     ActionResponse, NumberOfPlayers, Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};

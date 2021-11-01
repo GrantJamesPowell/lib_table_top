@@ -14,7 +14,7 @@ pub struct DebugMsg<T: Play> {
 }
 
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
-pub type PlayerSercretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
+pub type PlayerSecretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
 pub type PlayerSecretInfoUpdates<T> =
     SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;

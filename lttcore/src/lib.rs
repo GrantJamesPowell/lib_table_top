@@ -9,14 +9,13 @@
 #[macro_use]
 extern crate derive_builder;
 
+mod game_observer;
+mod game_player;
+mod game_progression;
+
 pub mod bots;
 pub mod common;
 pub mod examples;
-pub mod game_host;
-pub mod game_observer;
-pub mod game_player;
-pub mod game_progression;
-pub mod number_of_players;
 pub mod play;
 pub mod player;
 pub mod pov;
@@ -25,14 +24,12 @@ pub mod seed;
 pub mod utilities;
 pub mod view;
 
-pub use game_host::GameHost;
 pub use game_observer::GameObserver;
 pub use game_player::GamePlayer;
 pub use game_progression::{GameProgression, GameProgressionBuilder};
-pub use number_of_players::NumberOfPlayers;
 pub use play::{ActionResponse, Play};
 pub use player::Player;
 pub use scenario::Scenario;
 pub use seed::Seed;
-pub use utilities::PlayerSet;
+pub use utilities::{NumberOfPlayers, PlayerSet};
 pub use view::View;

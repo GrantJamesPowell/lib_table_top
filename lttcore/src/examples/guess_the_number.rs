@@ -1,6 +1,6 @@
 use crate::{
-    number_of_players::ONE_PLAYER,
     play::{DebugMsg, DebugMsgs, GameAdvance},
+    utilities::number_of_players::ONE_PLAYER,
     ActionResponse::{self, *},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };

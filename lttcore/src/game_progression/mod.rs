@@ -1,4 +1,5 @@
 mod game_progression;
-mod pov_support;
-mod scenario_support;
+mod support_getters;
+mod support_povs;
+mod support_scenarios;
 pub use game_progression::{GameProgression, GameProgressionBuilder};

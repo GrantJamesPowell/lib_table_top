@@ -1,12 +1,9 @@
 use im::Vector;
 use serde::{Deserialize, Serialize};
 
-use std::collections::HashMap;
-use std::sync::Arc;
-
 use crate::play::{Actions, EnumeratedGameAdvance};
-
-use crate::{NumberOfPlayers, Play, Player, PlayerSet, Seed};
+use crate::{ActionResponse, Play, Player, Seed};
+use std::sync::Arc;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[builder(setter(into, strip_option), build_fn(skip))]
@@ -37,67 +34,26 @@ impl<T: Play> GameProgression<T> {
             .unwrap()
     }
 
-    pub fn turn_num(&self) -> u64 {
-        self.turn_num
-    }
+    pub fn submit_actions(
+        &mut self,
+        actions: impl Iterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
+    ) -> EnumeratedGameAdvance<T> {
+        let actions: Actions<T> = actions.collect();
 
-    pub fn state(&self) -> &T {
-        &self.state
-    }
-
-    pub fn settings(&self) -> &<T as Play>::Settings {
-        &self.settings
-    }
-
-    pub fn settings_arc(&self) -> &Arc<<T as Play>::Settings> {
-        &self.settings
-    }
-
-    pub fn public_info(&self) -> <T as Play>::PublicInfo {
-        self.state.public_info(&self.settings)
-    }
-
-    pub fn player_secret_info(&self) -> HashMap<Player, <T as Play>::PlayerSecretInfo> {
-        self.state.player_secret_info(&self.settings)
-    }
-
-    pub fn number_of_players(&self) -> NumberOfPlayers {
-        <T as Play>::number_of_players_for_settings(&self.settings)
-    }
-
-    pub fn players(&self) -> PlayerSet {
-        self.number_of_players().player_set()
-    }
-
-    pub fn which_players_input_needed(&self) -> PlayerSet {
-        self.state.which_players_input_needed(&self.settings)
-    }
-
-    #[must_use = "advancing the game does not mutate the existing game progression, but instead returns a new one"]
-    pub fn submit_actions(&self, actions: Actions<T>) -> (Self, EnumeratedGameAdvance<T>) {
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
             actions.clone().into_iter(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
-        let mut history = self.history.clone();
+        self.history.push_back(HistoryEvent { actions });
+        self.state = new_state;
+        self.turn_num += 1;
 
-        history.push_back(HistoryEvent { actions });
-
-        let new_game_progression = Self {
-            history,
-            state: new_state,
-            turn_num: self.turn_num + 1,
-            ..self.clone()
-        };
-
-        let game_advance = EnumeratedGameAdvance {
+        EnumeratedGameAdvance {
             game_advance,
-            turn_num: new_game_progression.turn_num(),
-        };
-
-        (new_game_progression, game_advance)
+            turn_num: self.turn_num(),
+        }
     }
 }
 
