@@ -23,7 +23,3 @@ pub struct ObserverUpdate<T: Play> {
     pub action_requests: PlayerSet,
     pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
 }
-
-pub trait Observe<T: Play> {
-    fn observer_pov(&self) -> ObserverPov<'_, T>;
-}

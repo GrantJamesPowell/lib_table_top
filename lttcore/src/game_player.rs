@@ -1,4 +1,4 @@
-use crate::pov::{Observe, ObserverPov, PlayerPov};
+use crate::pov::{ObserverPov, PlayerPov};
 use crate::{Play, Player, PlayerSet, TurnNum};
 use serde::{Deserialize, Serialize};
 
@@ -15,17 +15,6 @@ pub struct GamePlayer<T: Play> {
     pub(crate) secret_info: <T as Play>::PlayerSecretInfo,
 }
 
-impl<T: Play> Observe<T> for GamePlayer<T> {
-    fn observer_pov(&self) -> ObserverPov<'_, T> {
-        ObserverPov {
-            turn_num: self.turn_num,
-            action_requests: self.action_requests,
-            settings: &self.settings,
-            public_info: &self.public_info,
-        }
-    }
-}
-
 impl<T: Play> GamePlayer<T> {
     pub fn player(&self) -> Player {
         self.player
@@ -39,6 +28,15 @@ impl<T: Play> GamePlayer<T> {
             settings: &self.settings,
             public_info: &self.public_info,
             secret_info: &self.secret_info,
+        }
+    }
+
+    fn observer_pov(&self) -> ObserverPov<'_, T> {
+        ObserverPov {
+            turn_num: self.turn_num,
+            action_requests: self.action_requests,
+            settings: &self.settings,
+            public_info: &self.public_info,
         }
     }
 
