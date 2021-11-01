@@ -1,6 +1,7 @@
 use crate::{Position, TicTacToe};
 use lttcore::{Player, View};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::ops::Deref;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
@@ -29,8 +30,8 @@ pub enum PublicInfoUpdate {
 impl View for PublicInfo {
     type Update = PublicInfoUpdate;
 
-    fn update(&mut self, update: &Self::Update) {
-        match update {
+    fn update(&mut self, update: Cow<'_, Self::Update>) {
+        match update.as_ref() {
             PublicInfoUpdate::Resign(player) => {
                 self.0.resign(*player);
             }

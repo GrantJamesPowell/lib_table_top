@@ -5,6 +5,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use thiserror::Error;
@@ -115,8 +116,8 @@ impl From<PublicInfoUpdate> for PublicInfo {
 impl View for PublicInfo {
     type Update = PublicInfoUpdate;
 
-    fn update(&mut self, update: &Self::Update) {
-        let _ = std::mem::replace(self, update.clone().into());
+    fn update(&mut self, update: Cow<'_, Self::Update>) {
+        let _ = std::mem::replace(self, update.into_owned().into());
     }
 }
 
