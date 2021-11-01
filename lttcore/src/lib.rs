@@ -12,7 +12,6 @@ extern crate derive_builder;
 pub mod bots;
 pub mod common;
 pub mod examples;
-pub mod game_host;
 pub mod game_observer;
 pub mod game_player;
 pub mod game_progression;
@@ -25,7 +24,6 @@ pub mod seed;
 pub mod utilities;
 pub mod view;
 
-pub use game_host::GameHost;
 pub use game_observer::GameObserver;
 pub use game_player::GamePlayer;
 pub use game_progression::{GameProgression, GameProgressionBuilder};
