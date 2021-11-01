@@ -1,11 +1,11 @@
-use crate::{view::NoSecretPlayerInfo, NumberOfPlayers, Player, PlayerSet, TurnNum, View};
+use super::{
+    game_advance::GameAdvance, settings::NoCustomSettings, view::NoSecretPlayerInfo, View,
+};
+use crate::{NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct NoCustomSettings;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DebugMsg<T: Play> {
@@ -29,20 +29,6 @@ impl<T> From<T> for ActionResponse<T> {
     fn from(t: T) -> Self {
         Self::Response(t)
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct GameAdvance<T: Play> {
-    pub next_players_input_needed: PlayerSet,
-    pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
-    pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
-    pub debug_msgs: DebugMsgs<T>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EnumeratedGameAdvance<T: Play> {
-    pub turn_num: TurnNum,
-    pub game_advance: GameAdvance<T>,
 }
 
 pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {

@@ -1,17 +1,12 @@
-use crate::pov::{ObserverPov, PlayerPov};
-use crate::{Play, Player, PlayerSet, TurnNum};
+use crate::pov::{ObserverPov, PlayerPov, PlayerUpdate};
+use crate::{GameObserver, Play, Player, View};
 use serde::{Deserialize, Serialize};
-
-use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GamePlayer<T: Play> {
-    pub(crate) turn_num: TurnNum,
+    pub(crate) game_observer: GameObserver<T>,
     pub(crate) player: Player,
-    pub(crate) action_requests: PlayerSet,
-    pub(crate) settings: Arc<<T as Play>::Settings>,
-    pub(crate) public_info: <T as Play>::PublicInfo,
     pub(crate) secret_info: <T as Play>::PlayerSecretInfo,
 }
 
@@ -22,25 +17,28 @@ impl<T: Play> GamePlayer<T> {
 
     pub fn player_pov(&self) -> PlayerPov<'_, T> {
         PlayerPov {
-            turn_num: self.turn_num,
-            action_requests: self.action_requests,
             player: self.player,
-            settings: &self.settings,
-            public_info: &self.public_info,
             secret_info: &self.secret_info,
+            turn_num: self.game_observer.turn_num,
+            action_requests: self.game_observer.action_requests,
+            settings: &self.game_observer.settings,
+            public_info: &self.game_observer.public_info,
         }
     }
 
-    fn observer_pov(&self) -> ObserverPov<'_, T> {
-        ObserverPov {
-            turn_num: self.turn_num,
-            action_requests: self.action_requests,
-            settings: &self.settings,
-            public_info: &self.public_info,
-        }
+    pub fn observer_pov(&self) -> ObserverPov<'_, T> {
+        self.game_observer.observer_pov()
     }
 
     pub fn is_player_input_needed(&self) -> bool {
-        self.action_requests.contains(self.player)
+        self.game_observer.action_requests.contains(self.player)
+    }
+
+    pub fn update(&mut self, update: PlayerUpdate<'_, T>) {
+        self.game_observer.update(update.observer_update);
+
+        if let Some(update) = update.secret_info_update {
+            self.secret_info.update(update);
+        }
     }
 }
