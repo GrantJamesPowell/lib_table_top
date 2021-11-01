@@ -23,6 +23,7 @@ pub mod player_set;
 pub mod pov;
 pub mod scenario;
 pub mod seed;
+pub mod utilities;
 pub mod view;
 
 pub use game_host::GameHost;

@@ -2,8 +2,6 @@ use super::action_collector::ActionCollector;
 use crate::play::EnumeratedGameAdvance;
 use crate::{ActionResponse, GameProgression, Play, Player};
 
-
-
 pub struct GameHost<T: Play> {
     game_progression: GameProgression<T>,
     action_collector: ActionCollector<T>,
