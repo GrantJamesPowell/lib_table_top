@@ -1,8 +1,8 @@
 use im::Vector;
 use serde::{Deserialize, Serialize};
 
-use crate::play::{Actions, EnumeratedGameAdvance, PlayerSecretInfos};
-use crate::{ActionResponse, NumberOfPlayers, Play, Player, PlayerSet, Seed};
+use crate::play::{Actions, EnumeratedGameAdvance};
+use crate::{ActionResponse, Play, Player, Seed};
 use std::sync::Arc;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -32,42 +32,6 @@ impl<T: Play> GameProgression<T> {
             .settings(settings)
             .build()
             .unwrap()
-    }
-
-    pub fn turn_num(&self) -> u64 {
-        self.turn_num
-    }
-
-    pub fn state(&self) -> &T {
-        &self.state
-    }
-
-    pub fn settings(&self) -> &<T as Play>::Settings {
-        &self.settings
-    }
-
-    pub fn settings_arc(&self) -> &Arc<<T as Play>::Settings> {
-        &self.settings
-    }
-
-    pub fn public_info(&self) -> <T as Play>::PublicInfo {
-        self.state.public_info(&self.settings)
-    }
-
-    pub fn player_secret_info(&self) -> PlayerSecretInfos<T> {
-        self.state.player_secret_info(&self.settings)
-    }
-
-    pub fn number_of_players(&self) -> NumberOfPlayers {
-        <T as Play>::number_of_players_for_settings(&self.settings)
-    }
-
-    pub fn players(&self) -> PlayerSet {
-        self.number_of_players().player_set()
-    }
-
-    pub fn which_players_input_needed(&self) -> PlayerSet {
-        self.state.which_players_input_needed(&self.settings)
     }
 
     pub fn submit_actions(
