@@ -2,7 +2,7 @@ use im::Vector;
 use serde::{Deserialize, Serialize};
 
 use crate::play::{ActionResponse, Actions, EnumeratedGameAdvance};
-use crate::{Play, Player, Seed};
+use crate::{Play, Player, Seed, TurnNum};
 use std::sync::Arc;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -12,7 +12,7 @@ pub struct GameProgression<T: Play> {
     pub(super) seed: Arc<Seed>,
     pub(super) settings: Arc<<T as Play>::Settings>,
     pub(super) initial_state: Option<Arc<T>>,
-    pub(super) turn_num: u64,
+    pub(super) turn_num: TurnNum,
     #[builder(setter(skip))]
     pub(super) state: T,
     #[builder(setter(skip))]
@@ -48,7 +48,7 @@ impl<T: Play> GameProgression<T> {
 
         self.history.push_back(HistoryEvent { actions });
         self.state = new_state;
-        self.turn_num += 1;
+        self.turn_num.increment();
 
         EnumeratedGameAdvance {
             game_advance,
@@ -66,7 +66,7 @@ impl<T: Play> GameProgressionBuilder<T> {
             .unwrap_or_else(|| Arc::new(Seed::random()));
 
         let initial_state: Option<Arc<T>> = self.initial_state.as_ref().cloned().unwrap_or(None);
-        let turn_num = self.turn_num.as_ref().cloned().unwrap_or(0);
+        let turn_num = self.turn_num.as_ref().cloned().unwrap_or_default();
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
         let state = initial_state
             .as_ref()

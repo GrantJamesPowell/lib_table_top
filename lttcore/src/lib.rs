@@ -14,6 +14,7 @@ mod game_player;
 mod game_progression;
 mod player;
 mod scenario;
+mod turn_num;
 
 pub mod bots;
 pub mod common;
@@ -31,5 +32,6 @@ pub use play::Play;
 pub use player::Player;
 pub use scenario::Scenario;
 pub use seed::Seed;
+pub use turn_num::TurnNum;
 pub use utilities::{NumberOfPlayers, PlayerSet};
 pub use view::View;

@@ -1,4 +1,4 @@
-use crate::{view::NoSecretPlayerInfo, NumberOfPlayers, Player, PlayerSet, View};
+use crate::{view::NoSecretPlayerInfo, NumberOfPlayers, Player, PlayerSet, TurnNum, View};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
@@ -41,7 +41,7 @@ pub struct GameAdvance<T: Play> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EnumeratedGameAdvance<T: Play> {
-    pub turn_num: u64,
+    pub turn_num: TurnNum,
     pub game_advance: GameAdvance<T>,
 }
 
