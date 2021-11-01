@@ -26,19 +26,12 @@ pub struct HistoryEvent<T: Play> {
 }
 
 impl<T: Play> GameProgression<T> {
-    pub fn from_settings(settings: impl Into<T::Settings>) -> Self {
-        let settings = settings.into();
-        GameProgressionBuilder::default()
-            .settings(settings)
-            .build()
-            .unwrap()
-    }
-
     pub fn submit_actions(
         &mut self,
-        actions: impl Iterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
+        actions: impl IntoIterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
     ) -> EnumeratedGameAdvance<T> {
-        let actions: Actions<T> = actions.collect();
+        let mut actions: Actions<T> = actions.into_iter().collect();
+        actions.sort_by_key(|(p, _)| *p);
 
         let (new_state, game_advance) = self.state.advance(
             &self.settings,
