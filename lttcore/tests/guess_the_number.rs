@@ -2,7 +2,6 @@ use lttcore::examples::guess_the_number::{Settings, SettingsBuilder};
 
 use lttcore::number_of_players::ONE_PLAYER;
 
-
 #[test]
 fn test_building_default_settings() {
     let settings: Settings = SettingsBuilder::default().build().unwrap();

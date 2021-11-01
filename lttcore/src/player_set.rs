@@ -28,6 +28,29 @@ impl PlayerSet {
         Default::default()
     }
 
+    /// Returns the offset of the player relative to the playerset
+    ///
+    /// ```
+    /// use lttcore::{Player, PlayerSet};
+    ///
+    /// let ps: PlayerSet = [2, 4, 6].into_iter().map(Player::new).collect();
+    /// assert_eq!(ps.player_offset(2), Some(0));
+    /// assert_eq!(ps.player_offset(4), Some(1));
+    /// assert_eq!(ps.player_offset(6), Some(2));
+    ///
+    /// assert_eq!(ps.player_offset(42), None);
+    /// ```
+    pub fn player_offset(&self, player: impl Into<Player>) -> Option<u8> {
+        let player = player.into();
+
+        self.players()
+            .enumerate()
+            .filter(|&(_offset, p)| p == player)
+            .map(|(offset, _p)| offset)
+            .map(|n| n.try_into().unwrap())
+            .next()
+    }
+
     /// Return the count of players in the set
     /// ```
     /// use lttcore::PlayerSet;
