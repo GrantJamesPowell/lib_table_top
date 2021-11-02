@@ -66,17 +66,24 @@ impl PlayerSet {
     /// assert_eq!(ps.player_offset(6), Some(2));
     /// assert_eq!(ps.player_offset(u8::MAX), Some(3));
     ///
+    /// // When a Player isn't in the set
+    ///
     /// assert_eq!(ps.player_offset(42), None);
     /// ```
     pub fn player_offset(&self, player: impl Into<Player>) -> Option<u8> {
         let player = player.into();
 
-        self.players()
-            .enumerate()
-            .filter(|&(_offset, p)| p == player)
-            .map(|(offset, _p)| offset)
-            .map(|n| n.try_into().unwrap())
-            .next()
+        self.contains(player).then(|| {
+            let initial_sections_sum = self.0[0..section(player)]
+                .iter()
+                .map(|x| x.count_ones())
+                .sum::<u32>();
+
+            let section = self.0[section(player)];
+            let mask: u64 = !(u64::MAX << offset(player));
+            let section_ones = (mask & section).count_ones();
+            (initial_sections_sum + section_ones).try_into().unwrap()
+        })
     }
 
     /// Return the count of players in the set
