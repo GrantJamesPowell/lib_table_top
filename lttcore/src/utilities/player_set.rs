@@ -91,17 +91,15 @@ impl PlayerSet {
     /// set.insert(1);
     /// assert_eq!(set.count(), 2);
     /// ```
-    pub fn count(&self) -> u8 {
+    pub fn count(&self) -> u32 {
         self.0
             .iter()
             .map(|&x| x.count_ones())
             .sum::<u32>()
-            .try_into()
-            .unwrap()
     }
 
     /// Alias for `count`
-    pub fn len(&self) -> u8 {
+    pub fn len(&self) -> u32 {
         self.count()
     }
 

@@ -24,7 +24,7 @@ impl<Item> PlayerItemCollector<Item> {
     pub fn new(players: impl Into<PlayerSet>) -> Self {
         let players = players.into();
         let mut items: SmallVec<[Option<Item>; 4]> = Default::default();
-        items.resize_with(players.count().into(), || None);
+        items.resize_with(players.count().try_into().unwrap(), || None);
         Self { players, items }
     }
 
