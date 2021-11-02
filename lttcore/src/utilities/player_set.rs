@@ -1,7 +1,7 @@
 use crate::common::direction::LeftOrRight::{self, *};
 use crate::Player;
+use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::iter::FromIterator;
 
 /// Helper function to define `PlayerSet` literals
@@ -334,21 +334,19 @@ impl PlayerSet {
         let to_end = player.as_u8()..=u8::MAX;
         let from_start = 0..player.as_u8();
 
-        let mut players: SmallVec<_> = to_end
-            .into_iter()
-            .chain(from_start.into_iter())
-            .map(Player::new)
-            .filter(|player| self.contains(*player))
-            .collect();
-
-        players.reverse();
-        IntoIter { players }
+        IntoIter {
+            set: self,
+            to_end,
+            from_start,
+        }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct IntoIter {
-    players: SmallVec<[Player; 32]>,
+    set: PlayerSet,
+    to_end: RangeInclusive<u8>,
+    from_start: Range<u8>,
 }
 
 impl IntoIterator for PlayerSet {
@@ -364,13 +362,37 @@ impl Iterator for IntoIter {
     type Item = Player;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.players.pop()
+        while let Some(player) = self.to_end.next() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        while let Some(player) = self.from_start.next() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        None
     }
 }
 
 impl std::iter::DoubleEndedIterator for IntoIter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        (self.players.len() > 0).then(|| self.players.remove(0))
+        while let Some(player) = self.from_start.next_back() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        while let Some(player) = self.to_end.next_back() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        None
     }
 }
 
