@@ -15,9 +15,47 @@ impl<T> Default for PlayerIndexedData<T> {
 }
 
 impl<T> PlayerIndexedData<T> {
-    /// Returns a new PlayerIndexData
+    /// Returns a new PlayerIndexedData
     pub fn new() -> Self {
         Self::with_capacity(0)
+    }
+
+    /// Init the player indexed data from a playerset and function
+    ///
+    /// ```
+    /// use lttcore::{player_set, utilities::PlayerIndexedData};
+    ///
+    /// let ps = player_set![1, 2, 3];
+    ///
+    /// let data = PlayerIndexedData::init_with(ps, |player| player.as_u8());
+    /// assert_eq!(data.len(), 3);
+    ///
+    /// assert_eq!(data.get(1), Some(&1));
+    /// assert_eq!(data.get(2), Some(&2));
+    /// assert_eq!(data.get(3), Some(&3));
+    /// ```
+    pub fn init_with(players: PlayerSet, mut func: impl FnMut(Player) -> T) -> Self {
+        let mut data = SmallVec::with_capacity(players.count().try_into().unwrap());
+
+        for player in players {
+            data.push(func(player))
+        }
+
+        Self { players, data }
+    }
+
+    /// Returns the number of elements in the PlayerIndexedData
+    ///
+    /// ```
+    /// use lttcore::{player_set, utilities::PlayerIndexedData};
+    ///
+    /// let ps = player_set![1, 2, 3];
+    ///
+    /// let data = PlayerIndexedData::init_with(ps, |player| player.as_u8());
+    /// assert_eq!(data.len(), 3);
+    /// ```
+    pub fn len(&self) -> usize {
+        self.players.count().try_into().unwrap()
     }
 
     /// Return an iterator over (Player, &Item)
@@ -25,7 +63,7 @@ impl<T> PlayerIndexedData<T> {
         self.players.into_iter().zip(&self.data)
     }
 
-    /// Returns a new PlayerIndexData with pre allocated capacity `n`
+    /// Returns a new PlayerIndexedData with pre allocated capacity `n`
     pub fn with_capacity(n: usize) -> Self {
         Self {
             players: PlayerSet::empty(),
