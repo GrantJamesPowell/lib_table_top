@@ -4,6 +4,7 @@ use super::{
 use crate::{NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -44,10 +45,10 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
 
-    fn advance(
-        &mut self,
+    fn advance<'a>(
+        &'a mut self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
+        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self::Action>>)>,
         rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self>;
 }
