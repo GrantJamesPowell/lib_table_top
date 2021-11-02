@@ -1,5 +1,5 @@
 use crate::{
-    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::ONE_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
@@ -175,16 +175,13 @@ impl Play for GuessTheNumber {
         let mut actions_vec = Vec::with_capacity(settings.num_players.get() as usize);
 
         for action @ (player, response) in actions {
-            if let ActionResponse::Response(attempted @ Guess(guess)) = response {
+            if let ActionResponse::Response(Guess(guess)) = response {
                 if !settings.range().contains(&guess) {
                     debug_msgs.push((
                         player,
-                        DebugMsg {
-                            attempted,
-                            error: GuessOutOfRange {
-                                guess,
-                                range: settings.range.clone(),
-                            },
+                        GuessOutOfRange {
+                            guess,
+                            range: settings.range.clone(),
                         },
                     ))
                 }

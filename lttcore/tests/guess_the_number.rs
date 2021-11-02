@@ -3,7 +3,7 @@ use lttcore::examples::guess_the_number::{
 };
 use lttcore::examples::GuessTheNumber;
 use lttcore::play::view::NoSecretPlayerInfo;
-use lttcore::play::{Actions, DebugMsg, DebugMsgs};
+use lttcore::play::{Actions, DebugMsgs};
 use lttcore::seed::SEED_42;
 use lttcore::utilities::number_of_players::{ONE_PLAYER, TWO_PLAYER};
 use lttcore::{GamePlayer, GameProgression, Player};
@@ -71,12 +71,9 @@ fn test_it_shows_the_player_the_correct_things() {
 
     let expected_debug_msgs: DebugMsgs<GuessTheNumber> = [(
         Player::new(0),
-        DebugMsg {
-            attempted: Guess(0),
-            error: GuessOutOfRange {
-                guess: 0,
-                range: 1..=10,
-            },
+        GuessOutOfRange {
+            guess: 0,
+            range: 1..=10,
         },
     )]
     .into_iter()

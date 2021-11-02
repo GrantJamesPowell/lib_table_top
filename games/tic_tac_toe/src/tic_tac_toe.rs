@@ -5,7 +5,7 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::{ActionResponse, DebugMsg, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
 };
@@ -552,21 +552,15 @@ impl Play for TicTacToe {
         let public_info_update = {
             match response {
                 Resign => new_state.resign(player),
-                Response(attempted @ Action { position }) => {
-                    match new_state.claim_space(player, position) {
-                        Ok(update) => update,
-                        Err(err) => {
-                            let msg = DebugMsg {
-                                attempted,
-                                error: err,
-                            };
-                            debug_msgs.push((player, msg));
-                            new_state
-                                .claim_next_available_space(player)
-                                .expect("Tried to apply an action to a full board")
-                        }
+                Response(Action { position }) => match new_state.claim_space(player, position) {
+                    Ok(update) => update,
+                    Err(err) => {
+                        debug_msgs.push((player, err));
+                        new_state
+                            .claim_next_available_space(player)
+                            .expect("Tried to apply an action to a full board")
                     }
-                }
+                },
             }
         };
 
