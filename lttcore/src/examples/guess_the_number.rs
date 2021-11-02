@@ -165,10 +165,10 @@ impl Play for GuessTheNumber {
         }
     }
 
-    fn advance(
-        &mut self,
+    fn advance<'a>(
+        &'a mut self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
+        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self::Action>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
@@ -180,7 +180,7 @@ impl Play for GuessTheNumber {
         let guesses: Guesses = actions
             .into_iter()
             .inspect(|(player, response)| {
-                if let Response(Guess(guess)) = response {
+                if let Response(Guess(guess)) = response.as_ref() {
                     if !settings.range().contains(&guess) {
                         let err = GuessOutOfRange {
                             guess: guess.clone(),
@@ -191,7 +191,7 @@ impl Play for GuessTheNumber {
                     }
                 }
             })
-            .map(|(_, response)| response.clone())
+            .map(|(_, response)| response.into_owned())
             .collect();
 
         self.guesses = Some(guesses.clone());

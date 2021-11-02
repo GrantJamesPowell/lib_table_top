@@ -10,6 +10,7 @@ use lttcore::{
     NumberOfPlayers, Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -534,10 +535,10 @@ impl Play for TicTacToe {
             .collect()
     }
 
-    fn advance(
-        &mut self,
+    fn advance<'a>(
+        &'a mut self,
         settings: &Self::Settings,
-        mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
+        mut actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<<Self as Play>::Action>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
@@ -549,9 +550,9 @@ impl Play for TicTacToe {
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
 
         let public_info_update = {
-            match response {
+            match response.as_ref() {
                 Resign => self.resign(player),
-                Response(Action { position }) => match self.claim_space(player, position) {
+                Response(Action { position }) => match self.claim_space(player, *position) {
                     Ok(update) => update,
                     Err(err) => {
                         debug_msgs.push((player, err));

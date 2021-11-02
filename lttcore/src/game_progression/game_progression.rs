@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::play::{ActionResponse, Actions, EnumeratedGameAdvance};
 use crate::{Play, Player, Seed, TurnNum};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 #[derive(Builder, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,7 +36,9 @@ impl<T: Play> GameProgression<T> {
 
         let game_advance = self.state.advance(
             &self.settings,
-            actions.clone().into_iter(),
+            actions
+                .iter()
+                .map(|(player, action)| (*player, Cow::Borrowed(action))),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
