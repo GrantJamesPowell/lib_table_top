@@ -33,14 +33,13 @@ impl<T: Play> GameProgression<T> {
         let mut actions: Actions<T> = actions.into_iter().collect();
         actions.sort_by_key(|(p, _)| *p);
 
-        let (new_state, game_advance) = self.state.advance(
+        let game_advance = self.state.advance(
             &self.settings,
             actions.clone().into_iter(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
         self.history.push_back(HistoryEvent { actions });
-        self.state = new_state;
         self.turn_num.increment();
 
         EnumeratedGameAdvance {

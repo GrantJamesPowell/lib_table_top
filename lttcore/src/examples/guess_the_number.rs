@@ -166,52 +166,44 @@ impl Play for GuessTheNumber {
     }
 
     fn advance(
-        &self,
+        &mut self,
         settings: &Self::Settings,
         actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
         _rng: &mut impl rand::Rng,
-    ) -> (Self, GameAdvance<Self>) {
+    ) -> GameAdvance<Self> {
+        use ActionResponse::*;
+
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
-        let mut actions_vec = Vec::with_capacity(settings.num_players.get() as usize);
+        let mut actions: SmallVec<[_; 4]> = actions.collect();
+        actions.sort_by_key(|(player, _)| *player);
 
-        for action @ (player, response) in actions {
-            if let ActionResponse::Response(Guess(guess)) = response {
-                if !settings.range().contains(&guess) {
-                    debug_msgs.push((
-                        player,
-                        GuessOutOfRange {
-                            guess,
-                            range: settings.range.clone(),
-                        },
-                    ))
-                }
-            }
-
-            actions_vec.push(action);
-        }
-
-        actions_vec.sort_by_key(|(player, _)| *player);
-        let guesses: Guesses = actions_vec
+        let guesses: Guesses = actions
             .into_iter()
-            .map(|(_, response)| response)
+            .inspect(|(player, response)| {
+                if let Response(Guess(guess)) = response {
+                    if !settings.range().contains(&guess) {
+                        let err = GuessOutOfRange {
+                            guess: guess.clone(),
+                            range: settings.range.clone(),
+                        };
+
+                        debug_msgs.push((*player, err));
+                    }
+                }
+            })
+            .map(|(_, response)| response.clone())
             .collect();
 
-        let new_state = Self {
-            guesses: Some(guesses.clone()),
-            ..self.clone()
-        };
+        self.guesses = Some(guesses.clone());
 
-        (
-            new_state.clone(),
-            GameAdvance {
-                debug_msgs,
-                next_players_input_needed: new_state.which_players_input_needed(settings),
-                player_secret_info_updates: Default::default(),
-                public_info_update: PublicInfoUpdate {
-                    guesses,
-                    secret_number: self.secret_number,
-                },
+        GameAdvance {
+            debug_msgs,
+            next_players_input_needed: self.which_players_input_needed(settings),
+            player_secret_info_updates: Default::default(),
+            public_info_update: PublicInfoUpdate {
+                guesses,
+                secret_number: self.secret_number,
             },
-        )
+        }
     }
 }

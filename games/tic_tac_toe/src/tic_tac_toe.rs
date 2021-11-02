@@ -535,45 +535,38 @@ impl Play for TicTacToe {
     }
 
     fn advance(
-        &self,
+        &mut self,
         settings: &Self::Settings,
         mut actions: impl Iterator<Item = (Player, ActionResponse<<Self as Play>::Action>)>,
         _rng: &mut impl rand::Rng,
-    ) -> (Self, GameAdvance<Self>) {
+    ) -> GameAdvance<Self> {
         use ActionResponse::*;
 
         let (player, response) = actions
             .next()
             .expect("Tic Tac Toe is single player at a time");
 
-        let mut new_state = self.clone();
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
 
         let public_info_update = {
             match response {
-                Resign => new_state.resign(player),
-                Response(Action { position }) => match new_state.claim_space(player, position) {
+                Resign => self.resign(player),
+                Response(Action { position }) => match self.claim_space(player, position) {
                     Ok(update) => update,
                     Err(err) => {
                         debug_msgs.push((player, err));
-                        new_state
-                            .claim_next_available_space(player)
+                        self.claim_next_available_space(player)
                             .expect("Tried to apply an action to a full board")
                     }
                 },
             }
         };
 
-        let next_players_input_needed = new_state.which_players_input_needed(settings);
-
-        (
-            new_state,
-            GameAdvance {
-                debug_msgs,
-                public_info_update,
-                next_players_input_needed,
-                player_secret_info_updates: Default::default(),
-            },
-        )
+        GameAdvance {
+            debug_msgs,
+            public_info_update,
+            next_players_input_needed: self.which_players_input_needed(settings),
+            player_secret_info_updates: Default::default(),
+        }
     }
 }

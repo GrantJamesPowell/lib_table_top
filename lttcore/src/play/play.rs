@@ -45,9 +45,9 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
 
     fn advance(
-        &self,
+        &mut self,
         settings: &Self::Settings,
         actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
         rng: &mut impl rand::Rng,
-    ) -> (Self, GameAdvance<Self>);
+    ) -> GameAdvance<Self>;
 }
