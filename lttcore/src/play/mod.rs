@@ -18,5 +18,5 @@ pub use turn_num::TurnNum;
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
 
 pub use play::{
-    ActionResponse, Actions, DebugMsg, DebugMsgs, Play, PlayerSecretInfoUpdates, PlayerSecretInfos,
+    ActionResponse, Actions, DebugMsgs, Play, PlayerSecretInfoUpdates, PlayerSecretInfos,
 };

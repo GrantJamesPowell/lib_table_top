@@ -7,15 +7,9 @@ use smallvec::SmallVec;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct DebugMsg<T: Play> {
-    pub attempted: <T as Play>::Action,
-    pub error: <T as Play>::ActionError,
-}
-
 pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
 pub type PlayerSecretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
-pub type DebugMsgs<T> = SmallVec<[(Player, DebugMsg<T>); 2]>;
+pub type DebugMsgs<T> = SmallVec<[(Player, <T as Play>::ActionError); 2]>;
 pub type PlayerSecretInfoUpdates<T> =
     SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;
 
