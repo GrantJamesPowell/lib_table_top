@@ -5,13 +5,22 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance, LttSettings},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct NoCustomSettings;
+
+impl LttSettings for NoCustomSettings {
+    fn num_players(&self) -> NumberOfPlayers {
+        TWO_PLAYER
+    }
+}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -502,6 +511,7 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
+    type Settings = NoCustomSettings;
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
         match self.status() {
@@ -519,10 +529,6 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
     ) -> Self {
         Default::default()
-    }
-
-    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> NumberOfPlayers {
-        TWO_PLAYER
     }
 
     fn player_secret_info(

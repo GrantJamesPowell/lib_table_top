@@ -1,5 +1,5 @@
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance, LttSettings},
     utilities::number_of_players::ONE_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
@@ -46,6 +46,12 @@ pub struct Settings {
     range: RangeInclusive<u64>,
     #[builder(default = "ONE_PLAYER")]
     num_players: NumberOfPlayers,
+}
+
+impl LttSettings for Settings {
+    fn num_players(&self) -> NumberOfPlayers {
+        self.num_players
+    }
 }
 
 impl TryFrom<RangeInclusive<u64>> for Settings {
@@ -127,9 +133,6 @@ impl Play for GuessTheNumber {
     type PublicInfo = PublicInfo;
     type Settings = Settings;
 
-    fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
-        settings.num_players
-    }
     fn player_secret_info(
         &self,
         settings: &Self::Settings,

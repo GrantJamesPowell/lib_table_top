@@ -30,8 +30,7 @@ use crossterm::{
 };
 
 use lttcore::{
-    play::settings::NoCustomSettings, play::ActionResponse::*, GameProgression,
-    GameProgressionBuilder, Play, Player, View,
+    play::ActionResponse::*, GameProgression, GameProgressionBuilder, Play, Player, View,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

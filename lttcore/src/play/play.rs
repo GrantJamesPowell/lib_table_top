@@ -1,7 +1,5 @@
-use super::{
-    game_advance::GameAdvance, settings::NoCustomSettings, view::NoSecretPlayerInfo, View,
-};
-use crate::{NumberOfPlayers, Player, PlayerSet};
+use super::{game_advance::GameAdvance, view::NoSecretPlayerInfo, LttSettings, View};
+use crate::{Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -29,18 +27,11 @@ impl<T> From<T> for ActionResponse<T> {
 pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     type Action: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
     type ActionError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
-
-    type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
-        NoCustomSettings;
-
+    type Settings: LttSettings;
     type PublicInfo: View;
     type PlayerSecretInfo: View = NoSecretPlayerInfo;
 
-    fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
-    fn player_secret_info(
-        &self,
-        settings: &Self::Settings,
-    ) -> HashMap<Player, Self::PlayerSecretInfo>;
+    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self>;
     fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
