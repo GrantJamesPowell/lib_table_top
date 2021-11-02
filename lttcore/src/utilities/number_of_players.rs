@@ -14,7 +14,7 @@ impl NumberOfPlayers {
 
     /// Return the "Starting Player" for a game, mostly just for readability,
     /// always returns Player 0
-    pub const fn starting_player(&self) -> Player {
+    pub const fn starting_player() -> Player {
         Player::new(0)
     }
 

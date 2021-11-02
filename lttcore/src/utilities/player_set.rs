@@ -1,5 +1,6 @@
 use crate::common::direction::LeftOrRight::{self, *};
 use crate::Player;
+use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
 
@@ -59,10 +60,11 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let ps = player_set![2, 4, 6];
+    /// let ps = player_set![2, 4, 6, u8::MAX];
     /// assert_eq!(ps.player_offset(2), Some(0));
     /// assert_eq!(ps.player_offset(4), Some(1));
     /// assert_eq!(ps.player_offset(6), Some(2));
+    /// assert_eq!(ps.player_offset(u8::MAX), Some(3));
     ///
     /// assert_eq!(ps.player_offset(42), None);
     /// ```
@@ -90,17 +92,12 @@ impl PlayerSet {
     /// set.insert(1);
     /// assert_eq!(set.count(), 2);
     /// ```
-    pub fn count(&self) -> u8 {
-        self.0
-            .iter()
-            .map(|&x| x.count_ones())
-            .sum::<u32>()
-            .try_into()
-            .unwrap()
+    pub fn count(&self) -> u32 {
+        self.0.iter().map(|&x| x.count_ones()).sum::<u32>()
     }
 
     /// Alias for `count`
-    pub fn len(&self) -> u8 {
+    pub fn len(&self) -> u32 {
         self.count()
     }
 
@@ -157,6 +154,7 @@ impl PlayerSet {
     }
 
     /// Adds the player to the set, is a noop if player is already in set
+    /// returns the player offset
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet};
@@ -165,12 +163,18 @@ impl PlayerSet {
     /// let player: Player = 1.into();
     ///
     /// assert!(!set.contains(player));
-    /// set.insert(player);
+    /// let idx = set.insert(player);
     /// assert!(set.contains(player));
+    /// assert_eq!(set.player_offset(player), Some(idx));
+    ///
+    /// let idx = set.insert(u8::MAX);
+    /// assert_eq!(set.player_offset(u8::MAX), Some(idx));
     /// ```
-    pub fn insert(&mut self, player: impl Into<Player>) {
+    pub fn insert(&mut self, player: impl Into<Player>) -> u8 {
         let player = player.into();
-        self.0[section(player)] |= (1usize << offset(player)) as u64
+        self.0[section(player)] |= (1usize << offset(player)) as u64;
+        self.player_offset(player)
+            .expect("we just inserted the player")
     }
 
     /// Remove a player from the set, is a noop if player is not in the set
@@ -276,12 +280,7 @@ impl PlayerSet {
     ///
     pub fn next_player_right(&self, player: impl Into<Player>) -> Option<Player> {
         let player = player.into();
-        let mut iter = IntoIter {
-            start: player.as_u8().wrapping_add(1),
-            end: player.as_u8(),
-            set: *self,
-        };
-        iter.next()
+        self.into_iter_from_starting_player(player.next()).next()
     }
 
     /// Returns the next player to the left of the given player, wrapping around if required
@@ -313,12 +312,8 @@ impl PlayerSet {
     /// ```
     pub fn next_player_left(&self, player: impl Into<Player>) -> Option<Player> {
         let player = player.into();
-        let mut iter = IntoIter {
-            start: player.as_u8(),
-            end: player.as_u8().wrapping_sub(1),
-            set: *self,
-        };
-        iter.next_back()
+        self.into_iter_from_starting_player(player.previous())
+            .next_back()
     }
 
     /// Convenience wrapper around `next_player_left` and `next_player_right`
@@ -328,17 +323,30 @@ impl PlayerSet {
         direction: LeftOrRight,
     ) -> Option<Player> {
         match direction {
+            Right => self.next_player_right(player),
             Left => self.next_player_left(player),
-            Right => self.next_player_left(player),
+        }
+    }
+
+    fn into_iter_from_starting_player(self, player: impl Into<Player>) -> IntoIter {
+        let player = player.into();
+
+        let to_end = player.as_u8()..=u8::MAX;
+        let from_start = 0..player.as_u8();
+
+        IntoIter {
+            set: self,
+            to_end,
+            from_start,
         }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct IntoIter {
-    start: u8,
-    end: u8,
     set: PlayerSet,
+    to_end: RangeInclusive<u8>,
+    from_start: Range<u8>,
 }
 
 impl IntoIterator for PlayerSet {
@@ -346,53 +354,45 @@ impl IntoIterator for PlayerSet {
     type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            set: self,
-            start: 0,
-            end: u8::MAX,
-        }
+        self.into_iter_from_starting_player(0)
     }
 }
 
 impl Iterator for IntoIter {
     type Item = Player;
 
-    // It's not pretty... but it works
     fn next(&mut self) -> Option<Self::Item> {
-        while self.start != self.end {
-            if self.set.contains(self.start) {
-                let player: Player = self.start.into();
-                self.start = self.start.wrapping_add(1);
-                return Some(player);
-            } else {
-                self.start = self.start.wrapping_add(1);
-                if self.start == self.end && self.set.contains(self.end) {
-                    return Some(self.end.into());
-                }
+        while let Some(player) = self.to_end.next() {
+            if self.set.contains(player) {
+                return Some(player.into());
             }
         }
 
-        return None;
+        while let Some(player) = self.from_start.next() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        None
     }
 }
 
 impl std::iter::DoubleEndedIterator for IntoIter {
-    // It's not pretty... but it works
     fn next_back(&mut self) -> Option<Self::Item> {
-        while self.end != self.start {
-            if self.set.contains(self.end) {
-                let player: Player = self.end.into();
-                self.end = self.end.wrapping_sub(1);
-                return Some(player);
-            } else {
-                self.end = self.end.wrapping_sub(1);
-                if self.end == self.start && self.set.contains(self.start) {
-                    return Some(self.start.into());
-                }
+        while let Some(player) = self.from_start.next_back() {
+            if self.set.contains(player) {
+                return Some(player.into());
             }
         }
 
-        return None;
+        while let Some(player) = self.to_end.next_back() {
+            if self.set.contains(player) {
+                return Some(player.into());
+            }
+        }
+
+        None
     }
 }
 
@@ -429,6 +429,16 @@ mod tests {
     }
 
     #[test]
+    fn test_creating_a_full_player_set() {
+        let ps: PlayerSet = Player::all().collect();
+        assert_eq!(ps.count(), 256);
+
+        for player in Player::all() {
+            assert_eq!(ps.player_offset(player), Some(player.as_u8()))
+        }
+    }
+
+    #[test]
     fn test_into_iter_for_player_set() {
         let players: Vec<Player> = [0, 1, 2, u8::MAX].into_iter().map(Player::new).collect();
         let player_set: PlayerSet = players.iter().cloned().collect();
@@ -450,17 +460,17 @@ mod tests {
 
         let mut iter = set.into_iter();
 
-        assert_eq!(iter.next(), Some(1.into()));
-        assert_eq!(iter.next(), Some(2.into()));
-        assert_eq!(iter.next_back(), Some(u8::MAX.into()));
-        assert_eq!(iter.next_back(), Some(10.into()));
-        assert_eq!(iter.next_back(), Some(9.into()));
-        assert_eq!(iter.next(), Some(3.into()));
-        assert_eq!(iter.next(), Some(8.into()));
-        assert_eq!(iter.next(), None);
-        assert_eq!(iter.next_back(), None);
-        assert_eq!(iter.next(), None);
-        assert_eq!(iter.next_back(), None);
+        assert_eq!(Some(1.into()), iter.next());
+        assert_eq!(Some(2.into()), iter.next());
+        assert_eq!(Some(u8::MAX.into()), iter.next_back());
+        assert_eq!(Some(10.into()), iter.next_back());
+        assert_eq!(Some(9.into()), iter.next_back());
+        assert_eq!(Some(3.into()), iter.next());
+        assert_eq!(Some(8.into()), iter.next());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
     }
 
     #[test]
@@ -468,20 +478,24 @@ mod tests {
         for player in Player::all() {
             let mut set = PlayerSet::new();
             assert!(!set.contains(player));
-            set.insert(player);
+            let idx = set.insert(player);
+            assert_eq!(set.player_offset(player), Some(idx));
             assert!(set.contains(player));
             set.remove(player);
+            assert_eq!(set.player_offset(player), None);
             assert!(!set.contains(player));
         }
 
         let mut set = PlayerSet::new();
 
         for player in Player::all() {
-            set.insert(player);
+            let idx = set.insert(player);
+            assert_eq!(set.player_offset(player), Some(idx));
         }
 
         for player in Player::all() {
             assert!(set.contains(player));
+            assert_eq!(set.player_offset(player), Some(player.as_u8()));
         }
     }
 }
