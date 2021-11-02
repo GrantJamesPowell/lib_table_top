@@ -166,11 +166,11 @@ impl Play for GuessTheNumber {
     }
 
     fn advance(
-        &self,
+        &mut self,
         settings: &Self::Settings,
         actions: impl Iterator<Item = (Player, ActionResponse<Self::Action>)>,
         _rng: &mut impl rand::Rng,
-    ) -> (Self, GameAdvance<Self>) {
+    ) -> GameAdvance<Self> {
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
         let mut actions_vec = Vec::with_capacity(settings.num_players.get() as usize);
 
@@ -196,22 +196,16 @@ impl Play for GuessTheNumber {
             .map(|(_, response)| response)
             .collect();
 
-        let new_state = Self {
-            guesses: Some(guesses.clone()),
-            ..self.clone()
-        };
+        self.guesses = Some(guesses.clone());
 
-        (
-            new_state.clone(),
-            GameAdvance {
-                debug_msgs,
-                next_players_input_needed: new_state.which_players_input_needed(settings),
-                player_secret_info_updates: Default::default(),
-                public_info_update: PublicInfoUpdate {
-                    guesses,
-                    secret_number: self.secret_number,
-                },
+        GameAdvance {
+            debug_msgs,
+            next_players_input_needed: self.which_players_input_needed(settings),
+            player_secret_info_updates: Default::default(),
+            public_info_update: PublicInfoUpdate {
+                guesses,
+                secret_number: self.secret_number,
             },
-        )
+        }
     }
 }
