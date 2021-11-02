@@ -22,6 +22,7 @@ pub mod examples;
 pub mod play;
 pub mod pov;
 pub mod seed;
+pub mod state_machines;
 pub mod utilities;
 
 pub use game_observer::GameObserver;
