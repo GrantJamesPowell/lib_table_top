@@ -397,7 +397,7 @@ impl TicTacToe {
         TWO_PLAYER
             .players()
             .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
-            .unwrap_or(TWO_PLAYER.starting_player())
+            .unwrap_or(NumberOfPlayers::starting_player())
     }
 
     /// Convenience method to construct a board from arrays of ints, mostly used as the
