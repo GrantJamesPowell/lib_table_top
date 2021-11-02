@@ -7,4 +7,4 @@ edition = "2021"
 clap = "2.33.3"
 lttcore = { path = "../lttcore" }
 tic_tac_toe = { path = "../games/tic_tac_toe" }
-tokio = { version = "1", features = ["rt", "net"] }
+tokio = { version = "1", features = ["full"] }
