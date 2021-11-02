@@ -1,14 +1,13 @@
 use crate::{Player, PlayerSet};
-use smallvec::SmallVec;
+use crate::utilities::PlayerIndexedData;
 
 pub struct PlayerItemCollector<Item> {
-    players: PlayerSet,
-    items: SmallVec<[Option<Item>; 4]>,
+    data: PlayerIndexedData<Option<Item>>
 }
 
 impl<Item> From<PlayerSet> for PlayerItemCollector<Item> {
     fn from(players: PlayerSet) -> Self {
-        players.into()
+        Self::new(players)
     }
 }
 
@@ -16,29 +15,26 @@ impl<Item> PlayerItemCollector<Item> {
     /// Returns a new PlayerItemCollector for a PlayerSet
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{player_set, utilities::PlayerItemCollector};
     ///
-    /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
-    /// let pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
+    /// let ps = player_set![2,3,4];
+    /// let _: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
     /// ```
     pub fn new(players: impl Into<PlayerSet>) -> Self {
-        let players = players.into();
-        let mut items: SmallVec<[Option<Item>; 4]> = Default::default();
-        items.resize_with(players.count().try_into().unwrap(), || None);
-        Self { players, items }
+        Self { data: PlayerIndexedData::init_with(players.into(), |_| None) }
     }
 
     /// Returns all the players for this collector whether they've submitted or not
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{player_set, utilities::PlayerItemCollector};
     ///
-    /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
+    /// let ps = player_set![2,3,4];
     /// let pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
     /// assert_eq!(pic.players(), ps);
     /// ```
     pub fn players(&self) -> PlayerSet {
-        self.players
+        self.data.players()
     }
 
     /// Returns all the players who have submitted items
@@ -55,10 +51,9 @@ impl<Item> PlayerItemCollector<Item> {
     /// assert_eq!(pic.players_who_have_submitted(), p2.into());
     /// ```
     pub fn players_who_have_submitted(&self) -> PlayerSet {
-        self.items
-            .iter()
-            .zip(self.players.into_iter())
-            .filter_map(|(item, player)| item.as_ref().map(|_| player))
+        self.players()
+            .into_iter()
+            .filter(|&player| self.data[player].is_some())
             .collect()
     }
 
@@ -77,7 +72,10 @@ impl<Item> PlayerItemCollector<Item> {
     /// assert_eq!(pic.unaccounted_for_players(), expected);
     /// ```
     pub fn unaccounted_for_players(&self) -> PlayerSet {
-        self.players.difference(self.players_who_have_submitted())
+        self.players()
+            .into_iter()
+            .filter(|&player| self.data[player].is_none())
+            .collect()
     }
 
     /// Returns all the players who haven't submitted yet
@@ -120,10 +118,9 @@ impl<Item> PlayerItemCollector<Item> {
     /// )
     /// ```
     pub fn into_items(self) -> impl Iterator<Item = (Player, Item)> {
-        self.items
+            self.data
             .into_iter()
-            .zip(self.players.into_iter())
-            .filter_map(|(item, player)| item.map(|item| (player, item)))
+            .filter_map(|(player, item)| item.map(|x| (player, x)))
     }
 
     /// Adds a player and associated item to the collector. Returning the old value
@@ -153,12 +150,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// pic.add(42, 123);
     /// ```
     pub fn add(&mut self, player: impl Into<Player>, item: Item) -> Option<Item> {
-        let offset = self
-            .players
-            .player_offset(player)
-            .expect("player was not in PlayerSet");
-
-        std::mem::replace(&mut self.items[offset as usize], Some(item))
+        std::mem::replace(&mut self.data[player.into()], Some(item))
     }
 
     /// Removes a player from the collector, returning the associated item if it's there
@@ -190,10 +182,6 @@ impl<Item> PlayerItemCollector<Item> {
     /// pic.remove(42);
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) -> Option<Item> {
-        let offset = self
-            .players
-            .player_offset(player)
-            .expect("player was not in PlayerSet");
-        self.items[offset as usize].take()
+        self.data[player.into()].take()
     }
 }
