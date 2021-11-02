@@ -59,10 +59,11 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let ps = player_set![2, 4, 6];
+    /// let ps = player_set![2, 4, 6, u8::MAX];
     /// assert_eq!(ps.player_offset(2), Some(0));
     /// assert_eq!(ps.player_offset(4), Some(1));
     /// assert_eq!(ps.player_offset(6), Some(2));
+    /// assert_eq!(ps.player_offset(u8::MAX), Some(3));
     ///
     /// assert_eq!(ps.player_offset(42), None);
     /// ```
@@ -157,6 +158,7 @@ impl PlayerSet {
     }
 
     /// Adds the player to the set, is a noop if player is already in set
+    /// returns the player offset
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet};
@@ -165,12 +167,18 @@ impl PlayerSet {
     /// let player: Player = 1.into();
     ///
     /// assert!(!set.contains(player));
-    /// set.insert(player);
+    /// let idx = set.insert(player);
     /// assert!(set.contains(player));
+    /// assert_eq!(set.player_offset(player), Some(idx));
+    ///
+    /// let idx = set.insert(u8::MAX);
+    /// assert_eq!(set.player_offset(u8::MAX), Some(idx));
     /// ```
-    pub fn insert(&mut self, player: impl Into<Player>) {
+    pub fn insert(&mut self, player: impl Into<Player>) -> u8 {
         let player = player.into();
-        self.0[section(player)] |= (1usize << offset(player)) as u64
+        self.0[section(player)] |= (1usize << offset(player)) as u64;
+        self.player_offset(player)
+            .expect("we just inserted the player")
     }
 
     /// Remove a player from the set, is a noop if player is not in the set
