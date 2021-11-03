@@ -1,7 +1,8 @@
 [workspace]
 
 members = [
-    "lttcore",
     "games/tic_tac_toe",
+    "lttcore",
     "ltti",
+    "lttnetworking",
 ]
