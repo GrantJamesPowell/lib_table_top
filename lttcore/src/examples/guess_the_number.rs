@@ -174,8 +174,6 @@ impl Play for GuessTheNumber {
         use ActionResponse::*;
 
         let mut debug_msgs: DebugMsgs<Self> = Default::default();
-        let mut actions: SmallVec<[_; 4]> = actions.collect();
-        actions.sort_by_key(|(player, _)| *player);
 
         let guesses: Guesses = actions
             .into_iter()

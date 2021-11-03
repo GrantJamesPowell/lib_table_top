@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
+pub type Actions<T> = PlayerIndexedData<ActionResponse<<T as Play>::Action>>;
 pub type PlayerSecretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 pub type DebugMsgs<T> = SmallVec<[(Player, <T as Play>::ActionError); 2]>;
 pub type PlayerSecretInfoUpdates<T> =
