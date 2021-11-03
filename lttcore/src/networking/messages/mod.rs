@@ -1,6 +1,3 @@
-
-
-
 mod auth;
 mod client_msg;
 mod game_setup;

@@ -10,3 +10,9 @@ pub enum ServerMsg<T: Play> {
     GameSetupResult(GameSetupResultMsg),
     InGame(ServerInGameMsg<T>),
 }
+
+impl<T: Play> From<PingMsg> for ServerMsg<T> {
+    fn from(ping: PingMsg) -> Self {
+        ServerMsg::Ping(ping)
+    }
+}

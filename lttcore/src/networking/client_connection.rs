@@ -13,9 +13,9 @@ pub struct ClientConnection<T> {
 }
 
 impl<T: Play> ClientConnection<T> {
-    pub fn receive_msg(&self, msg: ServerMsg<T>) -> Result<ClientMsg<T>, Box<dyn Error>> {
+    pub fn receive_msg(&self, msg: ServerMsg<T>) -> Result<Option<ClientMsg<T>>, Box<dyn Error>> {
         match msg {
-            ServerMsg::Ping(msg) => Ok(ClientMsg::Ping(msg.opposite())),
+            ServerMsg::Ping(msg) => Ok(Some(msg.opposite().into())),
             _ => {
                 todo!()
             }
