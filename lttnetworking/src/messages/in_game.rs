@@ -1,4 +1,4 @@
-use crate::{GamePlayer, Play, TurnNum};
+use lttcore::{GamePlayer, Play, TurnNum};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

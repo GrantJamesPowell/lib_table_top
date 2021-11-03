@@ -1,5 +1,5 @@
-use super::messages::{ClientMsg, PingMsg::*, ServerMsg};
-use crate::Play;
+use crate::messages::{ClientMsg, PingMsg::*, ServerMsg};
+use lttcore::Play;
 use std::error::Error;
 
 pub struct ServerConnection<T> {

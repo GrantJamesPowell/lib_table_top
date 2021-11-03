@@ -1,5 +1,5 @@
-use crate::networking::Token;
-use crate::Play;
+use crate::Token;
+use lttcore::Play;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

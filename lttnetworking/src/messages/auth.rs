@@ -1,4 +1,4 @@
-use crate::networking::Token;
+use crate::Token;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

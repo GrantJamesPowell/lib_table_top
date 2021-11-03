@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod client_connection;
 pub mod game_host;
 pub mod messages;

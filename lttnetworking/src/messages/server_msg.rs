@@ -1,5 +1,5 @@
-use crate::networking::messages::{AuthResultMsg, GameSetupResultMsg, PingMsg, ServerInGameMsg};
-use crate::Play;
+use crate::messages::{AuthResultMsg, GameSetupResultMsg, PingMsg, ServerInGameMsg};
+use lttcore::Play;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -1,5 +1,5 @@
-use super::messages::{ClientMsg, ServerMsg};
-use crate::Play;
+use crate::messages::{ClientMsg, ServerMsg};
+use lttcore::Play;
 use std::error::Error;
 
 enum Status {

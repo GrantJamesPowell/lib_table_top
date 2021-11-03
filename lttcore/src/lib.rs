@@ -19,7 +19,6 @@ mod scenario;
 pub mod bots;
 pub mod common;
 pub mod examples;
-pub mod networking;
 pub mod play;
 pub mod pov;
 pub mod seed;
