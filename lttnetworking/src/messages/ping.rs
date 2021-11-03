@@ -12,7 +12,7 @@ impl PingMsg {
     /// Opposite of {Ping/Pong}
     ///
     /// ```
-    /// use lttcore::networking::messages::PingMsg::*;
+    /// use lttnetworking::messages::PingMsg::*;
     ///
     /// assert_eq!(Ping.opposite(), Pong);
     /// assert_eq!(Pong.opposite(), Ping);

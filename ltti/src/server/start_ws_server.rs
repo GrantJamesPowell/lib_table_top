@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use futures_util::{Sink, SinkExt, Stream, StreamExt};
+use futures_util::{SinkExt, StreamExt};
 use lttnetworking::{
     hello::{process_client_hello, Auth},
     Token, User,
