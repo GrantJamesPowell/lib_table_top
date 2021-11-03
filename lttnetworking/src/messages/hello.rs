@@ -1,5 +1,6 @@
 use crate::Token;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ClientHello {
@@ -11,5 +12,5 @@ pub struct ClientHello {
 pub enum ServerHello {
     Unauthorized,
     UnsupportedVersion,
-    Welcome { username: String },
+    Welcome { username: String, user_id: Uuid },
 }

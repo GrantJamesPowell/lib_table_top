@@ -10,3 +10,5 @@ lttnetworking = { path = "../lttnetworking" }
 tic_tac_toe = { path = "../games/tic_tac_toe" }
 tokio = { version = "1", features = ["full"] }
 tokio-tungstenite = "*"
+log = "0.4"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }

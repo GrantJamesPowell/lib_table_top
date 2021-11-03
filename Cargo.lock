@@ -414,6 +414,8 @@ name = "ltti"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "futures-util",
+ "log",
  "lttcore",
  "lttnetworking",
  "tic_tac_toe",
