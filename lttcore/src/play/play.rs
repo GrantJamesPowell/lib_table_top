@@ -1,7 +1,7 @@
 use super::{
     game_advance::GameAdvance, settings::NoCustomSettings, view::NoSecretPlayerInfo, View,
 };
-use crate::{NumberOfPlayers, Player, PlayerSet};
+use crate::{utilities::PlayerIndexedData, NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -12,7 +12,7 @@ pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2
 pub type PlayerSecretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
 pub type DebugMsgs<T> = SmallVec<[(Player, <T as Play>::ActionError); 2]>;
 pub type PlayerSecretInfoUpdates<T> =
-    SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;
+    PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
