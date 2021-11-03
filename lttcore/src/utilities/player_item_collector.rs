@@ -1,8 +1,8 @@
-use crate::{Player, PlayerSet};
 use crate::utilities::PlayerIndexedData;
+use crate::{Player, PlayerSet};
 
 pub struct PlayerItemCollector<Item> {
-    data: PlayerIndexedData<Option<Item>>
+    data: PlayerIndexedData<Option<Item>>,
 }
 
 impl<Item> From<PlayerSet> for PlayerItemCollector<Item> {
@@ -21,7 +21,9 @@ impl<Item> PlayerItemCollector<Item> {
     /// let _: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
     /// ```
     pub fn new(players: impl Into<PlayerSet>) -> Self {
-        Self { data: PlayerIndexedData::init_with(players.into(), |_| None) }
+        Self {
+            data: PlayerIndexedData::init_with(players.into(), |_| None),
+        }
     }
 
     /// Returns all the players for this collector whether they've submitted or not
@@ -118,7 +120,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// )
     /// ```
     pub fn into_items(self) -> impl Iterator<Item = (Player, Item)> {
-            self.data
+        self.data
             .into_iter()
             .filter_map(|(player, item)| item.map(|x| (player, x)))
     }
