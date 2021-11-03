@@ -1,4 +1,4 @@
-use crate::messages::{AuthResultMsg, GameSetupResultMsg, PingMsg, ServerInGameMsg};
+use crate::messages::{GameSetupResultMsg, PingMsg, ServerInGameMsg};
 use lttcore::Play;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 #[serde(bound = "")]
 pub enum ServerMsg<T: Play> {
     Ping(PingMsg),
-    AuthResult(AuthResultMsg),
     GameSetupResult(GameSetupResultMsg),
     InGame(ServerInGameMsg<T>),
 }

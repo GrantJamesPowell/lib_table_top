@@ -1,4 +1,4 @@
-use crate::messages::{ClientMsg, PingMsg::*, ServerMsg};
+use crate::messages::{ClientMsg, ServerMsg};
 use lttcore::Play;
 use std::error::Error;
 

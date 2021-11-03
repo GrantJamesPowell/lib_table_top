@@ -1,4 +1,4 @@
-use crate::messages::{AuthMsg, ClientInGameMsg, GameSetupMsg, PingMsg};
+use crate::messages::{ClientInGameMsg, GameSetupMsg, PingMsg};
 use lttcore::Play;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 #[serde(bound = "")]
 pub enum ClientMsg<T: Play> {
     Ping(PingMsg),
-    Auth(AuthMsg),
     GameSetup(GameSetupMsg<T>),
     InGame(ClientInGameMsg<T>),
 }
@@ -22,7 +21,7 @@ impl<T: Play> ClientMsg<T> {
         use ClientMsg::*;
 
         match self {
-            Ping(_) | Auth(_) => true,
+            Ping(_) => true,
             GameSetup(_) | InGame(_) => authorized,
         }
     }
