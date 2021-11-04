@@ -19,11 +19,11 @@ pub enum ActionResponse<T: Play> {
     Resign,
 }
 
-pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
-    type Action: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
-    type ActionError: Clone + Debug + PartialEq + Eq + Serialize + DeserializeOwned;
+pub trait Play: Sized + Clone + Debug + Send + Serialize + DeserializeOwned {
+    type Action: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned;
+    type ActionError: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned;
 
-    type Settings: Clone + Debug + PartialEq + Eq + Default + Serialize + DeserializeOwned =
+    type Settings: Clone + Debug + PartialEq + Eq + Default + Send + Serialize + DeserializeOwned =
         NoCustomSettings;
 
     type PublicInfo: View;
