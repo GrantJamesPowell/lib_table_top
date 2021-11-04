@@ -4,8 +4,8 @@ use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{GameObserver, GamePlayer, Play};
 use lttnetworking::host_game::GameHostRuntime;
 use smallvec::SmallVec;
-use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
+use std::time::Instant;
 
 type Connections<Values> = SmallVec<[Sender<Values>; 8]>;
 
@@ -15,25 +15,10 @@ struct Runtime<T: Play> {
     phantom: std::marker::PhantomData<T>,
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl<T: Play> GameHostRuntime<T> for Runtime<T> {
-    fn send_game_player<'async_trait>(
-        &'async_trait mut self,
-        _: GamePlayer<T>,
-    ) -> Pin<Box<(dyn futures_util::Future<Output = ()> + std::marker::Send + 'async_trait)>> {
-        todo!()
-    }
-
-    fn send_observer<'async_trait>(
-        &'async_trait mut self,
-        _: GameObserver<T>,
-    ) -> Pin<Box<(dyn futures_util::Future<Output = ()> + std::marker::Send + 'async_trait)>> {
-        todo!()
-    }
-    fn send_updates<'async_trait>(
-        &'async_trait mut self,
-        _: EnumeratedGameAdvance<T>,
-    ) -> Pin<Box<(dyn futures_util::Future<Output = ()> + std::marker::Send + 'async_trait)>> {
-        todo!()
-    }
+    async fn send_game_player(&mut self, _game_player: GamePlayer<T>) {}
+    async fn send_observer(&mut self, _observer: GameObserver<T>) {}
+    async fn send_updates(&mut self, _game_advance: EnumeratedGameAdvance<T>) {}
+    async fn tick(&mut self, _time: Instant) {}
 }

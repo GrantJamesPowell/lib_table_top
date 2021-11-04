@@ -1,33 +1,20 @@
-use core::pin::Pin;
+use async_trait::async_trait;
 use futures_util::{Stream, StreamExt};
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::utilities::PlayerItemCollector;
 use lttcore::{GameObserver, GamePlayer, GameProgression, Play, Player};
+use std::time::Instant;
 
-pub trait GameHostRuntime<T: Play>: Send {
-    fn send_game_player<'async_trait>(
-        &'async_trait mut self,
-        _game_player: GamePlayer<T>,
-    ) -> Pin<Box<dyn core::future::Future<Output = ()> + Send + 'async_trait>>;
-
-    fn send_observer<'async_trait>(
-        &'async_trait mut self,
-        _game_observer: GameObserver<T>,
-    ) -> Pin<Box<dyn core::future::Future<Output = ()> + Send + 'async_trait>>;
-
-    fn send_updates<'async_trait>(
-        &'async_trait mut self,
-        _game_advance: EnumeratedGameAdvance<T>,
-    ) -> Pin<Box<dyn core::future::Future<Output = ()> + Send + 'async_trait>>;
-
-    // I'd like to use `#[async_trait]` but it doesn't want to cooperate
-    //
-    // async fn send_game_player(&mut self, _game_player: GamePlayer<T>) {}
-    // async fn send_observer(&mut self, _observer: GameObserver<T>) {}
-    // async fn send_updates(&mut self, _game_advance: EnumeratedGameAdvance<T>) {}
+#[async_trait(?Send)]
+pub trait GameHostRuntime<T: Play + Send>: Send {
+    async fn send_game_player(&mut self, _game_player: GamePlayer<T>) {}
+    async fn send_observer(&mut self, _observer: GameObserver<T>) {}
+    async fn send_updates(&mut self, _game_advance: EnumeratedGameAdvance<T>) {}
+    async fn tick(&mut self, _time: Instant) {}
 }
 
 pub enum GameHostRequest<T: Play> {
+    RuntimeTick { time: Instant },
     RequestObserver,
     SubmitActionResponse {
         player: Player,
@@ -50,6 +37,9 @@ pub async fn host_game<T: Play>(
             match mailbox.next().await {
                 None => return game,
                 Some(msg) => match msg {
+                    GameHostRequest::RuntimeTick { time } => {
+                        runtime.tick(time).await;
+                    }
                     GameHostRequest::RequestObserver => {
                         runtime.send_observer(game.game_observer()).await
                     }
@@ -71,6 +61,6 @@ async fn initialize<T: Play>(runtime: &mut impl GameHostRuntime<T>, game: &GameP
     runtime.send_observer(game.game_observer()).await;
 
     for player in game.game_players() {
-        runtime.send_game_player(player);
+        runtime.send_game_player(player).await;
     }
 }
