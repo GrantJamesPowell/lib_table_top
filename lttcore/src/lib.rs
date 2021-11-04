@@ -10,6 +10,9 @@
 #[macro_use]
 extern crate derive_builder;
 
+#[macro_use]
+extern crate static_assertions;
+
 mod game_observer;
 mod game_player;
 mod game_progression;

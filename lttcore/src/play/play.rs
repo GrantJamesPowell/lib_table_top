@@ -26,8 +26,8 @@ pub trait Play: Sized + Clone + Debug + Send + Serialize + DeserializeOwned {
     type Settings: Clone + Debug + PartialEq + Eq + Default + Send + Serialize + DeserializeOwned =
         NoCustomSettings;
 
-    type PublicInfo: View;
-    type PlayerSecretInfo: View = NoSecretPlayerInfo;
+    type PublicInfo: View + Send;
+    type PlayerSecretInfo: View + Send = NoSecretPlayerInfo;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
     fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self>;
