@@ -29,7 +29,7 @@ pub struct HistoryEvent<T: Play> {
 impl<T: Play> GameProgression<T> {
     pub fn submit_actions(
         &mut self,
-        actions: impl IntoIterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
+        actions: impl IntoIterator<Item = (Player, ActionResponse<T>)>,
     ) -> EnumeratedGameAdvance<T> {
         let actions: Actions<T> = actions.into_iter().collect();
 

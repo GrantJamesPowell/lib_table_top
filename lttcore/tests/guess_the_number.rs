@@ -2,7 +2,7 @@ use lttcore::examples::guess_the_number::{
     ActionError::*, Guess, PublicInfo, Settings, SettingsBuilder,
 };
 use lttcore::examples::GuessTheNumber;
-use lttcore::play::view::NoSecretPlayerInfo;
+use lttcore::play::{view::NoSecretPlayerInfo, ActionResponse::*};
 use lttcore::play::{Actions, DebugMsgs};
 use lttcore::seed::SEED_42;
 use lttcore::utilities::number_of_players::{ONE_PLAYER, TWO_PLAYER};
@@ -51,7 +51,7 @@ fn test_it_shows_the_player_the_correct_things() {
 
         // Note: Player(0) produces guess outside of range 1..=10
         let guess: Guess = player.player().as_u8().into();
-        actions.insert(player.player(), guess.into());
+        actions.insert(player.player(), Response(guess));
     }
 
     let game_advance = game.submit_actions(actions);

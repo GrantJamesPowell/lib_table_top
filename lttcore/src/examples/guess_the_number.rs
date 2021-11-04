@@ -9,7 +9,7 @@ use std::borrow::Cow;
 use std::ops::RangeInclusive;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct GuessTheNumber {
     secret_number: u64,
     guesses: Option<Guesses>,
@@ -25,7 +25,7 @@ impl<Num: Into<u64>> From<Num> for Guess {
     }
 }
 
-pub type Guesses = SmallVec<[ActionResponse<Guess>; 8]>;
+pub type Guesses = SmallVec<[ActionResponse<GuessTheNumber>; 8]>;
 
 #[derive(Error, Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ActionError {
@@ -164,11 +164,11 @@ impl Play for GuessTheNumber {
     fn advance<'a>(
         &'a mut self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self::Action>>)>,
+        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
-        let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self::Action>>> = actions.collect();
+        let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self>>> = actions.collect();
 
         let debug_msgs: DebugMsgs<Self> = actions
             .iter()

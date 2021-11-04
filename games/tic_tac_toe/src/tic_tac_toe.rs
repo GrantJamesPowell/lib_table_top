@@ -535,7 +535,7 @@ impl Play for TicTacToe {
     fn advance<'a>(
         &'a mut self,
         settings: &Self::Settings,
-        mut actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<<Self as Play>::Action>>)>,
+        mut actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
