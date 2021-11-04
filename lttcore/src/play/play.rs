@@ -3,13 +3,12 @@ use super::{
 };
 use crate::{utilities::PlayerIndexedData, NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::fmt::Debug;
 
 pub type Actions<T> = PlayerIndexedData<ActionResponse<<T as Play>::Action>>;
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
-pub type DebugMsgs<T> = SmallVec<[(Player, <T as Play>::ActionError); 2]>;
+pub type DebugMsgs<T> = PlayerIndexedData<<T as Play>::ActionError>;
 pub type PlayerSecretInfoUpdates<T> =
     PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 

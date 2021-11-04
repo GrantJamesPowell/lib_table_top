@@ -552,7 +552,7 @@ impl Play for TicTacToe {
                 Response(Action { position }) => match self.claim_space(player, *position) {
                     Ok(update) => update,
                     Err(err) => {
-                        debug_msgs.push((player, err));
+                        debug_msgs.insert(player, err);
                         self.claim_next_available_space(player)
                             .expect("Tried to apply an action to a full board")
                     }
