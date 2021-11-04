@@ -1,12 +1,11 @@
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfos},
     utilities::{number_of_players::ONE_PLAYER, PlayerIndexedData},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use thiserror::Error;
 
@@ -130,10 +129,7 @@ impl Play for GuessTheNumber {
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
     }
-    fn player_secret_info(
-        &self,
-        settings: &Self::Settings,
-    ) -> HashMap<Player, Self::PlayerSecretInfo> {
+    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self> {
         settings
             .num_players
             .players()

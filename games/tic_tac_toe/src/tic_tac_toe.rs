@@ -5,7 +5,7 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfos},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
 };
@@ -525,10 +525,7 @@ impl Play for TicTacToe {
         TWO_PLAYER
     }
 
-    fn player_secret_info(
-        &self,
-        _settings: &<Self as Play>::Settings,
-    ) -> HashMap<Player, Self::PlayerSecretInfo> {
+    fn player_secret_info(&self, _settings: &<Self as Play>::Settings) -> PlayerSecretInfos<Self> {
         TWO_PLAYER
             .players()
             .map(|player| (player, Default::default()))
