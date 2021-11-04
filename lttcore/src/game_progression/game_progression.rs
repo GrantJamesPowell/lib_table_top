@@ -31,14 +31,13 @@ impl<T: Play> GameProgression<T> {
         &mut self,
         actions: impl IntoIterator<Item = (Player, ActionResponse<<T as Play>::Action>)>,
     ) -> EnumeratedGameAdvance<T> {
-        let mut actions: Actions<T> = actions.into_iter().collect();
-        actions.sort_by_key(|(p, _)| *p);
+        let actions: Actions<T> = actions.into_iter().collect();
 
         let game_advance = self.state.advance(
             &self.settings,
             actions
                 .iter()
-                .map(|(player, action)| (*player, Cow::Borrowed(action))),
+                .map(|(player, action)| (player, Cow::Borrowed(action))),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 

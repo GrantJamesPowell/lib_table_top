@@ -1,12 +1,11 @@
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
-    utilities::number_of_players::ONE_PLAYER,
+    play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfos},
+    utilities::{number_of_players::ONE_PLAYER, PlayerIndexedData},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use thiserror::Error;
 
@@ -130,10 +129,7 @@ impl Play for GuessTheNumber {
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
     }
-    fn player_secret_info(
-        &self,
-        settings: &Self::Settings,
-    ) -> HashMap<Player, Self::PlayerSecretInfo> {
+    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self> {
         settings
             .num_players
             .players()
@@ -172,25 +168,27 @@ impl Play for GuessTheNumber {
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
+        let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self::Action>>> = actions.collect();
 
-        let mut debug_msgs: DebugMsgs<Self> = Default::default();
-        let mut actions: SmallVec<[_; 4]> = actions.collect();
-        actions.sort_by_key(|(player, _)| *player);
-
-        let guesses: Guesses = actions
-            .into_iter()
-            .inspect(|(player, response)| {
+        let debug_msgs: DebugMsgs<Self> = actions
+            .iter()
+            .filter_map(|(player, response)| {
                 if let Response(Guess(guess)) = response.as_ref() {
-                    if !settings.range().contains(&guess) {
+                    (!settings.range().contains(&guess)).then(|| {
                         let err = GuessOutOfRange {
                             guess: guess.clone(),
                             range: settings.range.clone(),
                         };
-
-                        debug_msgs.push((*player, err));
-                    }
+                        (player, err)
+                    })
+                } else {
+                    None
                 }
             })
+            .collect();
+
+        let guesses: Guesses = actions
+            .into_iter()
             .map(|(_, response)| response.into_owned())
             .collect();
 

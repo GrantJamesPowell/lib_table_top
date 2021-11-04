@@ -1,18 +1,16 @@
 use super::{
     game_advance::GameAdvance, settings::NoCustomSettings, view::NoSecretPlayerInfo, View,
 };
-use crate::{NumberOfPlayers, Player, PlayerSet};
+use crate::{utilities::PlayerIndexedData, NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub type Actions<T> = SmallVec<[(Player, ActionResponse<<T as Play>::Action>); 2]>;
-pub type PlayerSecretInfos<T> = HashMap<Player, <T as Play>::PlayerSecretInfo>;
-pub type DebugMsgs<T> = SmallVec<[(Player, <T as Play>::ActionError); 2]>;
+pub type Actions<T> = PlayerIndexedData<ActionResponse<<T as Play>::Action>>;
+pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
+pub type DebugMsgs<T> = PlayerIndexedData<<T as Play>::ActionError>;
 pub type PlayerSecretInfoUpdates<T> =
-    SmallVec<[(Player, <<T as Play>::PlayerSecretInfo as View>::Update); 2]>;
+    PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionResponse<T> {
@@ -37,10 +35,7 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     type PlayerSecretInfo: View = NoSecretPlayerInfo;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
-    fn player_secret_info(
-        &self,
-        settings: &Self::Settings,
-    ) -> HashMap<Player, Self::PlayerSecretInfo>;
+    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self>;
     fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;

@@ -20,6 +20,23 @@ impl<T> PlayerIndexedData<T> {
         Self::with_capacity(0)
     }
 
+    /// Returns if the PlayerIndexedData is empty
+    ///
+    /// ```
+    /// use lttcore::utilities::PlayerIndexedData;
+    ///
+    /// let mut pid = PlayerIndexedData::new();
+    /// assert!(pid.is_empty());
+    ///
+    /// pid.insert(1, "foo");
+    /// assert!(!pid.is_empty());
+    ///
+    ///
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Init the player indexed data from a playerset and function
     ///
     /// ```

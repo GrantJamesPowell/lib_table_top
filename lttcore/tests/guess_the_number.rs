@@ -51,7 +51,7 @@ fn test_it_shows_the_player_the_correct_things() {
 
         // Note: Player(0) produces guess outside of range 1..=10
         let guess: Guess = player.player().as_u8().into();
-        actions.push((player.player(), guess.into()))
+        actions.insert(player.player(), guess.into());
     }
 
     let game_advance = game.submit_actions(actions);
