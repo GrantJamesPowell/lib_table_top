@@ -448,6 +448,7 @@ dependencies = [
  "log",
  "lttcore",
  "lttnetworking",
+ "smallvec",
  "tic_tac_toe",
  "tokio",
  "tokio-tungstenite",
