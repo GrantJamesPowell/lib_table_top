@@ -6,22 +6,17 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
 
-pub type Actions<T> = PlayerIndexedData<ActionResponse<<T as Play>::Action>>;
+pub type Actions<T> = PlayerIndexedData<ActionResponse<T>>;
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
 pub type DebugMsgs<T> = PlayerIndexedData<<T as Play>::ActionError>;
 pub type PlayerSecretInfoUpdates<T> =
     PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ActionResponse<T> {
-    Response(T),
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound = "")]
+pub enum ActionResponse<T: Play> {
+    Response(<T as Play>::Action),
     Resign,
-}
-
-impl<T> From<T> for ActionResponse<T> {
-    fn from(t: T) -> Self {
-        Self::Response(t)
-    }
 }
 
 pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
@@ -43,7 +38,7 @@ pub trait Play: Sized + Clone + Debug + Serialize + DeserializeOwned {
     fn advance<'a>(
         &'a mut self,
         settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self::Action>>)>,
+        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self>;
 }
