@@ -1,6 +1,6 @@
 use crate::{
     play::{ActionResponse, DebugMsgs, GameAdvance},
-    utilities::number_of_players::ONE_PLAYER,
+    utilities::{number_of_players::ONE_PLAYER, PlayerIndexedData},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
@@ -172,23 +172,27 @@ impl Play for GuessTheNumber {
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::*;
+        let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self::Action>>> = actions.collect();
 
-        let mut debug_msgs: DebugMsgs<Self> = Default::default();
-
-        let guesses: Guesses = actions
-            .into_iter()
-            .inspect(|(player, response)| {
+        let debug_msgs: DebugMsgs<Self> = actions
+            .iter()
+            .filter_map(|(player, response)| {
                 if let Response(Guess(guess)) = response.as_ref() {
-                    if !settings.range().contains(&guess) {
+                    (!settings.range().contains(&guess)).then(|| {
                         let err = GuessOutOfRange {
                             guess: guess.clone(),
                             range: settings.range.clone(),
                         };
-
-                        debug_msgs.push((*player, err));
-                    }
+                        (player, err)
+                    })
+                } else {
+                    None
                 }
             })
+            .collect();
+
+        let guesses: Guesses = actions
+            .into_iter()
             .map(|(_, response)| response.into_owned())
             .collect();
 
