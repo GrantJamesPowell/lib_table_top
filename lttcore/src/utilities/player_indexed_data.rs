@@ -75,9 +75,14 @@ impl<T> PlayerIndexedData<T> {
         self.players.count().try_into().unwrap()
     }
 
-    /// Return an iterator over (Player, &Item)
+    /// Iterate over (Player, &Item)
     pub fn iter(&self) -> impl Iterator<Item = (Player, &T)> + '_ {
         self.players.into_iter().zip(&self.data)
+    }
+
+    /// Iterate over (Player, &mut Item)
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (Player, &mut T)> + '_ {
+        self.players.into_iter().zip(self.data.iter_mut())
     }
 
     /// Returns a new PlayerIndexedData with pre allocated capacity `n`

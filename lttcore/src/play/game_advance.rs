@@ -38,6 +38,7 @@ impl<T: Play> EnumeratedGameAdvance<T> {
             .map(|(_, update)| Cow::Borrowed(update));
 
         PlayerUpdate {
+            player,
             secret_info_update,
             observer_update,
         }

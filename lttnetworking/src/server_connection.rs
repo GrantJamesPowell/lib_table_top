@@ -1,18 +1,12 @@
-use crate::messages::{ClientMsg, ServerMsg};
-use lttcore::Play;
-use std::error::Error;
+use futures_util::Stream;
+use lttcore::{Play, TurnNum};
 
-pub struct ServerConnection<T> {
-    authorized: bool,
-    phantom: std::marker::PhantomData<T>,
+pub enum ClientMsgs {
+    SubmitAction { turn_num: TurnNum },
 }
 
-impl<T: Play> ServerConnection<T> {
-    pub fn receive_msg(&self, msg: ClientMsg<T>) -> Result<Option<ServerMsg<T>>, Box<dyn Error>> {
-        if let ClientMsg::Ping(msg) = msg {
-            return Ok(Some(msg.opposite().into()));
-        }
+pub enum ServerConnectionMsg {}
 
-        todo!()
-    }
+pub async fn server_connection<T: Play>(_client_msgs: impl Stream<Item = ClientMsgs>) {
+    todo!()
 }

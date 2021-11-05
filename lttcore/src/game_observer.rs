@@ -28,3 +28,6 @@ impl<T: Play> GameObserver<T> {
         self.public_info.update(update.public_info_update);
     }
 }
+
+use crate::examples::GuessTheNumber;
+assert_impl_all!(GameObserver<GuessTheNumber>: Send);

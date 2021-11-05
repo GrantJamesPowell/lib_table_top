@@ -42,3 +42,6 @@ impl<T: Play> GamePlayer<T> {
         }
     }
 }
+
+use crate::examples::GuessTheNumber;
+assert_impl_all!(GamePlayer<GuessTheNumber>: Send);
