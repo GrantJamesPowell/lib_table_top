@@ -3,13 +3,12 @@ use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::pov::{ObserverUpdate, PlayerUpdate};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
 use lttcore::{GameObserver, GamePlayer, GameProgression, Play, Player};
-use smallvec::SmallVec;
 
-use uuid::Uuid;
-
-pub type Connections<Stream> = SmallVec<[(Uuid, Stream); 2]>;
-
-pub enum GameHostRequest<T: Play> {
+pub enum GameHostMsg<T: Play> {
+    RequestObserverState,
+    RequestPlayerState {
+        player: Player,
+    },
     SubmitActionResponse {
         player: Player,
         response: ActionResponse<T>,
@@ -26,16 +25,34 @@ pub enum ObserverMsg<T: Play> {
     Update(ObserverUpdate<'static, T>),
 }
 
-use GameHostRequest::*;
+use GameHostMsg::*;
+
+pub async fn server_player<T: Play>(
+    player: Player,
+    mut mailbox: impl Stream<Item = PlayerMsg<T>> + Unpin,
+    mut to_game_host: impl Sink<GameHostMsg<T>> + Unpin,
+    mut to_client: impl Sink<PlayerMsg<T>> + Unpin,
+) {
+    use PlayerMsg::*;
+
+    send(&mut to_game_host, RequestPlayerState { player }).await;
+
+    while let Some(msg) = mailbox.next().await {
+        match msg {
+            SyncState(_) => {
+                send(&mut to_client, msg).await;
+            }
+            Update(_) => {}
+        }
+    }
+}
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,
-    mut mailbox: impl Stream<Item = GameHostRequest<T>> + Unpin,
-    mut players: PID<impl Sink<PlayerMsg<T>> + Unpin>,
-    mut observer: impl Sink<ObserverMsg<T>> + Unpin,
+    mut mailbox: impl Stream<Item = GameHostMsg<T>> + Unpin,
+    mut to_players: PID<impl Sink<PlayerMsg<T>> + Unpin>,
+    mut to_observer: impl Sink<ObserverMsg<T>> + Unpin,
 ) -> GameProgression<T> {
-    initialize(&mut game, &mut players, &mut observer).await;
-
     while !game.is_concluded() {
         let mut returned_actions: PIC<ActionResponse<T>> = game.which_players_input_needed().into();
 
@@ -43,6 +60,16 @@ pub async fn game_host<T: Play>(
             match mailbox.next().await {
                 None => return game,
                 Some(msg) => match msg {
+                    RequestObserverState => {
+                        let msg = ObserverMsg::SyncState(game.game_observer());
+                        send(&mut to_observer, msg).await;
+                    }
+                    RequestPlayerState { player } => {
+                        for gp in game.game_players().filter(|x| x.player() == player) {
+                            let player = gp.player();
+                            send(&mut to_players[player], PlayerMsg::SyncState(gp)).await;
+                        }
+                    }
                     SubmitActionResponse { player, response } => {
                         returned_actions.add(player, response);
                     }
@@ -51,7 +78,7 @@ pub async fn game_host<T: Play>(
         }
 
         let game_advance = game.submit_actions(returned_actions.into_items());
-        send_update(game_advance, &mut players, &mut observer).await;
+        send_update(game_advance, &mut to_players, &mut to_observer).await;
     }
 
     game
@@ -59,28 +86,28 @@ pub async fn game_host<T: Play>(
 
 async fn initialize<T: Play>(
     game: &GameProgression<T>,
-    players: &mut PID<impl Sink<PlayerMsg<T>> + Unpin>,
-    observer: &mut (impl Sink<ObserverMsg<T>> + Unpin),
+    to_players: &mut PID<impl Sink<PlayerMsg<T>> + Unpin>,
+    to_observer: &mut (impl Sink<ObserverMsg<T>> + Unpin),
 ) {
-    send(observer, ObserverMsg::SyncState(game.game_observer())).await;
+    send(to_observer, ObserverMsg::SyncState(game.game_observer())).await;
 
     for game_player in game.game_players() {
         let player = game_player.player();
-        send(&mut players[player], PlayerMsg::SyncState(game_player)).await;
+        send(&mut to_players[player], PlayerMsg::SyncState(game_player)).await;
     }
 }
 
 async fn send_update<T: Play>(
     update: EnumeratedGameAdvance<T>,
-    players: &mut PID<impl Sink<PlayerMsg<T>> + Unpin>,
-    observer: &mut (impl Sink<ObserverMsg<T>> + Unpin),
+    to_players: &mut PID<impl Sink<PlayerMsg<T>> + Unpin>,
+    to_observer: &mut (impl Sink<ObserverMsg<T>> + Unpin),
 ) {
     let observer_update = update.observer_update().into_owned();
-    send(observer, ObserverMsg::Update(observer_update)).await;
+    send(to_observer, ObserverMsg::Update(observer_update)).await;
 
-    for (player, sink) in players.iter_mut() {
+    for (player, to_player) in to_players.iter_mut() {
         let player_update = update.player_update(player).into_owned();
-        send(sink, PlayerMsg::Update(player_update)).await;
+        send(to_player, PlayerMsg::Update(player_update)).await;
     }
 }
 
