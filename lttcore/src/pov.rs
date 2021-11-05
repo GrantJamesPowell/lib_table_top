@@ -28,9 +28,28 @@ pub struct ObserverUpdate<'a, T: Play> {
     pub public_info_update: Cow<'a, <<T as Play>::PublicInfo as View>::Update>,
 }
 
+impl<'a, T: Play> ObserverUpdate<'a, T> {
+    fn into_owned(self) -> ObserverUpdate<'static, T> {
+        ObserverUpdate {
+            turn_num: self.turn_num,
+            public_info_update: Cow::Owned(self.public_info_update.into_owned()),
+            action_requests: self.action_requests,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(bound = "")]
 pub struct PlayerUpdate<'a, T: Play> {
     pub observer_update: ObserverUpdate<'a, T>,
     pub secret_info_update: Option<Cow<'a, <<T as Play>::PlayerSecretInfo as View>::Update>>,
+}
+
+impl<'a, T: Play> PlayerUpdate<'a, T> {
+    fn into_owned(self) -> PlayerUpdate<'static, T> {
+        PlayerUpdate {
+            observer_update: self.observer_update.into_owned(),
+            secret_info_update: self.secret_info_update.map(|x| Cow::Owned(x.into_owned())),
+        }
+    }
 }
