@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 
-pub mod client_connection;
-pub mod game_host;
+pub mod client;
 pub mod hello;
-pub mod messages;
-pub mod server_connection;
+pub mod ping;
+pub mod server;
 
 mod user;
 pub use user::User;

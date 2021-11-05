@@ -47,7 +47,7 @@ pub async fn server_player<T: Play>(
     }
 }
 
-pub async fn game_host<T: Play>(
+pub async fn run_game_host<T: Play>(
     mut game: GameProgression<T>,
     mut mailbox: impl Stream<Item = GameHostMsg<T>> + Unpin,
     mut to_players: PID<impl Sink<PlayerMsg<T>> + Unpin>,
