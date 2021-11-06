@@ -1,5 +1,4 @@
 use crate::{Token, User};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -20,19 +19,18 @@ pub enum JoinError {
     UnsupportedVersion,
 }
 
-#[async_trait]
-pub trait Auth {
-    async fn authorize(token: Token) -> Option<User>;
-}
-
-pub async fn process_client_hello<Authorizer: Auth>(
+pub async fn process_client_hello<Fut>(
+    authorize: impl FnOnce(Token) -> Fut,
     data: &[u8],
     mut output: Vec<u8>,
-) -> Result<(User, Vec<u8>), Vec<u8>> {
+) -> Result<(User, Vec<u8>), Vec<u8>>
+where
+    Fut: std::future::Future<Output = Option<User>>,
+{
     output.clear();
 
     match bincode::deserialize::<ClientHello>(data) {
-        Ok(ClientHello { credentials }) => match Authorizer::authorize(credentials).await {
+        Ok(ClientHello { credentials }) => match authorize(credentials).await {
             Some(user) => {
                 bincode::serialize_into(
                     &mut output,

@@ -1,8 +1,8 @@
-use super::messages::{GameHostMsg, ObserverMsg};
 use crate::connection::{ConnectionId, ConnectionMsg, ManageConnections};
-use futures_util::{Sink, SinkExt, Stream, StreamExt};
+use crate::server::messages::{GameHostMsg, ObserverMsg};
 use lttcore::Play;
 use smallvec::SmallVec;
+use tokio::sync::mpsc::{Receiver, Sender};
 
 struct Conn {
     id: ConnectionId,
@@ -19,15 +19,15 @@ use Mail::*;
 use ManageConnections::*;
 use ObserverMsg::*;
 
-pub async fn observer_connections<T: Play>(
-    mut mailbox: impl Stream<Item = Mail<T>> + Unpin,
-    mut to_client: impl Sink<ConnectionMsg<ObserverMsg<T>>> + Unpin,
-    mut to_game_host: impl Sink<GameHostMsg<T>> + Unpin,
-) {
+pub async fn observer_connections<T: Play, M, TC, TGH>(
+    mut mailbox: Receiver<Mail<T>>,
+    to_client: Sender<ConnectionMsg<ObserverMsg<T>>>,
+    to_game_host: Sender<GameHostMsg<T>>,
+) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
     let mut state_requested = false;
 
-    while let Some(mail) = mailbox.next().await {
+    while let Some(mail) = mailbox.recv().await {
         match mail {
             OM(msg @ SyncState(_)) => {
                 state_requested = false;
@@ -38,7 +38,7 @@ pub async fn observer_connections<T: Play>(
                     .map(|conn| conn.id)
                     .collect();
 
-                send(&mut to_client, ConnectionMsg { to, msg }).await;
+                to_client.send(ConnectionMsg { to, msg }).await?;
 
                 for conn in connections.iter_mut() {
                     conn.needs_state = false;
@@ -51,7 +51,7 @@ pub async fn observer_connections<T: Play>(
                     .map(|conn| conn.id)
                     .collect();
 
-                send(&mut to_client, ConnectionMsg { to, msg }).await;
+                to_client.send(ConnectionMsg { to, msg }).await?;
             }
             MC(Add(new_conns)) => {
                 connections.extend(new_conns.into_iter().map(|id| Conn {
@@ -60,18 +60,41 @@ pub async fn observer_connections<T: Play>(
                 }));
 
                 if !state_requested {
-                    send(&mut to_game_host, RequestObserverState).await;
+                    to_game_host.send(RequestObserverState).await?;
                     state_requested = true;
                 }
             }
             MC(Remove(remove_conns)) => connections.retain(|conn| !remove_conns.contains(conn.id)),
         }
     }
+
+    Ok(())
 }
 
-async fn send<T>(sink: &mut (impl Sink<T> + Unpin), msg: T) {
-    match sink.send(msg).await {
-        Ok(_) => {},
-        Err(_) => panic!("ObserverConnections can't send on a channel, and I can't figure out how to force Stream::Error to be debug")
-    }
-}
+// #[cfg(test)]
+// mod tests {
+//     use super::{observer_connections, Mail};
+//     use lttcore::examples::GuessTheNumber;
+//     use tokio::sync::mpsc::unbounded_channel;
+//
+//     #[tokio::test]
+//     async fn test_observer_connections_work() {
+//         let (_to_mailbox, mut mailbox) = unbounded_channel::<Mail<GuessTheNumber>>();
+//         let (to_client, _client) = unbounded_channel();
+//         let (to_game_host, _game_host) = unbounded_channel();
+//
+//         let handle = tokio::spawn(observer_connections(
+//             || async move { mailbox.recv().await },
+//             move |msg| async {
+//                 let _ = to_client.clone().send(msg);
+//                 return ();
+//             },
+//             move |msg| async {
+//                 let _ = to_game_host.clone().send(msg);
+//                 return ();
+//             },
+//         ));
+//
+//         handle.await;
+//     }
+// }
