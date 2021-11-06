@@ -467,6 +467,7 @@ dependencies = [
  "lttcore",
  "serde",
  "smallvec",
+ "tokio",
  "uuid",
 ]
 
