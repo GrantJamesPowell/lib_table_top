@@ -1,31 +1,11 @@
+use super::messages::{
+    GameHostMsg::{self, *},
+    ObserverMsg, PlayerMsg,
+};
 use futures_util::{Sink, SinkExt, Stream, StreamExt};
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
-use lttcore::pov::{ObserverUpdate, PlayerUpdate};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
-use lttcore::{GameObserver, GamePlayer, GameProgression, Play, Player};
-
-pub enum GameHostMsg<T: Play> {
-    RequestObserverState,
-    RequestPlayerState {
-        player: Player,
-    },
-    SubmitActionResponse {
-        player: Player,
-        response: ActionResponse<T>,
-    },
-}
-
-pub enum PlayerMsg<T: Play> {
-    SyncState(GamePlayer<T>),
-    Update(PlayerUpdate<'static, T>),
-}
-
-pub enum ObserverMsg<T: Play> {
-    SyncState(GameObserver<T>),
-    Update(ObserverUpdate<'static, T>),
-}
-
-use GameHostMsg::*;
+use lttcore::{GameProgression, Play, Player};
 
 pub async fn server_player<T: Play>(
     player: Player,
