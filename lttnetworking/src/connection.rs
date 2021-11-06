@@ -5,11 +5,13 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct ConnectionId(Uuid);
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConnectionMsg<T: Serialize> {
     pub to: Connections,
     pub msg: T,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ManageConnections {
     Add(Connections),
     Remove(Connections),

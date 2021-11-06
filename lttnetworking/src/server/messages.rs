@@ -3,6 +3,7 @@ use lttcore::pov::{ObserverUpdate, PlayerUpdate};
 use lttcore::{GameObserver, GamePlayer, Play, Player};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone)]
 pub enum GameHostMsg<T: Play> {
     RequestObserverState,
     RequestPlayerState {
@@ -14,6 +15,7 @@ pub enum GameHostMsg<T: Play> {
     },
 }
 
+#[derive(Debug, Clone)]
 pub enum PlayerMsg<T: Play> {
     SyncState(GamePlayer<T>),
     Update(PlayerUpdate<'static, T>),
