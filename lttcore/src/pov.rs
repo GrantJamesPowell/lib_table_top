@@ -23,9 +23,9 @@ pub struct PlayerPov<'a, T: Play> {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(bound = "")]
 pub struct ObserverUpdate<'a, T: Play> {
-    pub turn_num: TurnNum,
-    pub action_requests: PlayerSet,
-    pub public_info_update: Cow<'a, <<T as Play>::PublicInfo as View>::Update>,
+    pub(crate) turn_num: TurnNum,
+    pub(crate) action_requests: PlayerSet,
+    pub(crate) public_info_update: Cow<'a, <<T as Play>::PublicInfo as View>::Update>,
 }
 
 impl<'a, T: Play> ObserverUpdate<'a, T> {
@@ -42,12 +42,22 @@ impl<'a, T: Play> ObserverUpdate<'a, T> {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(bound = "")]
 pub struct PlayerUpdate<'a, T: Play> {
-    pub player: Player,
-    pub observer_update: ObserverUpdate<'a, T>,
-    pub secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
+    pub(crate) player: Player,
+    pub(crate) observer_update: ObserverUpdate<'a, T>,
+    pub(crate) secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
 }
 
 impl<'a, T: Play> PlayerUpdate<'a, T> {
+    /// Return the turn num for the player update
+    pub fn turn_num(&self) -> TurnNum {
+        self.observer_update.turn_num
+    }
+
+    /// Return whether a specific player's input is needed this turn
+    pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
+        self.observer_update.action_requests.contains(player)
+    }
+
     /// Change the lifetime to 'static making `PlayerUpdate` function like an owned type
     pub fn into_owned(self) -> PlayerUpdate<'static, T> {
         PlayerUpdate {
