@@ -4,7 +4,6 @@ use crate::{
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::ops::RangeInclusive;
 use thiserror::Error;
@@ -25,7 +24,7 @@ impl From<u64> for Guess {
     }
 }
 
-pub type Guesses = SmallVec<[ActionResponse<GuessTheNumber>; 8]>;
+pub type Guesses = PlayerIndexedData<Guess>;
 
 #[derive(Error, Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ActionError {
@@ -189,7 +188,13 @@ impl Play for GuessTheNumber {
 
         let guesses: Guesses = actions
             .into_iter()
-            .map(|(_, response)| response.into_owned())
+            .filter_map(|(player, response)| {
+                if let Response(guess) = response.as_ref() {
+                    Some((player, *guess))
+                } else {
+                    None
+                }
+            })
             .collect();
 
         self.guesses = Some(guesses.clone());
