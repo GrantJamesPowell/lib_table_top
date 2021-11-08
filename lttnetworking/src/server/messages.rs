@@ -15,7 +15,8 @@ pub enum GameHostMsg<T: Play> {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(bound = "")]
 pub enum PlayerMsg<T: Play> {
     SyncState(GamePlayer<T>),
     Update(PlayerUpdate<'static, T>),

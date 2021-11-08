@@ -35,7 +35,7 @@ use ObserverMsg::*;
 
 pub async fn observer_connections<T: Play>(
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    to_client: UnboundedSender<ConnectionMsg<ObserverMsg<T>>>,
+    to_clients: UnboundedSender<ConnectionMsg<ObserverMsg<T>>>,
     to_game_host: UnboundedSender<GameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
@@ -52,7 +52,7 @@ pub async fn observer_connections<T: Play>(
                     .map(|conn| conn.id)
                     .collect();
 
-                to_client.send(ConnectionMsg { to, msg })?;
+                to_clients.send(ConnectionMsg { to, msg })?;
 
                 for conn in connections.iter_mut() {
                     conn.needs_state = false;
@@ -68,7 +68,7 @@ pub async fn observer_connections<T: Play>(
                     .collect();
 
                 if !to.is_empty() {
-                    to_client.send(ConnectionMsg { to, msg })?;
+                    to_clients.send(ConnectionMsg { to, msg })?;
                 }
             }
             MC(Add(new_conns)) => {
@@ -110,10 +110,10 @@ mod tests {
         let connection_id_3 = ConnectionId::new();
 
         let (to_mailbox, mailbox) = unbounded_channel::<Mail<GuessTheNumber>>();
-        let (to_client, mut client) = unbounded_channel();
+        let (to_clients, mut client) = unbounded_channel();
         let (to_game_host, mut game_host) = unbounded_channel();
 
-        tokio::spawn(observer_connections(mailbox, to_client, to_game_host));
+        tokio::spawn(observer_connections(mailbox, to_clients, to_game_host));
 
         // On the first addition, it sends a state request to the game host
         to_mailbox.send(Add(connection_id_1.into()).into()).unwrap();
