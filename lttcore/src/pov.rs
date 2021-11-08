@@ -6,8 +6,8 @@ use std::borrow::Cow;
 pub struct ObserverPov<'a, T: Play> {
     pub turn_num: TurnNum,
     pub action_requests: PlayerSet,
-    pub settings: &'a <T as Play>::Settings,
-    pub public_info: &'a <T as Play>::PublicInfo,
+    pub settings: &'a T::Settings,
+    pub public_info: &'a T::PublicInfo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,9 +15,9 @@ pub struct PlayerPov<'a, T: Play> {
     pub turn_num: TurnNum,
     pub action_requests: PlayerSet,
     pub player: Player,
-    pub settings: &'a <T as Play>::Settings,
-    pub secret_info: &'a <T as Play>::PlayerSecretInfo,
-    pub public_info: &'a <T as Play>::PublicInfo,
+    pub settings: &'a T::Settings,
+    pub secret_info: &'a T::PlayerSecretInfo,
+    pub public_info: &'a T::PublicInfo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -44,7 +44,7 @@ impl<'a, T: Play> ObserverUpdate<'a, T> {
 pub struct PlayerUpdate<'a, T: Play> {
     pub player: Player,
     pub observer_update: ObserverUpdate<'a, T>,
-    pub secret_info_update: Option<Cow<'a, <<T as Play>::PlayerSecretInfo as View>::Update>>,
+    pub secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
 }
 
 impl<'a, T: Play> PlayerUpdate<'a, T> {

@@ -15,15 +15,15 @@ impl<T: Play> GameProgression<T> {
         &self.state
     }
 
-    pub fn settings(&self) -> &<T as Play>::Settings {
+    pub fn settings(&self) -> &T::Settings {
         &self.settings
     }
 
-    pub fn settings_arc(&self) -> Arc<<T as Play>::Settings> {
+    pub fn settings_arc(&self) -> Arc<T::Settings> {
         Arc::clone(&self.settings)
     }
 
-    pub fn public_info(&self) -> <T as Play>::PublicInfo {
+    pub fn public_info(&self) -> T::PublicInfo {
         self.state.public_info(&self.settings)
     }
 
@@ -32,7 +32,7 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
-        <T as Play>::number_of_players_for_settings(&self.settings)
+        T::number_of_players_for_settings(&self.settings)
     }
 
     pub fn players(&self) -> PlayerSet {

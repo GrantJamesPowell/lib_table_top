@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct GamePlayer<T: Play> {
     pub(crate) game_observer: GameObserver<T>,
     pub(crate) player: Player,
-    pub(crate) secret_info: <T as Play>::PlayerSecretInfo,
+    pub(crate) secret_info: T::PlayerSecretInfo,
 }
 
 impl<T: Play> GamePlayer<T> {

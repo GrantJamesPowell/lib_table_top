@@ -11,7 +11,7 @@ use std::sync::Arc;
 #[serde(bound = "")]
 pub struct GameProgression<T: Play> {
     pub(super) seed: Arc<Seed>,
-    pub(super) settings: Arc<<T as Play>::Settings>,
+    pub(super) settings: Arc<T::Settings>,
     pub(super) initial_state: Option<Arc<T>>,
     pub(super) turn_num: TurnNum,
     #[builder(setter(skip))]
@@ -66,9 +66,7 @@ impl<T: Play> GameProgressionBuilder<T> {
             .as_ref()
             .map(|arc| arc.as_ref())
             .cloned()
-            .unwrap_or_else(|| {
-                <T as Play>::initial_state_for_settings(&settings, &mut seed.rng_for_init())
-            });
+            .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
         let history = Vector::new();
 
         Ok(GameProgression {

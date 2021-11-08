@@ -8,8 +8,8 @@ use std::sync::Arc;
 pub struct GameObserver<T: Play> {
     pub(crate) turn_num: TurnNum,
     pub(crate) action_requests: PlayerSet,
-    pub(crate) settings: Arc<<T as Play>::Settings>,
-    pub(crate) public_info: <T as Play>::PublicInfo,
+    pub(crate) settings: Arc<T::Settings>,
+    pub(crate) public_info: T::PublicInfo,
 }
 
 impl<T: Play> GameObserver<T> {

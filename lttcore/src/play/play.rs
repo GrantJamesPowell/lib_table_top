@@ -15,7 +15,7 @@ pub type PlayerSecretInfoUpdates<T> =
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub enum ActionResponse<T: Play> {
-    Response(<T as Play>::Action),
+    Response(T::Action),
     Resign,
 }
 
