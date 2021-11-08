@@ -18,8 +18,8 @@ pub struct GuessTheNumber {
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Guess(pub u64);
 
-impl<Num: Into<u64>> From<Num> for Guess {
-    fn from(n: Num) -> Self {
+impl From<u64> for Guess {
+    fn from(n: u64) -> Self {
         let n = n.into();
         Guess(n)
     }
