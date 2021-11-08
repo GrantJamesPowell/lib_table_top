@@ -64,7 +64,7 @@ async fn send_update<T: Play>(
 mod tests {
     use super::*;
     use lttcore::examples::{
-        guess_the_number::{Guess, PublicInfoUpdate, Settings},
+        guess_the_number::{Guess, Settings},
         GuessTheNumber,
     };
     use lttcore::play::ActionResponse::Response;

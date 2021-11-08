@@ -26,13 +26,22 @@ struct State {
     timeout_tx: UnboundedSender<TurnNum>,
 }
 
-pub struct MailInbox<T: Play> {
+impl State {
+    fn all_connections(&self) -> impl Iterator<Item = ConnectionId> + '_ {
+        self.needs_sync_conns
+            .iter()
+            .chain(self.in_sync_conns.iter())
+            .copied()
+    }
+}
+
+pub struct Inbox<T: Play> {
     pub from_connections: UnboundedReceiver<FromConnection<FromPlayerMsg<T>>>,
     pub from_game_host: UnboundedReceiver<ToPlayerMsg<T>>,
     pub from_runtime: UnboundedReceiver<ManageConnections>,
 }
 
-pub struct MailOutbox<T: Play> {
+pub struct Outbox<T: Play> {
     pub to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
     pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 }
@@ -40,8 +49,8 @@ pub struct MailOutbox<T: Play> {
 pub async fn player_connections<T: Play>(
     player: Player,
     timeout: Duration,
-    mut inbox: MailInbox<T>,
-    outbox: MailOutbox<T>,
+    mut inbox: Inbox<T>,
+    outbox: Outbox<T>,
 ) -> anyhow::Result<()> {
     let (timeout_tx, mut timeout_rx) = unbounded_channel::<TurnNum>();
 
@@ -91,7 +100,7 @@ pub async fn player_connections<T: Play>(
 fn process_manage_connections<T: Play>(
     msg: ManageConnections,
     state: &mut State,
-    outbox: &MailOutbox<T>,
+    outbox: &Outbox<T>,
 ) -> anyhow::Result<()> {
     match msg {
         Add(conns) => {
@@ -114,7 +123,7 @@ fn process_manage_connections<T: Play>(
 fn process_from_connection<T: Play>(
     FromConnection { from, msg }: FromConnection<FromPlayerMsg<T>>,
     state: &mut State,
-    outbox: &MailOutbox<T>,
+    outbox: &Outbox<T>,
 ) -> anyhow::Result<()> {
     match msg {
         RequestPrimary => {
@@ -168,7 +177,7 @@ fn process_from_connection<T: Play>(
 fn process_from_game_host<T: Play>(
     msg: ToPlayerMsg<T>,
     state: &mut State,
-    outbox: &MailOutbox<T>,
+    outbox: &Outbox<T>,
 ) -> anyhow::Result<bool> {
     match msg {
         SyncState(_) => {
@@ -199,6 +208,14 @@ fn process_from_game_host<T: Play>(
                 msg,
             })?;
         }
+        GameOver => {
+            outbox.to_connections.send(ToConnections {
+                to: state.all_connections().collect(),
+                msg,
+            })?;
+
+            return Ok(true);
+        }
         SetPrimaryStatus(_) | SubmitActionError(_) => {
             panic!("The game host generated a player message it shouldn't have")
         }
@@ -210,7 +227,7 @@ fn process_from_game_host<T: Play>(
 fn process_timeout<T: Play>(
     turn_num: TurnNum,
     state: &mut State,
-    outbox: &MailOutbox<T>,
+    outbox: &Outbox<T>,
 ) -> anyhow::Result<()> {
     if state.awaiting_turn == Some(turn_num) {
         state.awaiting_turn = None;
@@ -313,7 +330,7 @@ mod tests {
         assert!(handles.from_to_game_host.try_recv().is_err());
     }
 
-    fn setup_test_infra<T: Play>() -> (MailInbox<T>, MailOutbox<T>, State, MailboxHandles<T>) {
+    fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, State, MailboxHandles<T>) {
         let (to_from_connections, from_connections) = unbounded_channel();
         let (to_from_game_host, from_game_host) = unbounded_channel();
         let (to_from_runtime, from_runtime) = unbounded_channel();
@@ -323,13 +340,13 @@ mod tests {
 
         let (timeout_tx, timeout_rx) = unbounded_channel::<TurnNum>();
 
-        let inbox = MailInbox {
+        let inbox = Inbox {
             from_connections,
             from_game_host,
             from_runtime,
         };
 
-        let outbox = MailOutbox {
+        let outbox = Outbox {
             to_connections,
             to_game_host,
         };

@@ -29,6 +29,7 @@ pub enum ToPlayerMsg<T: Play> {
     Update(PlayerUpdate<'static, T>),
     SetPrimaryStatus(bool),
     SubmitActionError(SubmitActionErrorKind),
+    GameOver,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -60,6 +61,7 @@ impl<T: Play> From<GamePlayer<T>> for ToPlayerMsg<T> {
 pub enum ToObserverMsg<T: Play> {
     SyncState(GameObserver<T>),
     Update(ObserverUpdate<'static, T>),
+    GameOver,
 }
 
 impl<T: Play> From<ObserverUpdate<'static, T>> for ToObserverMsg<T> {
@@ -86,7 +88,7 @@ impl PingMsg {
     /// Opposite of {Ping/Pong}
     ///
     /// ```
-    /// use lttnetworking::ping::PingMsg::*;
+    /// use lttnetworking::messages::PingMsg::*;
     ///
     /// assert_eq!(Ping.opposite(), Pong);
     /// assert_eq!(Pong.opposite(), Ping);
