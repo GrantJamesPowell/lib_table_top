@@ -549,6 +549,10 @@ impl Play for TicTacToe {
         let public_info_update = {
             match response.as_ref() {
                 Resign => self.resign(player),
+                Timeout => self
+                    .claim_next_available_space(player)
+                    .expect("Tried to apply an action to a full board"),
+
                 Response(Action { position }) => match self.claim_space(player, *position) {
                     Ok(update) => update,
                     Err(err) => {
