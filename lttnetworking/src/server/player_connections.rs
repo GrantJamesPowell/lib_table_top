@@ -3,6 +3,7 @@ use crate::connection::{
     ManageConnections::{self, *},
 };
 use crate::messages::{
+    FromPlayerMsg,
     ToGameHostMsg::{self, *},
     ToPlayerMsg,
 };
@@ -20,7 +21,7 @@ struct Conn {
 pub enum Mail<T: Play> {
     ManageConnections(ManageConnections),
     ToPlayerMsg(ToPlayerMsg<T>),
-    FromPlayerMsg,
+    FromPlayerMsg(FromPlayerMsg<T>),
 }
 
 use Mail::{FromPlayerMsg as FC, ManageConnections as MC, ToPlayerMsg as PM};
@@ -28,7 +29,7 @@ use Mail::{FromPlayerMsg as FC, ManageConnections as MC, ToPlayerMsg as PM};
 pub async fn player_connections<T: Play>(
     player: Player,
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    _to_clients: UnboundedSender<ConnectionMsg<ToPlayerMsg<T>>>,
+    to_clients: UnboundedSender<ConnectionMsg<ToPlayerMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
