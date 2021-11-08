@@ -1,4 +1,4 @@
-use crate::connection::{ConnectionId, ConnectionMsg, Connections, ManageConnections};
+use crate::connection::{ConnectionId, Connections, ManageConnections, ToConnections};
 use crate::messages::{ToGameHostMsg, ToObserverMsg};
 use lttcore::Play;
 use smallvec::SmallVec;
@@ -35,7 +35,7 @@ use ToObserverMsg::*;
 
 pub async fn observer_connections<T: Play>(
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    to_clients: UnboundedSender<ConnectionMsg<ToObserverMsg<T>>>,
+    to_connections: UnboundedSender<ToConnections<ToObserverMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
@@ -52,15 +52,13 @@ pub async fn observer_connections<T: Play>(
                     .map(|conn| conn.id)
                     .collect();
 
-                to_clients.send(ConnectionMsg { to, msg })?;
+                to_connections.send(ToConnections { to, msg })?;
 
                 for conn in connections.iter_mut() {
                     conn.needs_state = false;
                 }
             }
             TOM(msg @ Update(_)) => {
-                println!("Here!");
-                println!("Conns {:?}", connections);
                 let to: Connections = connections
                     .iter()
                     .filter(|conn| !conn.needs_state)
@@ -68,7 +66,7 @@ pub async fn observer_connections<T: Play>(
                     .collect();
 
                 if !to.is_empty() {
-                    to_clients.send(ConnectionMsg { to, msg })?;
+                    to_connections.send(ToConnections { to, msg })?;
                 }
             }
             MC(Add(new_conns)) => {

@@ -1,6 +1,7 @@
 use crate::connection::{
-    ConnectionId, ConnectionMsg,
+    ConnectionId,
     ManageConnections::{self, *},
+    ToConnections,
 };
 use crate::messages::{
     FromPlayerMsg,
@@ -24,12 +25,12 @@ pub enum Mail<T: Play> {
     FromPlayerMsg(FromPlayerMsg<T>),
 }
 
-use Mail::{FromPlayerMsg as FC, ManageConnections as MC, ToPlayerMsg as PM};
+use Mail::{FromPlayerMsg as FPM, ManageConnections as MC, ToPlayerMsg as TPM};
 
 pub async fn player_connections<T: Play>(
     player: Player,
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    to_clients: UnboundedSender<ConnectionMsg<ToPlayerMsg<T>>>,
+    _to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
