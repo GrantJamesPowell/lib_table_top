@@ -3,8 +3,10 @@ use std::borrow::Cow;
 
 use std::fmt::Debug;
 
-pub trait View: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned {
-    type Update: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned;
+pub trait View:
+    Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned
+{
+    type Update: Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned;
 
     fn update(&mut self, _update: Cow<'_, Self::Update>) {}
 }

@@ -19,9 +19,27 @@ pub enum ActionResponse<T: Play> {
     Resign,
 }
 
-pub trait Play: Sized + Clone + Debug + Send + Serialize + DeserializeOwned + 'static {
-    type Action: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned + 'static;
-    type ActionError: Clone + Debug + PartialEq + Eq + Send + Serialize + DeserializeOwned + 'static;
+pub trait Play:
+    Sized + Clone + Debug + Send + Sync + Serialize + DeserializeOwned + 'static
+{
+    type Action: Clone
+        + Debug
+        + PartialEq
+        + Eq
+        + Send
+        + Sync
+        + Serialize
+        + DeserializeOwned
+        + 'static;
+    type ActionError: Clone
+        + Debug
+        + PartialEq
+        + Eq
+        + Send
+        + Sync
+        + Serialize
+        + DeserializeOwned
+        + 'static;
 
     type Settings: Clone
         + Debug
@@ -29,12 +47,13 @@ pub trait Play: Sized + Clone + Debug + Send + Serialize + DeserializeOwned + 's
         + Eq
         + Default
         + Send
+        + Sync
         + Serialize
         + DeserializeOwned
         + 'static = NoCustomSettings;
 
-    type PublicInfo: View + Send + 'static;
-    type PlayerSecretInfo: View + Send + 'static = NoSecretPlayerInfo;
+    type PublicInfo: View + Send + Sync + 'static;
+    type PlayerSecretInfo: View + Send + Sync + 'static = NoSecretPlayerInfo;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
     fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self>;

@@ -459,13 +459,13 @@ dependencies = [
 name = "lttnetworking"
 version = "0.1.0"
 dependencies = [
- "async-trait",
+ "anyhow",
  "bincode",
- "futures-util",
  "hex",
  "lttcore",
  "serde",
  "smallvec",
+ "tokio",
  "uuid",
 ]
 
