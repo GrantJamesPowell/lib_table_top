@@ -1,5 +1,5 @@
 use crate::connection::{
-    ConnectionId, FromConnection,
+    ConnectionId, Connections, FromConnection,
     ManageConnections::{self, *},
     ToConnections,
 };
@@ -19,6 +19,8 @@ struct Conn {
     needs_state: bool,
 }
 
+type Conns = SmallVec<[Conn; 4]>;
+
 pub enum Mail<T: Play> {
     ManageConnections(ManageConnections),
     ToPlayerMsg(ToPlayerMsg<T>),
@@ -33,37 +35,33 @@ pub async fn player_connections<T: Play>(
     to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
-    let mut connections: SmallVec<[Conn; 4]> = Default::default();
+    let mut conns: Conns = Default::default();
     let mut state_requested = false;
 
     while let Some(mail) = mailbox.recv().await {
         match mail {
-            FPM(FromConnection {
-                from,
-                msg: RequestPrimary,
-            }) => {
-                for conn in connections.iter_mut() {
-                    if conn.id == from {
-                        to_connections.send(ToConnections {
-                            to: conn.id.into(),
-                            msg: SetPrimaryStatus(true),
-                        })?;
-
-                        conn.primary = true;
-                    } else {
-                        if conn.primary {
-                            conn.primary = false;
-
-                            to_connections.send(ToConnections {
-                                to: conn.id.into(),
-                                msg: SetPrimaryStatus(false),
-                            })?;
-                        }
+            FPM(FromConnection { from, msg }) => match msg {
+                RequestPrimary => {
+                    for msg in set_primary(from, &mut conns) {
+                        to_connections.send(msg)?;
                     }
+                }
+                SubmitAction { action, turn } => {
+                    println!("{:?}, {:?}", action, turn);
+                    todo!()
+                }
+            },
+            TPM(msg) => {
+                if let SyncState(_) = msg {
+                    state_requested = false;
+                }
+
+                if let Some(to_connections_msg) = forward(msg, &mut conns) {
+                    to_connections.send(to_connections_msg)?;
                 }
             }
             MC(Add(new_conns)) => {
-                connections.extend(new_conns.into_iter().map(|id| Conn {
+                conns.extend(new_conns.into_iter().map(|id| Conn {
                     id,
                     needs_state: true,
                     primary: false,
@@ -71,13 +69,79 @@ pub async fn player_connections<T: Play>(
 
                 if !state_requested {
                     to_game_host.send(RequestPlayerState { player })?;
-                    state_requested = true;
                 }
+
+                state_requested = true;
             }
-            MC(Remove(remove_conns)) => connections.retain(|conn| !remove_conns.contains(conn.id)),
-            _ => todo!(),
+            MC(Remove(remove_conns)) => conns.retain(|conn| !remove_conns.contains(conn.id)),
         }
     }
 
     Ok(())
+}
+
+fn forward<T: Play>(
+    msg: ToPlayerMsg<T>,
+    conns: &mut Conns,
+) -> Option<ToConnections<ToPlayerMsg<T>>> {
+    match msg {
+        SyncState(_) => {
+            let to: Connections = conns
+                .iter()
+                .filter(|conn| conn.needs_state)
+                .map(|conn| conn.id)
+                .collect();
+
+            for conn in conns.iter_mut() {
+                conn.needs_state = false;
+            }
+
+            if !to.is_empty() {
+                Some(ToConnections { to, msg })
+            } else {
+                None
+            }
+        }
+        Update(_) => {
+            let to: Connections = conns
+                .iter()
+                .filter(|conn| !conn.needs_state)
+                .map(|conn| conn.id)
+                .collect();
+
+            if !to.is_empty() {
+                Some(ToConnections { to, msg })
+            } else {
+                None
+            }
+        }
+        _ => panic!("Player connections should never receive anything but an update/state from the upstream")
+    }
+}
+
+fn set_primary<T: Play>(
+    new_primary: ConnectionId,
+    conns: &mut Conns,
+) -> impl Iterator<Item = ToConnections<ToPlayerMsg<T>>> + '_ {
+    conns.iter_mut().filter_map(move |conn| {
+        if conn.id == new_primary {
+            conn.primary = true;
+
+            Some(ToConnections {
+                to: conn.id.into(),
+                msg: SetPrimaryStatus(true),
+            })
+        } else {
+            if conn.primary {
+                conn.primary = false;
+
+                Some(ToConnections {
+                    to: conn.id.into(),
+                    msg: SetPrimaryStatus(false),
+                })
+            } else {
+                None
+            }
+        }
+    })
 }
