@@ -1,5 +1,5 @@
 use crate::pov::{ObserverPov, PlayerPov, PlayerUpdate};
-use crate::{GameObserver, Play, Player, View};
+use crate::{GameObserver, Play, Player, TurnNum, View};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -13,6 +13,10 @@ pub struct GamePlayer<T: Play> {
 impl<T: Play> GamePlayer<T> {
     pub fn player(&self) -> Player {
         self.player
+    }
+
+    pub fn turn_num(&self) -> TurnNum {
+        self.game_observer.turn_num
     }
 
     pub fn player_pov(&self) -> PlayerPov<'_, T> {

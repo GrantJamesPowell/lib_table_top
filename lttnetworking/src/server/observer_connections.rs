@@ -99,7 +99,7 @@ mod tests {
     };
     use lttcore::{play::ActionResponse, pov::ObserverUpdate};
     use lttcore::{GameObserver, GameProgression};
-    
+
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::sync::mpsc::unbounded_channel;
     use tokio::time::{sleep, Duration};
