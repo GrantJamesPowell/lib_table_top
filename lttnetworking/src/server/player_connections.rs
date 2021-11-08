@@ -2,9 +2,9 @@ use crate::connection::{
     ConnectionId, ConnectionMsg,
     ManageConnections::{self, *},
 };
-use crate::server::messages::{
-    GameHostMsg::{self, *},
-    PlayerMsg,
+use crate::messages::{
+    ToGameHostMsg::{self, *},
+    ToPlayerMsg,
 };
 use lttcore::{Play, Player};
 use smallvec::SmallVec;
@@ -19,7 +19,7 @@ struct Conn {
 
 pub enum Mail<T: Play> {
     ManageConnections(ManageConnections),
-    ToPlayerMsg(PlayerMsg<T>),
+    ToPlayerMsg(ToPlayerMsg<T>),
     FromPlayerMsg,
 }
 
@@ -28,8 +28,8 @@ use Mail::{FromPlayerMsg as FC, ManageConnections as MC, ToPlayerMsg as PM};
 pub async fn player_connections<T: Play>(
     player: Player,
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    _to_clients: UnboundedSender<ConnectionMsg<PlayerMsg<T>>>,
-    to_game_host: UnboundedSender<GameHostMsg<T>>,
+    _to_clients: UnboundedSender<ConnectionMsg<ToPlayerMsg<T>>>,
+    to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
     let mut state_requested = false;

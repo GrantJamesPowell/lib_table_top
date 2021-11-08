@@ -1,6 +1,6 @@
-use super::messages::{
-    GameHostMsg::{self, *},
-    ObserverMsg, PlayerMsg,
+use crate::messages::{
+    ToGameHostMsg::{self, *},
+    ToObserverMsg, ToPlayerMsg,
 };
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
@@ -9,9 +9,9 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,
-    mut mailbox: UnboundedReceiver<GameHostMsg<T>>,
-    to_players: PID<UnboundedSender<PlayerMsg<T>>>,
-    to_observer: UnboundedSender<ObserverMsg<T>>,
+    mut mailbox: UnboundedReceiver<ToGameHostMsg<T>>,
+    to_players: PID<UnboundedSender<ToPlayerMsg<T>>>,
+    to_observer: UnboundedSender<ToObserverMsg<T>>,
 ) -> GameProgression<T> {
     while !game.is_concluded() {
         let mut returned_actions: PIC<ActionResponse<T>> = game.which_players_input_needed().into();
@@ -21,13 +21,13 @@ pub async fn game_host<T: Play>(
                 None => return game,
                 Some(msg) => match msg {
                     RequestObserverState => {
-                        let msg = ObserverMsg::SyncState(game.game_observer());
+                        let msg = ToObserverMsg::SyncState(game.game_observer());
                         to_observer.send(msg).unwrap();
                     }
                     RequestPlayerState { player } => {
                         for gp in game.game_players().filter(|x| x.player() == player) {
                             let player = gp.player();
-                            to_players[player].send(PlayerMsg::SyncState(gp)).unwrap();
+                            to_players[player].send(ToPlayerMsg::SyncState(gp)).unwrap();
                         }
                     }
                     SubmitActionResponse { player, response } => {
@@ -46,17 +46,17 @@ pub async fn game_host<T: Play>(
 
 async fn send_update<T: Play>(
     update: EnumeratedGameAdvance<T>,
-    to_players: &PID<UnboundedSender<PlayerMsg<T>>>,
-    to_observer: &UnboundedSender<ObserverMsg<T>>,
+    to_players: &PID<UnboundedSender<ToPlayerMsg<T>>>,
+    to_observer: &UnboundedSender<ToObserverMsg<T>>,
 ) {
     let observer_update = update.observer_update().into_owned();
     to_observer
-        .send(ObserverMsg::Update(observer_update))
+        .send(ToObserverMsg::Update(observer_update))
         .unwrap();
 
     for (player, to_player) in to_players.iter() {
         let player_update = update.player_update(player).into_owned();
-        to_player.send(PlayerMsg::Update(player_update)).unwrap();
+        to_player.send(ToPlayerMsg::Update(player_update)).unwrap();
     }
 }
 

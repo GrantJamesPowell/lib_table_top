@@ -1,5 +1,5 @@
 use crate::connection::{ConnectionId, ConnectionMsg, Connections, ManageConnections};
-use crate::server::messages::{GameHostMsg, ObserverMsg};
+use crate::messages::{ToGameHostMsg, ToObserverMsg};
 use lttcore::Play;
 use smallvec::SmallVec;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -12,38 +12,38 @@ struct Conn {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mail<T: Play> {
-    OM(ObserverMsg<T>),
-    MC(ManageConnections),
+    ToObserverMsg(ToObserverMsg<T>),
+    ManageConnections(ManageConnections),
 }
 
-impl<T: Play> From<ObserverMsg<T>> for Mail<T> {
-    fn from(observer_msg: ObserverMsg<T>) -> Self {
-        Self::OM(observer_msg)
+impl<T: Play> From<ToObserverMsg<T>> for Mail<T> {
+    fn from(to_observer_msg: ToObserverMsg<T>) -> Self {
+        Self::ToObserverMsg(to_observer_msg)
     }
 }
 
 impl<T: Play> From<ManageConnections> for Mail<T> {
     fn from(manage_connections: ManageConnections) -> Self {
-        Self::MC(manage_connections)
+        Self::ManageConnections(manage_connections)
     }
 }
 
-use GameHostMsg::*;
-use Mail::*;
+use Mail::{ManageConnections as MC, ToObserverMsg as TOM};
 use ManageConnections::*;
-use ObserverMsg::*;
+use ToGameHostMsg::*;
+use ToObserverMsg::*;
 
 pub async fn observer_connections<T: Play>(
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    to_clients: UnboundedSender<ConnectionMsg<ObserverMsg<T>>>,
-    to_game_host: UnboundedSender<GameHostMsg<T>>,
+    to_clients: UnboundedSender<ConnectionMsg<ToObserverMsg<T>>>,
+    to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
     let mut state_requested = false;
 
     while let Some(mail) = mailbox.recv().await {
         match mail {
-            OM(msg @ SyncState(_)) => {
+            TOM(msg @ SyncState(_)) => {
                 state_requested = false;
 
                 let to = connections
@@ -58,7 +58,7 @@ pub async fn observer_connections<T: Play>(
                     conn.needs_state = false;
                 }
             }
-            OM(msg @ Update(_)) => {
+            TOM(msg @ Update(_)) => {
                 println!("Here!");
                 println!("Conns {:?}", connections);
                 let to: Connections = connections
