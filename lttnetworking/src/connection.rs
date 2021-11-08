@@ -5,6 +5,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct ConnectionId(Uuid);
 
+impl ConnectionId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConnectionMsg<T: Serialize> {
     pub to: Connections,
@@ -21,8 +27,26 @@ pub enum ManageConnections {
 pub struct Connections(SmallVec<[ConnectionId; 4]>);
 
 impl Connections {
+    pub fn new(connections: impl IntoIterator<Item = ConnectionId>) -> Self {
+        connections.into_iter().collect()
+    }
+
     pub fn contains(&self, connection_id: ConnectionId) -> bool {
         self.0.binary_search(&connection_id).is_ok()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl From<ConnectionId> for Connections {
+    fn from(connection_id: ConnectionId) -> Self {
+        [connection_id].into_iter().collect()
     }
 }
 
