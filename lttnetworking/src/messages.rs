@@ -28,8 +28,14 @@ pub enum ToPlayerMsg<T: Play> {
     SyncState(GamePlayer<T>),
     Update(PlayerUpdate<'static, T>),
     SetPrimaryStatus(bool),
-    PrimaryDisconnected,
-    RejectedActionForInvalidTurn {
+    SubmitActionError(SubmitActionError),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SubmitActionError {
+    Timeout,
+    NotPrimary,
+    InvalidTurn {
         attempted: TurnNum,
         correct: TurnNum,
     },
