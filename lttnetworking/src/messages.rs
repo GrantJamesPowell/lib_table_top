@@ -40,3 +40,28 @@ impl<T: Play> From<GameObserver<T>> for ToObserverMsg<T> {
         Self::SyncState(state)
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PingMsg {
+    Ping,
+    Pong,
+}
+
+use PingMsg::*;
+
+impl PingMsg {
+    /// Opposite of {Ping/Pong}
+    ///
+    /// ```
+    /// use lttnetworking::ping::PingMsg::*;
+    ///
+    /// assert_eq!(Ping.opposite(), Pong);
+    /// assert_eq!(Pong.opposite(), Ping);
+    /// ```
+    pub fn opposite(&self) -> Self {
+        match self {
+            Ping => Pong,
+            Pong => Ping,
+        }
+    }
+}
