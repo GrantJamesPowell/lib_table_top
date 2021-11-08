@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use smallvec::SmallVec;
 use uuid::Uuid;
 
@@ -12,8 +12,14 @@ impl ConnectionId {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConnectionMsg<T: Serialize> {
+pub struct ToConnections<T: Serialize> {
     pub to: Connections,
+    pub msg: T,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FromConnection<T: DeserializeOwned> {
+    pub from: ConnectionId,
     pub msg: T,
 }
 
@@ -23,7 +29,7 @@ pub enum ManageConnections {
     Remove(Connections),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Connections(SmallVec<[ConnectionId; 4]>);
 
 impl Connections {

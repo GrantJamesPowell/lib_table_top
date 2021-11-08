@@ -4,7 +4,7 @@
 pub mod client;
 pub mod connection;
 pub mod hello;
-pub mod ping;
+pub mod messages;
 pub mod server;
 
 mod user;

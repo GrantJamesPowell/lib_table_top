@@ -16,6 +16,7 @@ pub type PlayerSecretInfoUpdates<T> =
 #[serde(bound = "")]
 pub enum ActionResponse<T: Play> {
     Response(T::Action),
+    Timeout,
     Resign,
 }
 
