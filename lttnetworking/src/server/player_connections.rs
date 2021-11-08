@@ -8,15 +8,25 @@ use crate::messages::{
     ToGameHostMsg::{self, *},
     ToPlayerMsg::{self, *},
 };
-use lttcore::{Play, Player};
+use lttcore::{Play, Player, TurnNum};
 use smallvec::SmallVec;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::select;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Conn {
     id: ConnectionId,
     primary: bool,
     needs_state: bool,
+}
+
+#[derive(Debug)]
+struct State {
+    player: Player,
+    state_requested: bool,
+    conns: Conns,
+    awaiting_turn: Option<TurnNum>,
+    timeout_tx: UnboundedSender<()>,
 }
 
 type Conns = SmallVec<[Conn; 4]>;
@@ -35,46 +45,74 @@ pub async fn player_connections<T: Play>(
     to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
-    let mut conns: Conns = Default::default();
-    let mut state_requested = false;
+    let (timeout_tx, mut timeout_rx) = unbounded_channel::<()>();
 
-    while let Some(mail) = mailbox.recv().await {
-        match mail {
-            FPM(FromConnection { from, msg }) => match msg {
-                RequestPrimary => {
-                    for msg in set_primary(from, &mut conns) {
-                        to_connections.send(msg)?;
-                    }
-                }
-                SubmitAction { action, turn } => {
-                    println!("{:?}, {:?}", action, turn);
-                    todo!()
-                }
-            },
-            TPM(msg) => {
-                if let SyncState(_) = msg {
-                    state_requested = false;
-                }
+    let mut state = State {
+        player,
+        timeout_tx,
+        state_requested: false,
+        conns: Default::default(),
+        awaiting_turn: None,
+    };
 
-                if let Some(to_connections_msg) = forward(msg, &mut conns) {
-                    to_connections.send(to_connections_msg)?;
+    loop {
+        select! {
+            msg = mailbox.recv() => {
+                match msg {
+                    Some(mail) => process_mail(mail, &to_connections, &to_game_host, &mut state)?,
+                    None => break
                 }
             }
-            MC(Add(new_conns)) => {
-                conns.extend(new_conns.into_iter().map(|id| Conn {
-                    id,
-                    needs_state: true,
-                    primary: false,
-                }));
-
-                if !state_requested {
-                    to_game_host.send(RequestPlayerState { player })?;
-                }
-
-                state_requested = true;
+            _timeout = timeout_rx.recv() => {
+                todo!()
             }
-            MC(Remove(remove_conns)) => conns.retain(|conn| !remove_conns.contains(conn.id)),
         }
+    }
+
+    Ok(())
+}
+
+fn process_mail<T: Play>(
+    msg: Mail<T>,
+    to_connections: &UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
+    to_game_host: &UnboundedSender<ToGameHostMsg<T>>,
+    state: &mut State
+) -> anyhow::Result<()> {
+    match msg {
+        FPM(FromConnection { from, msg }) => match msg {
+            RequestPrimary => {
+                for msg in set_primary(from, state) {
+                    to_connections.send(msg)?;
+                }
+            }
+            SubmitAction { action, turn } => {
+                println!("{:?}, {:?}", action, turn);
+                todo!()
+            }
+        },
+        TPM(msg) => {
+            if let SyncState(_) = msg {
+                state.state_requested = false;
+            }
+
+            if let Some(to_connections_msg) = forward(msg, state) {
+                to_connections.send(to_connections_msg)?;
+            }
+        }
+        MC(Add(new_conns)) => {
+            state.conns.extend(new_conns.into_iter().map(|id| Conn {
+                id,
+                needs_state: true,
+                primary: false,
+            }));
+
+            if !state.state_requested {
+                to_game_host.send(RequestPlayerState { player: state.player })?;
+            }
+
+            state.state_requested = true;
+        }
+        MC(Remove(remove_conns)) => state.conns.retain(|conn| !remove_conns.contains(conn.id)),
     }
 
     Ok(())
@@ -82,17 +120,18 @@ pub async fn player_connections<T: Play>(
 
 fn forward<T: Play>(
     msg: ToPlayerMsg<T>,
-    conns: &mut Conns,
+    state: &mut State,
 ) -> Option<ToConnections<ToPlayerMsg<T>>> {
     match msg {
         SyncState(_) => {
-            let to: Connections = conns
+            let to: Connections = state
+                .conns
                 .iter()
                 .filter(|conn| conn.needs_state)
                 .map(|conn| conn.id)
                 .collect();
 
-            for conn in conns.iter_mut() {
+            for conn in state.conns.iter_mut() {
                 conn.needs_state = false;
             }
 
@@ -103,7 +142,8 @@ fn forward<T: Play>(
             }
         }
         Update(_) => {
-            let to: Connections = conns
+            let to: Connections = state
+                .conns
                 .iter()
                 .filter(|conn| !conn.needs_state)
                 .map(|conn| conn.id)
@@ -121,9 +161,9 @@ fn forward<T: Play>(
 
 fn set_primary<T: Play>(
     new_primary: ConnectionId,
-    conns: &mut Conns,
+    state: &mut State,
 ) -> impl Iterator<Item = ToConnections<ToPlayerMsg<T>>> + '_ {
-    conns.iter_mut().filter_map(move |conn| {
+    state.conns.iter_mut().filter_map(move |conn| {
         if conn.id == new_primary {
             conn.primary = true;
 
