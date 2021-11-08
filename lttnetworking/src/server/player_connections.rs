@@ -227,3 +227,132 @@ fn process_timeout<T: Play>(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lttcore::examples::GuessTheNumber;
+
+    struct MailboxHandles<T: Play> {
+        to_from_connections: UnboundedSender<FromConnection<FromPlayerMsg<T>>>,
+        to_from_game_host: UnboundedSender<ToPlayerMsg<T>>,
+        to_from_runtime: UnboundedSender<ManageConnections>,
+        from_to_connections: UnboundedReceiver<ToConnections<ToPlayerMsg<T>>>,
+        from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
+        timeout_rx: UnboundedReceiver<TurnNum>,
+    }
+
+    #[tokio::test]
+    async fn test_managing_connections() {
+        let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
+
+        let new_conn_1 = ConnectionId::new();
+        let new_conn_2 = ConnectionId::new();
+
+        // It sends a request to game host if it's the first connection being added
+        // since the last sync state
+        state.needs_sync_conns.clear();
+        process_manage_connections(Add(new_conn_1.into()), &mut state, &outbox).unwrap();
+
+        assert_eq!(
+            handles.from_to_game_host.recv().await.unwrap(),
+            RequestPlayerState {
+                player: state.player
+            }
+        );
+
+        // It doesn't do it the second time if it's before the game host has responded
+        process_manage_connections(Add(new_conn_2.into()), &mut state, &outbox).unwrap();
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert!(handles.from_to_game_host.try_recv().is_err());
+
+        // You can remove connections
+        assert!(state.needs_sync_conns.contains(&new_conn_1));
+        process_manage_connections(Remove(new_conn_1.into()), &mut state, &outbox).unwrap();
+        assert!(!state.needs_sync_conns.contains(&new_conn_1));
+    }
+
+    #[tokio::test]
+    async fn test_processing_timeouts_for_awaited_turn() {
+        let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
+
+        // When turn matches the one you're awaiting it sends timeout info out
+        let turn_num: TurnNum = 0.into();
+        state.awaiting_turn = Some(turn_num);
+        process_timeout(turn_num, &mut state, &outbox).unwrap();
+
+        assert_eq!(
+            handles.from_to_connections.recv().await.unwrap(),
+            ToConnections {
+                to: state.in_sync_conns.into_iter().collect(),
+                msg: SubmitActionError(Timeout { turn_num })
+            }
+        );
+
+        assert_eq!(
+            handles.from_to_game_host.recv().await.unwrap(),
+            SubmitActionResponse {
+                player: state.player,
+                response: ActionResponse::Timeout
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn test_processing_timeouts_when_turn_is_not_awaited() {
+        let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
+
+        // When turn doesn't match the one you're awaiting it does nothing
+        let turn_num: TurnNum = 0.into();
+        state.awaiting_turn = Some(1.into());
+        process_timeout(turn_num, &mut state, &outbox).unwrap();
+
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert!(handles.from_to_connections.try_recv().is_err());
+        assert!(handles.from_to_game_host.try_recv().is_err());
+    }
+
+    fn setup_test_infra<T: Play>() -> (MailInbox<T>, MailOutbox<T>, State, MailboxHandles<T>) {
+        let (to_from_connections, from_connections) = unbounded_channel();
+        let (to_from_game_host, from_game_host) = unbounded_channel();
+        let (to_from_runtime, from_runtime) = unbounded_channel();
+
+        let (to_connections, from_to_connections) = unbounded_channel();
+        let (to_game_host, from_to_game_host) = unbounded_channel();
+
+        let (timeout_tx, timeout_rx) = unbounded_channel::<TurnNum>();
+
+        let inbox = MailInbox {
+            from_connections,
+            from_game_host,
+            from_runtime,
+        };
+
+        let outbox = MailOutbox {
+            to_connections,
+            to_game_host,
+        };
+
+        let handles = MailboxHandles {
+            to_from_connections,
+            to_from_game_host,
+            to_from_runtime,
+            from_to_connections,
+            from_to_game_host,
+            timeout_rx,
+        };
+
+        let state = State {
+            awaiting_turn: None,
+            in_sync_conns: [ConnectionId::new()].into_iter().collect(),
+            needs_sync_conns: [ConnectionId::new()].into_iter().collect(),
+            player: 0.into(),
+            primary: None,
+            timeout: Duration::from_millis(1000),
+            timeout_tx,
+        };
+
+        (inbox, outbox, state, handles)
+    }
+}
