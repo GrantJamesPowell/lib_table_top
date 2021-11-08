@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 impl<T: Play> GameProgression<T> {
     pub fn is_concluded(&self) -> bool {
-        !self.which_players_input_needed().is_empty()
+        self.which_players_input_needed().is_empty()
     }
 
     pub fn turn_num(&self) -> TurnNum {
@@ -19,8 +19,8 @@ impl<T: Play> GameProgression<T> {
         &self.settings
     }
 
-    pub fn settings_arc(&self) -> &Arc<<T as Play>::Settings> {
-        &self.settings
+    pub fn settings_arc(&self) -> Arc<<T as Play>::Settings> {
+        Arc::clone(&self.settings)
     }
 
     pub fn public_info(&self) -> <T as Play>::PublicInfo {
