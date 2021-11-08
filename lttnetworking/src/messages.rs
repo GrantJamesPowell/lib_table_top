@@ -33,8 +33,10 @@ pub enum ToPlayerMsg<T: Play> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SubmitActionErrorKind {
-    Timeout,
     NotPrimary,
+    Timeout {
+        turn_num: TurnNum,
+    },
     InvalidTurn {
         attempted: TurnNum,
         correct: Option<TurnNum>,

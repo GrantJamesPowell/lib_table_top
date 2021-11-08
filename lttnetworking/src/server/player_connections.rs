@@ -121,8 +121,39 @@ pub async fn player_connections<T: Play>(
             }
 
             // Messages from the game host
-            Some(_msg) = inbox.from_game_host.recv() => {
-                todo!()
+            Some(msg) = inbox.from_game_host.recv() => {
+                match msg {
+                    SyncState(_) => {
+                        let needs_sync = std::mem::take(&mut state.needs_sync_conns);
+
+                        outbox.to_connections.send(ToConnections {
+                            to: needs_sync.iter().copied().collect(),
+                            msg
+                        })?;
+
+                        state.in_sync_conns.extend(needs_sync);
+                    }
+                    Update(ref player_update) => {
+                        if player_update.is_player_input_needed_this_turn(player) {
+                            let turn_num = player_update.turn_num();
+                            state.awaiting_turn = Some(turn_num);
+                            let sender = state.timeout_tx.clone();
+
+                            tokio::spawn(async move {
+                                tokio::time::sleep(timeout).await;
+                                let _ = sender.send(turn_num);
+                            });
+                        }
+
+                        outbox.to_connections.send(ToConnections {
+                            to: state.in_sync_conns.iter().copied().collect(),
+                            msg,
+                        })?;
+                    }
+                    SetPrimaryStatus(_) | SubmitActionError(_) => {
+                        panic!("The game host generated a player message it shouldn't have")
+                    }
+                }
             }
 
             // Timeout for a turn
@@ -131,6 +162,11 @@ pub async fn player_connections<T: Play>(
             Some(turn_num) = timeout_rx.recv() => {
                 if state.awaiting_turn == Some(turn_num) {
                     state.awaiting_turn = None;
+
+                    outbox.to_connections.send(ToConnections {
+                        to: state.in_sync_conns.iter().copied().collect(),
+                        msg: SubmitActionError(Timeout { turn_num })
+                    })?;
 
                     outbox.to_game_host.send(SubmitActionResponse {
                         player,
@@ -147,45 +183,3 @@ pub async fn player_connections<T: Play>(
 
     Ok(())
 }
-//
-// // fn f// orward<T: Play>(
-// //     // msg: ToPlayerMsg<T>,
-// //     // state: &mut State,
-// // ) ->//  Option<ToConnections<ToPlayerMsg<T>>> {
-// //     // match msg {
-// //     //     SyncState(_) => {
-// //     //         let to: Connections = state
-// //     //             .conns
-// //     //             .iter()
-// //     //             .filter(|conn| conn.needs_state)
-// //     //             .map(|conn| conn.id)
-// //     //             .collect();
-// //
-// //     //         for conn in state.conns.iter_mut() {
-// //     //             conn.needs_state = false;
-// //     //         }
-// //
-// //     //         if !to.is_empty() {
-// //     //             Some(ToConnections { to, msg })
-// //     //         } else {
-// //     //             None
-// //     //         }
-// //     //     }
-// //     //     Update(_) => {
-// //     //         let to: Connections = state
-// //     //             .conns
-// //     //             .iter()
-// //     //             .filter(|conn| !conn.needs_state)
-// //     //             .map(|conn| conn.id)
-// //     //             .collect();
-// //
-// //     //         if !to.is_empty() {
-// //     //             Some(ToConnections { to, msg })
-// //     //         } else {
-// //     //             None
-// //     //         }
-// //     //     }
-// //     //     _ => panic!("Player connections should never receive anything but an update/state from the upstream")
-// //     // }
-// // }
-// //
