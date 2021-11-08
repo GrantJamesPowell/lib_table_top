@@ -29,10 +29,6 @@ pub struct ObserverUpdate<'a, T: Play> {
 }
 
 impl<'a, T: Play> ObserverUpdate<'a, T> {
-    pub fn is_player_input_needed(&self, player: Player) -> bool {
-        self.action_requests.contains(player)
-    }
-
     /// Change the lifetime to 'static making `ObserverUpdate` function like an owned type
     pub fn into_owned(self) -> ObserverUpdate<'static, T> {
         ObserverUpdate {
@@ -52,10 +48,6 @@ pub struct PlayerUpdate<'a, T: Play> {
 }
 
 impl<'a, T: Play> PlayerUpdate<'a, T> {
-    pub fn is_this_players_input_needed(&self) -> bool {
-        self.observer_update.is_player_input_needed(self.player)
-    }
-
     /// Change the lifetime to 'static making `PlayerUpdate` function like an owned type
     pub fn into_owned(self) -> PlayerUpdate<'static, T> {
         PlayerUpdate {
