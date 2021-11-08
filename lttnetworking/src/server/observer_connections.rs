@@ -97,7 +97,7 @@ mod tests {
         GuessTheNumber,
     };
     use lttcore::pov::ObserverUpdate;
-    use lttcore::{GameObserver, GameProgression, PlayerSet};
+    use lttcore::{GameProgression, PlayerSet};
     use std::borrow::Cow;
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::sync::mpsc::unbounded_channel;
