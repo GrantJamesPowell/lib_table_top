@@ -1,12 +1,12 @@
 use crate::connection::{
-    ConnectionId,
+    ConnectionId, FromConnection,
     ManageConnections::{self, *},
     ToConnections,
 };
 use crate::messages::{
-    FromPlayerMsg,
+    FromPlayerMsg::{self, *},
     ToGameHostMsg::{self, *},
-    ToPlayerMsg,
+    ToPlayerMsg::{self, *},
 };
 use lttcore::{Play, Player};
 use smallvec::SmallVec;
@@ -22,7 +22,7 @@ struct Conn {
 pub enum Mail<T: Play> {
     ManageConnections(ManageConnections),
     ToPlayerMsg(ToPlayerMsg<T>),
-    FromPlayerMsg(FromPlayerMsg<T>),
+    FromPlayerMsg(FromConnection<FromPlayerMsg<T>>),
 }
 
 use Mail::{FromPlayerMsg as FPM, ManageConnections as MC, ToPlayerMsg as TPM};
@@ -30,7 +30,7 @@ use Mail::{FromPlayerMsg as FPM, ManageConnections as MC, ToPlayerMsg as TPM};
 pub async fn player_connections<T: Play>(
     player: Player,
     mut mailbox: UnboundedReceiver<Mail<T>>,
-    _to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
+    to_connections: UnboundedSender<ToConnections<ToPlayerMsg<T>>>,
     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 ) -> anyhow::Result<()> {
     let mut connections: SmallVec<[Conn; 4]> = Default::default();
@@ -38,6 +38,30 @@ pub async fn player_connections<T: Play>(
 
     while let Some(mail) = mailbox.recv().await {
         match mail {
+            FPM(FromConnection {
+                from,
+                msg: RequestPrimary,
+            }) => {
+                for conn in connections.iter_mut() {
+                    if conn.id == from {
+                        to_connections.send(ToConnections {
+                            to: conn.id.into(),
+                            msg: SetPrimaryStatus(true),
+                        })?;
+
+                        conn.primary = true;
+                    } else {
+                        if conn.primary {
+                            conn.primary = false;
+
+                            to_connections.send(ToConnections {
+                                to: conn.id.into(),
+                                msg: SetPrimaryStatus(false),
+                            })?;
+                        }
+                    }
+                }
+            }
             MC(Add(new_conns)) => {
                 connections.extend(new_conns.into_iter().map(|id| Conn {
                     id,
