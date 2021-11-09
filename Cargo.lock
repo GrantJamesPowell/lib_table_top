@@ -460,6 +460,7 @@ name = "lttnetworking"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bincode",
  "bytes",
  "futures-util",
@@ -477,6 +478,7 @@ name = "lttws"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bincode",
  "futures-util",
  "lttcore",
