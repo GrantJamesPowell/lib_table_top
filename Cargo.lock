@@ -461,6 +461,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
+ "bytes",
+ "futures-util",
  "hex",
  "lttcore",
  "rand",
@@ -476,8 +478,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
+ "futures-util",
  "lttcore",
  "lttnetworking",
+ "serde",
  "tokio",
  "tokio-tungstenite",
 ]
