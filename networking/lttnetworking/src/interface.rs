@@ -1,19 +1,22 @@
-use futures_util::{Sink, Stream};
-use serde::{Deserialize, Serialize};
+use crate::messages::JoinError;
+use crate::{Token, User};
+use async_trait::async_trait;
 
-pub struct ParseError;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-pub trait Encoding {
-    fn serialize<T>(value: &T) -> Vec<u8>
-    where
-        T: Serialize;
-    fn deserialize<'a, T>(bytes: &'a [u8]) -> Result<T, ParseError>
-    where
-        T: Deserialize<'a>;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ServerConnectionError {
+    Closed,
 }
 
-#[derive(Debug)]
-pub struct ReaderWriter<Read: Stream<Item = Result<Vec<u8>, ParseError>>, Write: Sink<Vec<u8>>> {
-    pub read: Read,
-    pub write: Write,
+#[async_trait]
+pub trait Auth {
+    async fn authorize(&mut self, token: Token) -> Result<User, JoinError>;
+}
+
+#[async_trait]
+pub trait ServerConnection {
+    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, ServerConnectionError>;
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), ServerConnectionError>;
+    async fn close(&mut self);
 }

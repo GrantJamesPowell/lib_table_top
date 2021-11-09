@@ -6,6 +6,17 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FromServerMsg<T: Send> {
+    Msg(T),
+    ProtocolError(ProtocolErrorKind),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ProtocolErrorKind {
+    ParseError,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ClientHello {
     pub credentials: Token,
 }

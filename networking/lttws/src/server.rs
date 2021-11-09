@@ -1,60 +1,45 @@
+use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
-use lttnetworking::{
-    interface::{ParseError, ReaderWriter},
-    messages::{JoinError},
-    Token, User,
-};
-
-
-
-
-use tokio::net::TcpStream;
-
+use lttnetworking::interface::{ServerConnection, ServerConnectionError};
+use lttnetworking::messages::FromServerMsg::*;
+use serde::{de::DeserializeOwned, Serialize};
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::WebSocketStream;
 
-
-async fn data_to_ws_message(
-    data: Vec<u8>,
-) -> Result<Message, tokio_tungstenite::tungstenite::Error> {
-    Ok(Message::binary(data))
+pub struct WebSocketServerConnection<S: AsyncRead + AsyncWrite + Unpin + Send> {
+    ws: WebSocketStream<S>,
 }
 
-async fn accept_connection(
-    stream: TcpStream,
-    _authorize: impl FnMut(Token) -> Result<User, JoinError>,
-) -> anyhow::Result<()> {
-    let ws = tokio_tungstenite::accept_async(stream).await?;
-    let (write, read) = ws.split();
+#[async_trait]
+impl<S: AsyncRead + AsyncWrite + Unpin + Send> ServerConnection for WebSocketServerConnection<S> {
+    async fn close(&mut self) {
+        let _ = self.ws.close(None).await;
+    }
 
-    let _rw = ReaderWriter {
-        read: read.map(|msg| msg.map(|msg| msg.into_data()).map_err(|_| ParseError)),
-        write: write.with(data_to_ws_message),
-    };
-    Ok(())
+    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, ServerConnectionError> {
+        let msg = match self.ws.next().await {
+            Some(Ok(msg)) => msg,
+            _ => {
+                self.close().await;
+                return Err(ServerConnectionError::Closed);
+            }
+        };
+
+        match bincode::deserialize::<T>(&msg.into_data()) {
+            Ok(msg) => Ok(msg),
+            Err(_) => {
+                self.close().await;
+                return Err(ServerConnectionError::Closed);
+            }
+        }
+    }
+
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), ServerConnectionError> {
+        let msg = bincode::serialize(&Msg(msg)).unwrap();
+        self.ws
+            .send(Message::binary(msg))
+            .await
+            .map_err(|_| ServerConnectionError::Closed)
+    }
 }
-
-// async fn run_authorize<S>(
-//     ws: &mut WebSocketStream<S>,
-//     mut authorize: impl FnMut(Token) -> Result<User, JoinError>
-// ) -> Option<User> where S: AsyncRead + AsyncWrite + Unpin {
-//     while let Some(Ok(msg)) = ws.next().await {
-//         match bincode::deserialize::<ClientHello>(&msg.into_data()) {
-//             Ok(ClientHello { credentials }) => {
-//                 match authorize(credentials) {
-//                     Ok(user) => return Some(user),
-//                     Err(err) => send(ws, &err)
-//                 };
-//             }
-//             Err(_) => {
-//                 send(ws, &JoinError::UnparseableClientHello).await?;
-//             }
-//         }
-//     };
-//
-//     None
-// }
-//
-// async fn send<T: Serialize, S: AsyncRead + AsyncWrite + Unpin>(ws: &mut WebSocketStream<S>, msg: &T) -> anyhow::Result<()> {
-//     let msg = bincode::serialize(msg).unwrap();
-//     Ok(ws.send(Message::binary(msg)).await?)
-// }
