@@ -3,17 +3,12 @@ use lttcore::play::ActionResponse;
 use lttcore::pov::{ObserverUpdate, PlayerUpdate};
 use lttcore::{GameObserver, GamePlayer, Play, Player, TurnNum};
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FromServerMsg<T: Send> {
-    Msg(T),
-    ProtocolError(ProtocolErrorKind),
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ProtocolErrorKind {
-    ParseError,
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Closed {
+    Hangup,
+    InvalidMsg,
+    Unauthorized,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -22,15 +17,8 @@ pub struct ClientHello {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ServerHello<'a> {
-    pub user: Cow<'a, User>,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum JoinError {
-    UnparseableClientHello,
-    Unauthorized,
-    UnsupportedVersion,
+pub struct ServerHello {
+    pub user: User,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,22 +1,16 @@
-use crate::messages::JoinError;
+use crate::messages::Closed;
 use crate::{Token, User};
 use async_trait::async_trait;
-
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ServerConnectionError {
-    Closed,
-}
+use serde::{de::DeserializeOwned, Serialize};
 
 #[async_trait]
 pub trait Auth {
-    async fn authorize(&mut self, token: Token) -> Result<User, JoinError>;
+    async fn authorize(&mut self, token: Token) -> Option<User>;
 }
 
 #[async_trait]
-pub trait ServerConnection {
-    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, ServerConnectionError>;
-    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), ServerConnectionError>;
+pub trait ConnectionIO {
+    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed>;
     async fn close(&mut self);
 }
