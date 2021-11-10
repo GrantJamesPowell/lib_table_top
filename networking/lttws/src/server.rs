@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use futures_util::{SinkExt, StreamExt};
-use lttnetworking::interface::ConnectionIO;
+use lttnetworking::connection::ConnectionIO;
 use lttnetworking::messages::Closed;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::io::{AsyncRead, AsyncWrite};

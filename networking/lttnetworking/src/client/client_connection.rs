@@ -1,6 +1,6 @@
 use crate::{Token, User};
 use crate::messages::{ClientHello, ServerHello, Closed};
-use crate::interface::ConnectionIO;
+use crate::connection::ConnectionIO;
 
 pub async fn authorize(
     credentials: Token,

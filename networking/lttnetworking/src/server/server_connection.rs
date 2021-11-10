@@ -1,4 +1,5 @@
-use crate::interface::{Auth, ConnectionIO};
+use crate::auth::Auth;
+use crate::connection::ConnectionIO;
 use crate::messages::{ClientHello, Closed, ServerHello};
 use crate::User;
 

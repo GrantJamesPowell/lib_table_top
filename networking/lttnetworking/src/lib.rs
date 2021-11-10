@@ -3,7 +3,6 @@
 
 pub mod client;
 pub mod connection;
-pub mod interface;
 pub mod messages;
 pub mod server;
 
@@ -12,3 +11,13 @@ pub use user::User;
 
 mod token;
 pub use token::Token;
+
+mod auth {
+    use super::*;
+    use async_trait::async_trait;
+
+    #[async_trait]
+    pub trait Auth {
+        async fn authorize(&mut self, token: Token) -> Option<User>;
+    }
+}
