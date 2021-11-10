@@ -1,5 +1,6 @@
 use crate::connection::{ConnectionId, ManageConnections, ToConnections};
-use crate::messages::{ToGameHostMsg, ToObserverMsg};
+use crate::messages::game_host::ToGameHostMsg;
+use crate::messages::observer::ToObserverMsg;
 use lttcore::Play;
 use smallvec::SmallVec;
 use tokio::select;

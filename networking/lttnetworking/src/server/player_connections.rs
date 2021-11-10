@@ -4,10 +4,12 @@ use crate::connection::{
     ToConnections,
 };
 use crate::messages::{
-    FromPlayerMsg::{self, *},
-    SubmitActionErrorKind::*,
-    ToGameHostMsg::{self, *},
-    ToPlayerMsg::{self, *},
+    game_host::ToGameHostMsg::{self, *},
+    player::{
+        FromPlayerMsg::{self, *},
+        SubmitActionErrorKind::*,
+        ToPlayerMsg::{self, *},
+    },
 };
 use lttcore::{play::ActionResponse, Play, Player, TurnNum};
 use smallvec::SmallVec;

@@ -1,6 +1,7 @@
 use crate::auth::Auth;
 use crate::connection::ConnectionIO;
-use crate::messages::{ClientHello, Closed, ServerHello};
+use crate::messages::hello::{ClientHello, ServerHello};
+use crate::messages::Closed;
 use crate::User;
 
 pub async fn authorize(auth: &mut impl Auth, conn: &mut impl ConnectionIO) -> Result<User, Closed> {

@@ -1,12 +1,10 @@
-use crate::messages::{
+use crate::messages::player::{
     FromPlayerMsg::{self, *},
     SubmitActionErrorKind::*,
     ToPlayerMsg::{self, *},
 };
 use lttcore::bots::Bot;
-
 use lttcore::{GamePlayer, Play, Seed};
-
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub struct Inbox<T: Play> {
