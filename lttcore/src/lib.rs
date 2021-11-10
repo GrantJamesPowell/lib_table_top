@@ -22,6 +22,7 @@ mod scenario;
 pub mod bots;
 pub mod common;
 pub mod examples;
+pub mod id;
 pub mod play;
 pub mod pov;
 pub mod seed;
