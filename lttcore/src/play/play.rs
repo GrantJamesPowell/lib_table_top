@@ -32,6 +32,7 @@ pub trait Play:
         + Serialize
         + DeserializeOwned
         + 'static;
+
     type ActionError: Clone
         + Debug
         + PartialEq
