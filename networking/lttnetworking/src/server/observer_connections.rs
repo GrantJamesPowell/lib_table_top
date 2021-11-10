@@ -1,7 +1,7 @@
-use crate::connection::{ConnectionId, ManageConnections, ToConnections};
+use crate::connection::{ManageConnections, ToConnections};
 use crate::messages::game_host::ToGameHostMsg;
 use crate::messages::observer::ToObserverMsg;
-use lttcore::Play;
+use lttcore::{id::ConnectionId, Play};
 use smallvec::SmallVec;
 use tokio::select;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};

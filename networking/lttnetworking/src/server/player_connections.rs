@@ -1,5 +1,5 @@
 use crate::connection::{
-    ConnectionId, FromConnection,
+    FromConnection,
     ManageConnections::{self, *},
     ToConnections,
 };
@@ -11,7 +11,7 @@ use crate::messages::{
         ToPlayerMsg::{self, *},
     },
 };
-use lttcore::{play::ActionResponse, Play, Player, TurnNum};
+use lttcore::{id::ConnectionId, play::ActionResponse, Play, Player, TurnNum};
 use smallvec::SmallVec;
 use std::time::Duration;
 use tokio::select;

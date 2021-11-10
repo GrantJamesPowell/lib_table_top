@@ -1,17 +1,8 @@
 use crate::messages::Closed;
 use async_trait::async_trait;
+use lttcore::id::ConnectionId;
 use serde::{de::DeserializeOwned, Serialize};
 use smallvec::SmallVec;
-use uuid::Uuid;
-
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub struct ConnectionId(Uuid);
-
-impl ConnectionId {
-    pub fn new() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
 
 #[async_trait]
 pub trait ConnectionIO {
