@@ -460,13 +460,32 @@ name = "lttnetworking"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bincode",
+ "bytes",
+ "futures-util",
  "hex",
  "lttcore",
+ "rand",
  "serde",
  "smallvec",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "lttws"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bincode",
+ "futures-util",
+ "lttcore",
+ "lttnetworking",
+ "serde",
+ "tokio",
+ "tokio-tungstenite",
 ]
 
 [[package]]

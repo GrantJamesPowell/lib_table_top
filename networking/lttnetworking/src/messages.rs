@@ -1,7 +1,25 @@
+use crate::{Token, User};
 use lttcore::play::ActionResponse;
 use lttcore::pov::{ObserverUpdate, PlayerUpdate};
 use lttcore::{GameObserver, GamePlayer, Play, Player, TurnNum};
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Closed {
+    Hangup,
+    InvalidMsg,
+    Unauthorized,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ClientHello {
+    pub credentials: Token,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ServerHello {
+    pub user: User,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToGameHostMsg<T: Play> {

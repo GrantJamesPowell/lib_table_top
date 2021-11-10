@@ -2,7 +2,8 @@
 
 members = [
     "games/tic_tac_toe",
+    "networking/lttnetworking",
+    "networking/lttws",
     "lttcore",
     "ltti",
-    "lttnetworking",
 ]

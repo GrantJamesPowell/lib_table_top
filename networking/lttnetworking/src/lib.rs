@@ -3,7 +3,7 @@
 
 pub mod client;
 pub mod connection;
-pub mod hello;
+pub mod interface;
 pub mod messages;
 pub mod server;
 

@@ -7,7 +7,7 @@ edition = "2021"
 smallvec = { version = "1.7.0", features = ["serde"] }
 clap = "2.33.3"
 lttcore = { path = "../lttcore" }
-lttnetworking = { path = "../lttnetworking" }
+lttnetworking = { path = "../networking/lttnetworking" }
 tic_tac_toe = { path = "../games/tic_tac_toe" }
 tokio = { version = "1", features = ["full"] }
 tokio-tungstenite = "*"
