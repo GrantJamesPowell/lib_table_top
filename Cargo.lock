@@ -434,6 +434,7 @@ dependencies = [
  "smallvec",
  "static_assertions",
  "thiserror",
+ "uuid",
 ]
 
 [[package]]
