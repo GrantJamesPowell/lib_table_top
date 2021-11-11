@@ -2,9 +2,9 @@ use crate::connection::ConnectionIO;
 use crate::messages::Closed;
 use crate::messages::hello::{ClientHello, ServerHello};
 use crate::messages::mode::{Mode::*, JoinAs};
-use crate::{Token, User};
+use crate::{Token, User, SupportedGames};
 
-pub async fn observe_game(
+pub async fn observe_game<SG: SupportedGames>(
     token: Token,
     game_id: GameId,
     conn: &mut impl ConnectionIO,
@@ -12,7 +12,7 @@ pub async fn observe_game(
     let user = authenticate(conn, token)?;
     choose_mode(
         conn,
-        JoinInProgressGame(game_id, JoinAs::Observer)
+        JoinInProgressGame((SG, game_id), JoinAs::Observer)
     )?;
     todo!()
 }
@@ -25,10 +25,10 @@ pub async fn authenticate(
     conn.next::<Result<ServerHello, Closed>>.await??;
 }
 
-pub async fn choose_mode(
+pub async fn choose_mode<SG: SupportedGames>(
     conn: &mut impl ConnectionIO,
-    mode: Mode
+    mode: Mode<SG>
 ) -> Result<(), Closed> {
     conn.send(mode).await?;
-    conn.next::<Result<Mode, Closed>>().await
+    conn.next::<Result<Mode<SG>, Closed>>().await
 }

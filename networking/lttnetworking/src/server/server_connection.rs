@@ -3,11 +3,11 @@ use crate::connection::ConnectionIO;
 use crate::messages::hello::{ClientHello, ServerHello};
 use crate::messages::mode::Mode;
 use crate::messages::Closed;
-use crate::User;
+use crate::{SupportedGames, User};
 
-pub async fn server_connection(
+pub async fn server_connection<SG: SupportedGames>(
     _authenticate: &mut impl Authenticate,
-    _authorize: &mut impl Authorize,
+    _authorize: &mut impl Authorize<SG>,
     _conn: &mut impl ConnectionIO,
 ) {
     todo!()
@@ -17,7 +17,7 @@ pub async fn authenticate(
     auth: &mut impl Authenticate,
     conn: &mut impl ConnectionIO,
 ) -> Result<User, Closed> {
-    let ClientHello { credentials } = conn.next::<ClientHello>().await?;
+    let ClientHello { credentials } = conn.next().await?;
 
     match auth.authenticate(&credentials).await {
         Some(user) => {
@@ -33,19 +33,19 @@ pub async fn authenticate(
     }
 }
 
-pub async fn choose_and_authorize_mode(
+pub async fn choose_and_authorize_mode<SG: SupportedGames>(
     user: &User,
-    auth: &mut impl Authorize,
+    auth: &mut impl Authorize<SG>,
     conn: &mut impl ConnectionIO,
-) -> Result<Mode, Closed> {
-    let mode: Mode = conn.next::<Mode>().await?;
+) -> Result<Mode<SG>, Closed> {
+    let mode: Mode<SG> = conn.next().await?;
 
     if auth.authorize(user, &mode).await {
-        let msg: Result<Mode, Closed> = Ok(mode);
+        let msg: Result<Mode<SG>, Closed> = Ok(mode);
         conn.send(msg.clone()).await?;
         msg
     } else {
-        let msg: Result<Mode, Closed> = Err(Closed::Unauthorized);
+        let msg: Result<Mode<SG>, Closed> = Err(Closed::Unauthorized);
         conn.send(msg.clone()).await?;
         msg
     }

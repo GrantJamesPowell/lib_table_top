@@ -1,5 +1,5 @@
 use crate::messages::mode::Mode;
-use crate::{Token, User};
+use crate::{SupportedGames, Token, User};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -8,6 +8,6 @@ pub trait Authenticate {
 }
 
 #[async_trait]
-pub trait Authorize {
-    async fn authorize(&mut self, user: &User, mode: &Mode) -> bool;
+pub trait Authorize<SG: SupportedGames> {
+    async fn authorize(&mut self, user: &User, mode: &Mode<SG>) -> bool;
 }

@@ -6,7 +6,9 @@ pub mod client;
 pub mod connection;
 pub mod messages;
 pub mod server;
-pub mod supported_game;
+
+mod supported_game;
+pub use supported_game::SupportedGames;
 
 mod user;
 pub use user::User;
