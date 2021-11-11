@@ -5,6 +5,14 @@ use crate::messages::mode::Mode;
 use crate::messages::Closed;
 use crate::User;
 
+pub async fn server_connection(
+    _authenticate: &mut impl Authenticate,
+    _authorize: &mut impl Authorize,
+    _conn: &mut impl ConnectionIO,
+) {
+    todo!()
+}
+
 pub async fn authenticate(
     auth: &mut impl Authenticate,
     conn: &mut impl ConnectionIO,
