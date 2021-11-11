@@ -5,4 +5,5 @@ pub enum Closed {
     Hangup,
     InvalidMsg,
     Unauthorized,
+    InvalidCredentials,
 }
