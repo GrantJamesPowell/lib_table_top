@@ -5,6 +5,7 @@ pub mod auth;
 pub mod client;
 pub mod connection;
 pub mod messages;
+pub mod runtime;
 pub mod server;
 
 mod supported_game;
