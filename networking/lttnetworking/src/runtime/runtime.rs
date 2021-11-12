@@ -1,35 +1,17 @@
 use super::game_meta::GameMeta;
-use crate::connection::{FromConnection, ManageConnections, ToConnections};
-use crate::messages::player::FromPlayerMsg;
+use crate::connection::{ToConnections};
+
+use crate::runtime::error::GameNotFound;
 use bytes::Bytes;
 use dashmap::DashMap;
-use lttcore::id::{ConnectionId, GameId, UserId};
-use lttcore::utilities::PlayerIndexedData as PID;
-use lttcore::{Play, Player};
+use lttcore::id::{ConnectionId, GameId};
+
+use lttcore::{Play};
 use serde::Serialize;
 use tokio::sync::mpsc::UnboundedSender;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GameNotFound;
-
 pub trait Serializer {
     fn serialize<T>(value: &T) -> Bytes;
-}
-
-pub struct PlayerInput<T: Play> {
-    chan: UnboundedSender<FromConnection<FromPlayerMsg<T>>>,
-    connection_id: ConnectionId,
-}
-
-impl<T: Play> PlayerInput<T> {
-    fn send(&self, msg: FromPlayerMsg<T>) -> Result<(), GameNotFound> {
-        self.chan
-            .send(FromConnection {
-                from: self.connection_id,
-                msg,
-            })
-            .map_err(|_| GameNotFound)
-    }
 }
 
 #[derive(Debug)]

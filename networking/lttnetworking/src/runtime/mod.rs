@@ -1,3 +1,4 @@
+pub mod error;
 mod game_host;
 mod game_meta;
 mod observer_connections;
