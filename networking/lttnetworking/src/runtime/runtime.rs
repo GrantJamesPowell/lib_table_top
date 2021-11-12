@@ -1,3 +1,4 @@
+use super::game_meta::GameMeta;
 use crate::connection::{FromConnection, ManageConnections, ToConnections};
 use crate::messages::player::FromPlayerMsg;
 use bytes::Bytes;
@@ -11,16 +12,24 @@ use tokio::sync::mpsc::UnboundedSender;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameNotFound;
 
-#[derive(Debug)]
-struct GameMeta<T: Play> {
-    manage_observer_connections: UnboundedSender<ManageConnections>,
-    manage_player_connections: PID<UnboundedSender<ManageConnections>>,
-    player_user_mapping: PID<UserId>,
-    from_connection_to_player_connections: PID<UnboundedSender<FromConnection<FromPlayerMsg<T>>>>,
-}
-
 pub trait Serializer {
     fn serialize<T>(value: &T) -> Bytes;
+}
+
+pub struct PlayerInput<T: Play> {
+    chan: UnboundedSender<FromConnection<FromPlayerMsg<T>>>,
+    connection_id: ConnectionId,
+}
+
+impl<T: Play> PlayerInput<T> {
+    fn send(&self, msg: FromPlayerMsg<T>) -> Result<(), GameNotFound> {
+        self.chan
+            .send(FromConnection {
+                from: self.connection_id,
+                msg,
+            })
+            .map_err(|_| GameNotFound)
+    }
 }
 
 #[derive(Debug)]
@@ -36,23 +45,10 @@ impl<T: Play> Runtime<T> {
         conn: UnboundedSender<Bytes>,
     ) -> Result<ConnectionId, GameNotFound> {
         let game_meta = self.games.get(&game_id).ok_or(GameNotFound)?;
-
         let connection_id = ConnectionId::new();
         self.connections.insert(connection_id, conn);
-        game_meta
-            .manage_observer_connections
-            .send(ManageConnections::Add(connection_id.into()))
-            .map(|_| connection_id)
-            .map_err(|_| {
-                self.connections.remove(&connection_id);
-                GameNotFound
-            })
-    }
-
-    pub fn user_id_for_game_player(&self, game_id: GameId, player: Player) -> Option<UserId> {
-        self.games
-            .get(&game_id)
-            .and_then(|meta| meta.player_user_mapping.get(player).copied())
+        game_meta.add_observers(connection_id);
+        Ok(connection_id)
     }
 
     pub async fn send_to_connections<Msg: Serialize, Ser: Serializer>(
