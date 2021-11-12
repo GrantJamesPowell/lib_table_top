@@ -1,4 +1,3 @@
-use crate::connection::FromConnection;
 use crate::messages::player::FromPlayerMsg;
 use crate::runtime::error::GameNotFound;
 use crate::runtime::{ByteStream, ToByteSink};
@@ -10,7 +9,7 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 #[derive(Debug)]
 pub struct PlayerConnection<T: Play> {
-    sink: UnboundedSender<FromConnection<FromPlayerMsg<T>>>,
+    sink: UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>,
     stream: ByteStream,
     connection_id: ConnectionId,
 }
@@ -18,10 +17,7 @@ pub struct PlayerConnection<T: Play> {
 impl<T: Play> PlayerConnection<T> {
     pub async fn send(&self, msg: FromPlayerMsg<T>) -> Result<(), GameNotFound> {
         self.sink
-            .send(FromConnection {
-                from: self.connection_id,
-                msg,
-            })
+            .send((self.connection_id, msg))
             .map_err(|_| GameNotFound)
     }
 
@@ -46,7 +42,7 @@ impl ObserverConnection {
 pub struct GameMeta<T: Play> {
     add_observer_chan: UnboundedSender<(ConnectionId, ToByteSink)>,
     add_player_chan: PID<UnboundedSender<(ConnectionId, ToByteSink)>>,
-    player_inputs: PID<UnboundedSender<FromConnection<FromPlayerMsg<T>>>>,
+    player_inputs: PID<UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>>,
 }
 
 impl<T: Play> GameMeta<T> {
