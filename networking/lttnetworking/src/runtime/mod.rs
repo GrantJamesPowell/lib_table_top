@@ -1,6 +1,7 @@
 pub mod error;
 
 mod game_host;
+pub mod id;
 mod observer_connections;
 mod player_connections;
 

@@ -2,8 +2,8 @@ use crate::messages::{
     game_host::ToGameHostMsg::{self, *},
     observer::ToObserverMsg::{self, *},
 };
-use crate::runtime::ToByteSink;
-use lttcore::{encoder::Encoder, id::ConnectionId, Play};
+use crate::runtime::{id::ConnectionId, ToByteSink};
+use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;

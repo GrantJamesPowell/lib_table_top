@@ -1,8 +1,10 @@
 use crate::messages::player::FromPlayerMsg;
 use crate::runtime::error::GameNotFound;
-use crate::runtime::{ByteStream, ToByteSink};
+use crate::runtime::{
+    id::{ConnectionId, ConnectionIdSource},
+    ByteStream, ToByteSink,
+};
 use bytes::Bytes;
-use lttcore::id::ConnectionId;
 use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{Play, Player};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
@@ -40,6 +42,7 @@ impl ObserverConnection {
 
 #[derive(Debug)]
 pub struct GameMeta<T: Play> {
+    connection_id_source: ConnectionIdSource,
     add_observer_chan: UnboundedSender<(ConnectionId, ToByteSink)>,
     add_player_chan: PID<UnboundedSender<(ConnectionId, ToByteSink)>>,
     player_inputs: PID<UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>>,
@@ -48,7 +51,7 @@ pub struct GameMeta<T: Play> {
 impl<T: Play> GameMeta<T> {
     pub fn add_observer(&self) -> ObserverConnection {
         let (updates_sender, stream) = unbounded_channel();
-        let connection_id = ConnectionId::new();
+        let connection_id = self.connection_id_source.next();
         self.add_observer_chan
             .send((connection_id, updates_sender))
             .expect("observer connections is alive as long as game meta is");
@@ -62,7 +65,7 @@ impl<T: Play> GameMeta<T> {
     pub fn add_player(&self, player: Player) -> Option<PlayerConnection<T>> {
         let sink = self.player_inputs.get(player)?.clone();
 
-        let connection_id = ConnectionId::new();
+        let connection_id = self.connection_id_source.next();
         let (updates_sender, stream) = unbounded_channel();
 
         self.add_player_chan
