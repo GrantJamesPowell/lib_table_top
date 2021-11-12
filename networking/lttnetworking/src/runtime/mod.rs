@@ -11,4 +11,4 @@ mod runtime;
 pub use runtime::{ByteStream, Runtime, ToByteSink};
 
 mod encoder;
-pub use encoder::{Encoder, BincodeEncoder, JsonEncoder};
+pub use encoder::{BincodeEncoder, Encoder, JsonEncoder};

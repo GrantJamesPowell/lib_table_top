@@ -33,7 +33,7 @@ struct State<E: Encoder> {
 
 impl<E: Encoder> State<E> {
     fn send_to<T: Serialize>(&mut self, msg: &T, f: impl Fn(&mut Conn) -> bool) {
-        let bytes = E::serialize(msg);
+        let bytes = E::serialize(msg).expect("All game messages are serializable");
         self.conns.retain(|conn| {
             if f(conn) {
                 conn.sink.send(bytes.clone()).is_ok()
