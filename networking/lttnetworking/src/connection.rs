@@ -2,7 +2,6 @@ use crate::messages::Closed;
 use async_trait::async_trait;
 use lttcore::id::ConnectionId;
 use serde::{de::DeserializeOwned, Serialize};
-use smallvec::SmallVec;
 
 #[async_trait]
 pub trait ConnectionIO {

@@ -1,97 +1,84 @@
-// use crate::connection::{ManageConnections, ToConnections};
-// use crate::runtime::ByteSink;
-// use crate::messages::game_host::ToGameHostMsg;
-// use crate::messages::observer::ToObserverMsg;
-// use lttcore::{id::ConnectionId, Play};
-// use smallvec::SmallVec;
-// use tokio::select;
-// use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-//
-// use ManageConnections::*;
-// use ToGameHostMsg::*;
-// use ToObserverMsg::*;
-//
-// #[derive(Debug, Default)]
-// struct State {
-//     in_sync_conns: SmallVec<[ByteSink; 4]>,
-//     needs_sync_conns: SmallVec<[ByteSink; 1]>,
-// }
-//
-// impl State {
-//     fn all_chans(&self) -> impl Iterator<Item = ByteSink> + '_ {
-//         self.needs_sync_conns
-//             .iter()
-//             .chain(self.in_sync_conns.iter())
-//             .copied()
-//     }
-// }
-//
-// pub struct Inbox<T: Play> {
-//     pub from_game_host: UnboundedReceiver<ToObserverMsg<T>>,
-//     pub from_runtime: UnboundedReceiver<ManageConnections>,
-// }
-//
-// pub struct Outbox<T: Play> {
-//     to_game_host: UnboundedSender<ToGameHostMsg<T>>,
-// }
-//
-// pub async fn observer_connections<T: Play>(
-//     mut inbox: Inbox<T>,
-//     outbox: Outbox<T>,
-// ) -> anyhow::Result<()> {
-//     let mut state: State = Default::default();
-//
-//     loop {
-//         select! {
-//             Some(msg) = inbox.from_runtime.recv() => {
-//                 match msg {
-//                     Add(conns) => {
-//                         if state.needs_sync_conns.is_empty() {
-//                             outbox.to_game_host.send(RequestObserverState)?;
-//                         }
-//                         state.needs_sync_conns.extend(conns);
-//                     }
-//                     Remove(remove) => {
-//                         state.in_sync_conns.retain(|id| !remove.contains(*id));
-//                         state.needs_sync_conns.retain(|id| !remove.contains(*id));
-//                     }
-//                 }
-//             }
-//             Some(msg) = inbox.from_game_host.recv() => {
-//                 match msg {
-//                     SyncState(_) => {
-//                         let needs_sync = std::mem::take(&mut state.needs_sync_conns);
-//
-//                         outbox.to_connections.send(ToConnections {
-//                             to: needs_sync.iter().copied().collect(),
-//                             msg,
-//                         })?;
-//
-//                         state.in_sync_conns.extend(needs_sync);
-//                     }
-//                     Update(_) => {
-//                         outbox.to_connections.send(ToConnections {
-//                             to: state.in_sync_conns.iter().copied().collect(),
-//                             msg,
-//                         })?;
-//                     }
-//                     GameOver => {
-//                         outbox.to_connections.send(ToConnections {
-//                             to: state.all_connections().collect(),
-//                             msg,
-//                         })?;
-//
-//                         break
-//                     }
-//                 }
-//             }
-//         }
-//     }
-//
-//     Ok(())
-// }
-//
-// // #[cfg(test)]
+use crate::messages::{
+    game_host::ToGameHostMsg::{self, *},
+    observer::ToObserverMsg::{self, *},
+};
+use crate::runtime::{Encoder, ToByteSink};
+use lttcore::{id::ConnectionId, Play};
+use smallvec::SmallVec;
+use tokio::select;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+
+pub struct Inbox<T: Play> {
+    pub from_game_host: UnboundedReceiver<ToObserverMsg<T>>,
+    pub from_runtime: UnboundedReceiver<(ConnectionId, ToByteSink)>,
+}
+
+pub struct Outbox<T: Play> {
+    pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
+}
+
+#[derive(Debug, Default)]
+struct State {
+    in_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 4]>,
+    needs_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 1]>,
+}
+
+impl State {
+    fn all_conns(&self) -> impl Iterator<Item = &(ConnectionId, ToByteSink)> {
+        self.needs_sync_conns
+            .iter()
+            .chain(self.needs_sync_conns.iter())
+    }
+}
+
+pub async fn observer_connections<T: Play, E: Encoder>(
+    mut inbox: Inbox<T>,
+    outbox: Outbox<T>,
+) -> anyhow::Result<()> {
+    let mut state: State = Default::default();
+
+    loop {
+        select! {
+            Some(conn) = inbox.from_runtime.recv() => {
+                if state.needs_sync_conns.is_empty() {
+                    outbox.to_game_host.send(RequestObserverState)?;
+                }
+                state.needs_sync_conns.push(conn)
+            }
+            Some(msg) = inbox.from_game_host.recv() => {
+                 match msg {
+                     SyncState(_) => {
+                         let msg = E::serialize(&msg);
+                         let mut needs_sync = std::mem::take(&mut state.needs_sync_conns);
+                         needs_sync.retain(|(_id, conn)| {
+                             conn.send(msg.clone()).is_ok()
+                         });
+                         state.in_sync_conns.extend(needs_sync);
+                     }
+                     Update(_) => {
+                         let msg = E::serialize(&msg);
+                         state.in_sync_conns.retain(|(_id, conn)| {
+                             conn.send(msg.clone()).is_ok()
+                         });
+                     }
+                     GameOver => {
+                         let msg = E::serialize(&msg);
+                         state.all_conns().for_each(|(_id, conn)| {
+                             let _ = conn.send(msg.clone());
+                         });
+
+                         break
+                     }
+                 }
+
+            }
+        }
+    }
+
+    Ok(())
+}
+
+// #[cfg(test)]
 // // mod tests {
 // //     use super::*;
 // //     use lttcore::examples::{

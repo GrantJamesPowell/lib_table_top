@@ -1,16 +1,15 @@
 use super::game_meta::GameMeta;
-
-use crate::runtime::error::GameNotFound;
+use crate::runtime::{ObserverConnection, PlayerConnection};
 use bytes::Bytes;
 use dashmap::DashMap;
-use lttcore::id::{ConnectionId, GameId};
-
-use lttcore::Play;
+use lttcore::id::GameId;
+use lttcore::{Play, Player};
 use serde::Serialize;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub trait Encoder {
-    fn serialize<T>(value: &T) -> Bytes;
+    fn serialize<T: Serialize>(value: &T) -> Bytes;
+    // fn deserialize<T: Deserialize>(bytes: Bytes) -> Option<T>
 }
 
 pub type ToByteSink = UnboundedSender<Bytes>;
@@ -22,14 +21,13 @@ pub struct Runtime<T: Play> {
 }
 
 impl<T: Play> Runtime<T> {
-    // pub fn observe_game(
-    //     &self,
-    //     game_id: GameId,
-    //     conn: UnboundedSender<Bytes>,
-    // ) -> Result<ConnectionId, GameNotFound> {
-    //     let game_meta = self.games.get(&game_id).ok_or(GameNotFound)?;
-    //     let connection_id = ConnectionId::new();
-    //     game_meta.add_observers(connection_id);
-    //     Ok(connection_id)
-    // }
+    pub fn observe_game(&self, game_id: GameId) -> Option<ObserverConnection> {
+        self.games.get(&game_id).map(|meta| meta.add_observer())
+    }
+
+    pub fn play_game(&self, game_id: GameId, player: Player) -> Option<PlayerConnection<T>> {
+        self.games
+            .get(&game_id)
+            .and_then(|meta| meta.add_player(player))
+    }
 }
