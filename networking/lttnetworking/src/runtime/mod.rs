@@ -9,6 +9,3 @@ pub use game_meta::{ObserverConnection, PlayerConnection};
 
 mod runtime;
 pub use runtime::{ByteStream, Runtime, ToByteSink};
-
-mod encoder;
-pub use encoder::{BincodeEncoder, Encoder, JsonEncoder};

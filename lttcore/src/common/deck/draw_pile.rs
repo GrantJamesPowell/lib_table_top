@@ -58,7 +58,6 @@ mod tests {
         assert_eq!(pile.len(), 1);
         assert_eq!(pile.draw(), Some(3));
 
-        assert_eq!(pile.deref(), &[]);
         assert_eq!(pile.len(), 0);
         assert_eq!(pile.draw(), None);
     }

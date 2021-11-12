@@ -6,8 +6,8 @@ use crate::messages::{
         ToPlayerMsg::{self, *},
     },
 };
-use crate::runtime::{Encoder, ToByteSink};
-use lttcore::{id::ConnectionId, play::ActionResponse, Play, Player, TurnNum};
+use crate::runtime::ToByteSink;
+use lttcore::{encoder::Encoder, id::ConnectionId, play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;

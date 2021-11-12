@@ -433,6 +433,8 @@ dependencies = [
 name = "lttcore"
 version = "0.1.0"
 dependencies = [
+ "bincode",
+ "bytes",
  "derive_builder",
  "hex",
  "im",
