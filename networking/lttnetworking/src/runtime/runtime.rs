@@ -1,17 +1,22 @@
-use crate::connection::{ManageConnections, ToConnections};
+use crate::connection::{FromConnection, ManageConnections, ToConnections};
+use crate::messages::player::FromPlayerMsg;
 use bytes::Bytes;
 use dashmap::DashMap;
 use lttcore::id::{ConnectionId, GameId, UserId};
-use lttcore::utilities::PlayerIndexedData;
-use lttcore::Player;
+use lttcore::utilities::PlayerIndexedData as PID;
+use lttcore::{Play, Player};
 use serde::Serialize;
 use tokio::sync::mpsc::UnboundedSender;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GameNotFound;
+
 #[derive(Debug)]
-struct GameMeta {
+struct GameMeta<T: Play> {
     manage_observer_connections: UnboundedSender<ManageConnections>,
-    manage_player_connections: UnboundedSender<ManageConnections>,
-    player_user_mapping: PlayerIndexedData<UserId>,
+    manage_player_connections: PID<UnboundedSender<ManageConnections>>,
+    player_user_mapping: PID<UserId>,
+    from_connection_to_player_connections: PID<UnboundedSender<FromConnection<FromPlayerMsg<T>>>>,
 }
 
 pub trait Serializer {
@@ -19,27 +24,46 @@ pub trait Serializer {
 }
 
 #[derive(Debug)]
-struct Runtime {
-    games: DashMap<GameId, GameMeta>,
+struct Runtime<T: Play> {
+    games: DashMap<GameId, GameMeta<T>>,
     connections: DashMap<ConnectionId, UnboundedSender<Bytes>>,
 }
 
-impl Runtime {
+impl<T: Play> Runtime<T> {
+    pub fn observe_game(
+        &self,
+        game_id: GameId,
+        conn: UnboundedSender<Bytes>,
+    ) -> Result<ConnectionId, GameNotFound> {
+        let game_meta = self.games.get(&game_id).ok_or(GameNotFound)?;
+
+        let connection_id = ConnectionId::new();
+        self.connections.insert(connection_id, conn);
+        game_meta
+            .manage_observer_connections
+            .send(ManageConnections::Add(connection_id.into()))
+            .map(|_| connection_id)
+            .map_err(|_| {
+                self.connections.remove(&connection_id);
+                GameNotFound
+            })
+    }
+
     pub fn user_id_for_game_player(&self, game_id: GameId, player: Player) -> Option<UserId> {
         self.games
             .get(&game_id)
             .and_then(|meta| meta.player_user_mapping.get(player).copied())
     }
 
-    pub async fn send_to_connections<T: Serialize, S: Serializer>(
+    pub async fn send_to_connections<Msg: Serialize, Ser: Serializer>(
         &self,
-        ToConnections { to, msg }: ToConnections<T>,
+        ToConnections { to, msg }: ToConnections<Msg>,
     ) {
-        let bytes = S::serialize(&msg);
+        let bytes = Ser::serialize(&msg);
 
-        for connection_id in to {
-            if let Some(sender) = self.connections.get(&connection_id) {
-                let _ = sender.send(bytes.clone());
+        for id in to {
+            if let Some(conn) = self.connections.get(&id) {
+                let _ = conn.send(bytes.clone());
             }
         }
     }
