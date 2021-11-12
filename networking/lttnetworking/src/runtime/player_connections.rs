@@ -219,132 +219,225 @@ fn process_from_game_host<T: Play, E: Encoder>(
     Ok(false)
 }
 
-//
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use lttcore::examples::GuessTheNumber;
-//
-//     struct MailboxHandles<T: Play> {
-//         to_from_connections: UnboundedSender<FromConnection<FromPlayerMsg<T>>>,
-//         to_from_game_host: UnboundedSender<ToPlayerMsg<T>>,
-//         to_from_runtime: UnboundedSender<ManageConnections>,
-//         from_to_connections: UnboundedReceiver<ToConnections<ToPlayerMsg<T>>>,
-//         from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
-//         timeout_rx: UnboundedReceiver<TurnNum>,
-//     }
-//
-//     #[tokio::test]
-//     async fn test_managing_connections() {
-//         let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
-//
-//         let new_conn_1 = ConnectionId::new();
-//         let new_conn_2 = ConnectionId::new();
-//
-//         // It sends a request to game host if it's the first connection being added
-//         // since the last sync state
-//         state.needs_sync_conns.clear();
-//         process_manage_connections(Add(new_conn_1.into()), &mut state, &outbox).unwrap();
-//
-//         assert_eq!(
-//             handles.from_to_game_host.recv().await.unwrap(),
-//             RequestPlayerState {
-//                 player: state.player
-//             }
-//         );
-//
-//         // It doesn't do it the second time if it's before the game host has responded
-//         process_manage_connections(Add(new_conn_2.into()), &mut state, &outbox).unwrap();
-//
-//         tokio::time::sleep(Duration::from_millis(50)).await;
-//         assert!(handles.from_to_game_host.try_recv().is_err());
-//
-//         // You can remove connections
-//         assert!(state.needs_sync_conns.contains(&new_conn_1));
-//         process_manage_connections(Remove(new_conn_1.into()), &mut state, &outbox).unwrap();
-//         assert!(!state.needs_sync_conns.contains(&new_conn_1));
-//     }
-//
-//     #[tokio::test]
-//     async fn test_processing_timeouts_for_awaited_turn() {
-//         let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
-//
-//         // When turn matches the one you're awaiting it sends timeout info out
-//         let turn_num: TurnNum = 0.into();
-//         state.awaiting_turn = Some(turn_num);
-//         process_timeout(turn_num, &mut state, &outbox).unwrap();
-//
-//         assert_eq!(
-//             handles.from_to_connections.recv().await.unwrap(),
-//             ToConnections {
-//                 to: state.in_sync_conns.into_iter().collect(),
-//                 msg: SubmitActionError(Timeout { turn_num })
-//             }
-//         );
-//
-//         assert_eq!(
-//             handles.from_to_game_host.recv().await.unwrap(),
-//             SubmitActionResponse {
-//                 player: state.player,
-//                 response: ActionResponse::Timeout
-//             }
-//         );
-//     }
-//
-//     #[tokio::test]
-//     async fn test_processing_timeouts_when_turn_is_not_awaited() {
-//         let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
-//
-//         // When turn doesn't match the one you're awaiting it does nothing
-//         let turn_num: TurnNum = 0.into();
-//         state.awaiting_turn = Some(1.into());
-//         process_timeout(turn_num, &mut state, &outbox).unwrap();
-//
-//         tokio::time::sleep(Duration::from_millis(50)).await;
-//         assert!(handles.from_to_connections.try_recv().is_err());
-//         assert!(handles.from_to_game_host.try_recv().is_err());
-//     }
-//
-//     fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, State, MailboxHandles<T>) {
-//         let (to_from_connections, from_connections) = unbounded_channel();
-//         let (to_from_game_host, from_game_host) = unbounded_channel();
-//         let (to_from_runtime, from_runtime) = unbounded_channel();
-//
-//         let (to_connections, from_to_connections) = unbounded_channel();
-//         let (to_game_host, from_to_game_host) = unbounded_channel();
-//
-//         let (timeout_tx, timeout_rx) = unbounded_channel::<TurnNum>();
-//
-//         let inbox = Inbox {
-//             from_connections,
-//             from_game_host,
-//             from_runtime,
-//         };
-//
-//         let outbox = Outbox {
-//             to_connections,
-//             to_game_host,
-//         };
-//
-//         let handles = MailboxHandles {
-//             to_from_connections,
-//             to_from_game_host,
-//             to_from_runtime,
-//             from_to_connections,
-//             from_to_game_host,
-//             timeout_rx,
-//         };
-//
-//         let state = State {
-//             awaiting_turn: None,
-//             in_sync_conns: [ConnectionId::new()].into_iter().collect(),
-//             needs_sync_conns: [ConnectionId::new()].into_iter().collect(),
-//             player: 0.into(),
-//             primary: None,
-//             timeout: Duration::from_millis(1000),
-//             timeout_tx,
-//         };
-//
-//         (inbox, outbox, state, handles)
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::runtime::id::ConnectionIdSource;
+    use lttcore::encoder::json::JsonEncoder;
+    use lttcore::examples::{
+        guess_the_number::{Guess, Settings},
+        GuessTheNumber,
+    };
+    use lttcore::{pov::PlayerUpdate, GamePlayer, GameProgression};
+    use tokio::sync::mpsc::error::TryRecvError;
+    use tokio::time::sleep;
+
+    struct MailboxHandles<T: Play> {
+        to_from_connections: UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>,
+        to_from_game_host: UnboundedSender<ToPlayerMsg<T>>,
+        to_from_runtime: UnboundedSender<(ConnectionId, ToByteSink)>,
+        from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
+    }
+
+    #[tokio::test]
+    async fn test_player_connections() {
+        let (inbox, outbox, mut mailbox_handles) = setup_test_infra::<GuessTheNumber>();
+        let player: Player = 0.into();
+        let (_game_progression, game_player, player_update) = setup_guess_the_number(player);
+        let connection_id_source = ConnectionIdSource::new();
+        let (connections, mut connection_streams): (Vec<_>, Vec<_>) = (0..=2)
+            .map(|_| {
+                let (sink, stream) = unbounded_channel();
+                ((connection_id_source.next(), sink), stream)
+            })
+            .unzip();
+
+        let _handle = tokio::spawn(player_connections::<GuessTheNumber, JsonEncoder>(
+            player,
+            Duration::from_millis(50),
+            inbox,
+            outbox,
+        ));
+
+        // On the first connections added, it sends a request for the game state
+        mailbox_handles
+            .to_from_runtime
+            .send(connections[0].clone())
+            .unwrap();
+        assert_eq!(
+            mailbox_handles.from_to_game_host.recv().await,
+            Some(RequestPlayerState { player })
+        );
+
+        // On the second, it does not re-request the game state
+        mailbox_handles
+            .to_from_runtime
+            .send(connections[1].clone())
+            .unwrap();
+        sleep(Duration::from_millis(50)).await;
+        assert_eq!(
+            mailbox_handles.from_to_game_host.try_recv(),
+            Err(TryRecvError::Empty)
+        );
+
+        // If an update arrives it doesn't get sent out to connections awaiting the full sync
+        mailbox_handles
+            .to_from_game_host
+            .send(player_update.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        for stream in connection_streams.iter_mut().take(2) {
+            assert!(stream.try_recv().is_err());
+        }
+
+        // If the state arrives it gets sent to awaiting connections
+        mailbox_handles
+            .to_from_game_host
+            .send(game_player.clone().into())
+            .unwrap();
+        for stream in connection_streams.iter_mut().take(2) {
+            let msg = stream.recv().await.unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            assert_eq!(decoded, SyncState(game_player.clone()));
+        }
+
+        // Add connection id 3 which doesn't have the state yet
+        mailbox_handles
+            .to_from_runtime
+            .send(connections[2].clone())
+            .unwrap();
+
+        // Get an update (only 1 & 2 get it because 3 is waiting on the state)
+        mailbox_handles
+            .to_from_game_host
+            .send(player_update.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        assert!(connection_streams[2].try_recv().is_err());
+
+        for stream in connection_streams.iter_mut().take(2) {
+            let msg = stream.recv().await.unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            assert_eq!(decoded, Update(player_update.clone()))
+        }
+
+        // Once the state is sent, only connections waiting on it get it
+        mailbox_handles
+            .to_from_game_host
+            .send(game_player.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        for stream in connection_streams.iter_mut().take(2) {
+            assert!(stream.try_recv().is_err());
+        }
+
+        let msg = connection_streams[2].recv().await.unwrap();
+        let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+        assert_eq!(decoded, SyncState(game_player.clone()));
+    }
+
+    // #[tokio::test]
+    // async fn test_managing_connections() {
+    //     let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
+
+    //     let new_conn_1 = ConnectionId::new();
+    //     let new_conn_2 = ConnectionId::new();
+
+    //     // It sends a request to game host if it's the first connection being added
+    //     // since the last sync state
+    //     state.needs_sync_conns.clear();
+    //     process_manage_connections(Add(new_conn_1.into()), &mut state, &outbox).unwrap();
+
+    //     assert_eq!(
+    //         handles.from_to_game_host.recv().await.unwrap(),
+    //         RequestPlayerState {
+    //             player: state.player
+    //         }
+    //     );
+
+    //     // It doesn't do it the second time if it's before the game host has responded
+    //     process_manage_connections(Add(new_conn_2.into()), &mut state, &outbox).unwrap();
+
+    //     tokio::time::sleep(Duration::from_millis(50)).await;
+    //     assert!(handles.from_to_game_host.try_recv().is_err());
+
+    //     // You can remove connections
+    //     assert!(state.needs_sync_conns.contains(&new_conn_1));
+    //     process_manage_connections(Remove(new_conn_1.into()), &mut state, &outbox).unwrap();
+    //     assert!(!state.needs_sync_conns.contains(&new_conn_1));
+    // }
+
+    // #[tokio::test]
+    // async fn test_processing_timeouts_for_awaited_turn() {
+    //     let (_inbox, outbox, mut state, mut handles) = setup_test_infra::<GuessTheNumber>();
+
+    //     // When turn matches the one you're awaiting it sends timeout info out
+    //     let turn_num: TurnNum = 0.into();
+    //     state.awaiting_turn = Some(turn_num);
+    //     process_timeout(turn_num, &mut state, &outbox).unwrap();
+
+    //     assert_eq!(
+    //         handles.from_to_connections.recv().await.unwrap(),
+    //         ToConnections {
+    //             to: state.in_sync_conns.into_iter().collect(),
+    //             msg: SubmitActionError(Timeout { turn_num })
+    //         }
+    //     );
+
+    //     assert_eq!(
+    //         handles.from_to_game_host.recv().await.unwrap(),
+    //         SubmitActionResponse {
+    //             player: state.player,
+    //             response: ActionResponse::Timeout
+    //         }
+    //     );
+    // }
+
+    fn setup_guess_the_number(
+        player: Player,
+    ) -> (
+        GameProgression<GuessTheNumber>,
+        GamePlayer<GuessTheNumber>,
+        PlayerUpdate<'static, GuessTheNumber>,
+    ) {
+        let settings: Settings = (0..=10).try_into().unwrap();
+        let mut game_progression = GameProgression::from_settings(settings);
+        let guess: Guess = 4.into();
+        let update = game_progression.submit_actions([(0.into(), ActionResponse::Response(guess))]);
+        let player_update = update.player_update(player).into_owned();
+        let game_player = game_progression
+            .game_players()
+            .filter(|p| p.player() == player)
+            .next()
+            .unwrap();
+
+        (game_progression, game_player, player_update)
+    }
+
+    fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, MailboxHandles<T>) {
+        let (to_from_connections, from_connections) = unbounded_channel();
+        let (to_from_game_host, from_game_host) = unbounded_channel();
+        let (to_from_runtime, from_runtime) = unbounded_channel();
+        let (to_game_host, from_to_game_host) = unbounded_channel();
+
+        let inbox = Inbox {
+            from_connections,
+            from_game_host,
+            from_runtime,
+        };
+
+        let outbox = Outbox { to_game_host };
+
+        let handles = MailboxHandles {
+            to_from_connections,
+            to_from_game_host,
+            to_from_runtime,
+            from_to_game_host,
+        };
+
+        (inbox, outbox, handles)
+    }
+}
