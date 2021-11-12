@@ -2,39 +2,58 @@ use crate::messages::{
     game_host::ToGameHostMsg::{self, *},
     player::{
         FromPlayerMsg::{self, *},
-        SubmitActionErrorKind,
-        ToPlayerMsg::{self},
+        SubmitActionErrorKind::*,
+        ToPlayerMsg::{self, *},
     },
 };
 use crate::runtime::{Encoder, ToByteSink};
 use lttcore::{id::ConnectionId, play::ActionResponse, Play, Player, TurnNum};
+use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;
 use tokio::select;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug)]
-struct State {
-    awaiting_turn: Option<TurnNum>,
-    in_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 1]>,
-    needs_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 1]>,
-    player: Player,
-    primary: Option<ConnectionId>,
-    timeout: Duration,
-    timeout_tx: UnboundedSender<TurnNum>,
+struct Conn {
+    sink: ToByteSink,
+    id: ConnectionId,
+    primary: bool,
+    in_sync: bool,
 }
 
-impl State {
-    fn all_conns(&self) -> impl Iterator<Item = &(ConnectionId, ToByteSink)> + '_ {
-        self.needs_sync_conns
-            .iter()
-            .chain(self.in_sync_conns.iter())
+#[derive(Debug)]
+struct State<E: Encoder> {
+    conns: SmallVec<[Conn; 1]>,
+    awaiting_turn: Option<TurnNum>,
+    player: Player,
+    timeout: Duration,
+    timeout_tx: UnboundedSender<TurnNum>,
+    _phantom: std::marker::PhantomData<E>,
+}
+
+impl<E: Encoder> State<E> {
+    fn send_to<T: Serialize>(&mut self, msg: &T, f: impl Fn(&mut Conn) -> bool) {
+        let bytes = E::serialize(msg);
+        self.conns.retain(|conn| {
+            if f(conn) {
+                conn.sink.send(bytes.clone()).is_ok()
+            } else {
+                true
+            }
+        });
     }
 
-    fn primary_conn(&self) -> Option<&(ConnectionId, ToByteSink)> {
-        self.primary
-            .as_ref()
-            .and_then(|id| self.all_conns().filter(|(i, _)| i == id).next())
+    fn primary(&self) -> Option<ConnectionId> {
+        self.conns
+            .iter()
+            .filter(|conn| conn.primary)
+            .map(|conn| conn.id.clone())
+            .next()
+    }
+
+    fn are_all_in_sync(&self) -> bool {
+        self.conns.iter().all(|conn| conn.in_sync)
     }
 }
 
@@ -61,31 +80,31 @@ pub async fn player_connections<T: Play, E: Encoder>(
         timeout,
         timeout_tx,
         awaiting_turn: None,
-        primary: None,
-        in_sync_conns: Default::default(),
-        needs_sync_conns: Default::default(),
+        conns: Default::default(),
+        _phantom: std::marker::PhantomData,
     };
 
     loop {
         select! {
             // Adding a new connection
-            Some(msg) = inbox.from_runtime.recv() => {
-                if state.needs_sync_conns.is_empty() {
+            Some((id, sink)) = inbox.from_runtime.recv() => {
+                // Request state if we haven't already
+                if state.are_all_in_sync() {
                     outbox.to_game_host.send(RequestPlayerState {
                         player: state.player,
                     })?;
                 }
-                state.needs_sync_conns.push(msg);
+                state.conns.push(Conn { id, sink, primary: false, in_sync: false });
             }
 
             // Messages hot off the wire from clients
             Some(msg) = inbox.from_connections.recv() => {
-                process_from_connection(msg, &mut state, &outbox)?;
+                process_from_connection::<T, E>(msg, &mut state, &outbox)?;
             }
 
             // Messages from the game host
             Some(msg) = inbox.from_game_host.recv() => {
-                let is_game_over = process_from_game_host(msg, &mut state, &outbox)?;
+                let is_game_over = process_from_game_host(msg, &mut state)?;
 
                 if is_game_over {
                     break
@@ -98,14 +117,9 @@ pub async fn player_connections<T: Play, E: Encoder>(
             Some(turn_num) = timeout_rx.recv() => {
                 if state.awaiting_turn == Some(turn_num) {
                     state.awaiting_turn = None;
-                    let msg: ToPlayerMsg<T> = ToPlayerMsg::SubmitActionError(
-                        SubmitActionErrorKind::Timeout { turn_num }
-                    );
 
-                    let bytes = E::serialize(&msg);
-                    state.in_sync_conns.retain(|(_id, conn)| {
-                        conn.send(bytes.clone()).is_ok()
-                    });
+                    let msg: ToPlayerMsg<T> = SubmitActionError(Timeout { turn_num });
+                    state.send_to(&msg, |conn| conn.in_sync);
 
                     outbox.to_game_host.send(SubmitActionResponse {
                         player: state.player,
@@ -119,112 +133,90 @@ pub async fn player_connections<T: Play, E: Encoder>(
     Ok(())
 }
 
-fn process_from_connection<T: Play>(
-    (_from, msg): (ConnectionId, FromPlayerMsg<T>),
-    _state: &mut State,
-    _outbox: &Outbox<T>,
+fn process_from_connection<T: Play, E: Encoder>(
+    (from, msg): (ConnectionId, FromPlayerMsg<T>),
+    state: &mut State<E>,
+    outbox: &Outbox<T>,
 ) -> anyhow::Result<()> {
     match msg {
         RequestPrimary => {
-            todo!()
-            // outbox.to_connections.send(ToConnections {
-            //     to: from.into(),
-            //     msg: SetPrimaryStatus(true),
-            // })?;
+            let msg: ToPlayerMsg<T> = SetPrimaryStatus(false);
+            state.send_to(&msg, |conn| std::mem::replace(&mut conn.primary, false));
 
-            // if let Some(old_primary) = state.primary.replace(from) {
-            //     state.all_conns().
-            //     outbox.to_connections.send(ToConnections {
-            //         to: old_primary.into(),
-            //         msg: SetPrimaryStatus(false),
-            //     })?;
-            // }
+            let msg: ToPlayerMsg<T> = SetPrimaryStatus(true);
+            state.send_to(&msg, |conn| conn.id == from);
         }
-        SubmitAction { action: _, turn: _ } => {
-            todo!()
-            // let is_correct_turn = state.awaiting_turn == Some(turn);
-            // let is_connection_primary = state.primary == Some(from);
+        SubmitAction { action, turn } => {
+            let is_correct_turn = state.awaiting_turn == Some(turn);
+            let is_connection_primary = state.primary() == Some(from);
 
-            // if is_correct_turn && is_connection_primary {
-            //     outbox.to_game_host.send(SubmitActionResponse {
-            //         player: state.player,
-            //         response: ActionResponse::Response(action),
-            //     })?;
+            if is_correct_turn && is_connection_primary {
+                outbox.to_game_host.send(SubmitActionResponse {
+                    player: state.player,
+                    response: ActionResponse::Response(action),
+                })?;
 
-            //     state.awaiting_turn = None;
-            // }
+                state.awaiting_turn = None;
+            }
 
-            // if !is_connection_primary {
-            //     outbox.to_connections.send(ToConnections {
-            //         to: from.into(),
-            //         msg: SubmitActionError(NotPrimary),
-            //     })?;
-            // }
+            if !is_connection_primary {
+                let msg: ToPlayerMsg<T> = SubmitActionError(NotPrimary);
+                state.send_to(&msg, |conn| conn.id == from);
+            }
 
-            // if !is_correct_turn {
-            //     outbox.to_connections.send(ToConnections {
-            //         to: from.into(),
-            //         msg: SubmitActionError(InvalidTurn {
-            //             attempted: turn,
-            //             correct: state.awaiting_turn,
-            //         }),
-            //     })?;
-            // }
+            if !is_correct_turn {
+                let msg: ToPlayerMsg<T> = SubmitActionError(InvalidTurn {
+                    attempted: turn,
+                    correct: state.awaiting_turn,
+                });
+                state.send_to(&msg, |conn| conn.id == from);
+            }
         }
     }
 
     Ok(())
 }
 
-fn process_from_game_host<T: Play>(
-    _msg: ToPlayerMsg<T>,
-    _state: &mut State,
-    _outbox: &Outbox<T>,
+fn process_from_game_host<T: Play, E: Encoder>(
+    msg: ToPlayerMsg<T>,
+    state: &mut State<E>,
 ) -> anyhow::Result<bool> {
-    todo!()
-    // match msg {
-    //     SyncState(_) => {
-    //         let needs_sync = std::mem::take(&mut state.needs_sync_conns);
+    match msg {
+        SyncState(_) => {
+            state.send_to(&msg, |conn| {
+                if conn.in_sync {
+                    false
+                } else {
+                    conn.in_sync = true;
+                    true
+                }
+            });
+        }
+        Update(ref player_update) => {
+            if player_update.is_player_input_needed_this_turn(state.player) {
+                let turn_num = player_update.turn_num();
+                state.awaiting_turn = Some(turn_num);
+                let sender = state.timeout_tx.clone();
+                let timeout = state.timeout;
 
-    //         outbox.to_connections.send(ToConnections {
-    //             to: needs_sync.iter().copied().collect(),
-    //             msg,
-    //         })?;
+                tokio::spawn(async move {
+                    tokio::time::sleep(timeout).await;
+                    let _ = sender.send(turn_num);
+                });
+            }
 
-    //         state.in_sync_conns.extend(needs_sync);
-    //     }
-    //     Update(ref player_update) => {
-    //         if player_update.is_player_input_needed_this_turn(state.player) {
-    //             let turn_num = player_update.turn_num();
-    //             state.awaiting_turn = Some(turn_num);
-    //             let sender = state.timeout_tx.clone();
-    //             let timeout = state.timeout;
+            state.send_to(&msg, |conn| conn.in_sync);
+        }
+        GameOver => {
+            state.send_to(&msg, |_conn| true);
+            return Ok(true);
+        }
+        SetPrimaryStatus(_) | SubmitActionError(_) => {
+            panic!("The game host generated a player message it shouldn't have")
+        }
+    }
 
-    //             tokio::spawn(async move {
-    //                 tokio::time::sleep(timeout).await;
-    //                 let _ = sender.send(turn_num);
-    //             });
-    //         }
-
-    //         outbox.to_connections.send(ToConnections {
-    //             to: state.in_sync_conns.iter().copied().collect(),
-    //             msg,
-    //         })?;
-    //     }
-    //     GameOver => {
-    //         outbox.to_connections.send(ToConnections {
-    //             to: state.all_connections().collect(),
-    //             msg,
-    //         })?;
-
-    //         return Ok(true);
-    //     }
-    //     SetPrimaryStatus(_) | SubmitActionError(_) => {
-    //         panic!("The game host generated a player message it shouldn't have")
-    //     }
-    // }
-
-    // Ok(false)
+    Ok(false)
 }
 
 //
