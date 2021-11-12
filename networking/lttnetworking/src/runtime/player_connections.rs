@@ -2,11 +2,12 @@ use crate::messages::{
     game_host::ToGameHostMsg::{self, *},
     player::{
         FromPlayerMsg::{self, *},
+        SubmitActionErrorKind,
         ToPlayerMsg::{self},
     },
 };
-use crate::runtime::ToByteSink;
-use lttcore::{id::ConnectionId, Play, Player, TurnNum};
+use crate::runtime::{Encoder, ToByteSink};
+use lttcore::{id::ConnectionId, play::ActionResponse, Play, Player, TurnNum};
 use smallvec::SmallVec;
 use std::time::Duration;
 use tokio::select;
@@ -47,7 +48,7 @@ pub struct Outbox<T: Play> {
     pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 }
 
-pub async fn player_connections<T: Play>(
+pub async fn player_connections<T: Play, E: Encoder>(
     player: Player,
     timeout: Duration,
     mut inbox: Inbox<T>,
@@ -95,7 +96,22 @@ pub async fn player_connections<T: Play>(
             // Note: Since we hold a sender for this channel it will never return `None`
             // so this `select!` block will never yield to an `else` clause
             Some(turn_num) = timeout_rx.recv() => {
-                process_timeout(turn_num, &mut state, &outbox)?;
+                if state.awaiting_turn == Some(turn_num) {
+                    state.awaiting_turn = None;
+                    let msg: ToPlayerMsg<T> = ToPlayerMsg::SubmitActionError(
+                        SubmitActionErrorKind::Timeout { turn_num }
+                    );
+
+                    let bytes = E::serialize(&msg);
+                    state.in_sync_conns.retain(|(_id, conn)| {
+                        conn.send(bytes.clone()).is_ok()
+                    });
+
+                    outbox.to_game_host.send(SubmitActionResponse {
+                        player: state.player,
+                        response: ActionResponse::Timeout,
+                    })?;
+                }
             }
         }
     }
@@ -211,27 +227,6 @@ fn process_from_game_host<T: Play>(
     // Ok(false)
 }
 
-fn process_timeout<T: Play>(
-    _turn_num: TurnNum,
-    _state: &mut State,
-    _outbox: &Outbox<T>,
-) -> anyhow::Result<()> {
-    todo!()
-    // if state.awaiting_turn == Some(turn_num) {
-    //     state.awaiting_turn = None;
-
-    //     outbox.to_connections.send(ToConnections {
-    //         to: state.in_sync_conns.iter().copied().collect(),
-    //         msg: SubmitActionError(Timeout { turn_num }),
-    //     })?;
-
-    //     outbox.to_game_host.send(SubmitActionResponse {
-    //         player: state.player,
-    //         response: ActionResponse::Timeout,
-    //     })?;
-    // }
-    // Ok(())
-}
 //
 // #[cfg(test)]
 // mod tests {
