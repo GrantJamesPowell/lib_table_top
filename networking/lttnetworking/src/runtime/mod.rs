@@ -8,4 +8,7 @@ mod game_meta;
 pub use game_meta::{ObserverConnection, PlayerConnection};
 
 mod runtime;
-pub use runtime::{ByteStream, Encoder, Runtime, ToByteSink};
+pub use runtime::{ByteStream, Runtime, ToByteSink};
+
+mod encoder;
+pub use encoder::{Encoder, BincodeEncoder, JsonEncoder};

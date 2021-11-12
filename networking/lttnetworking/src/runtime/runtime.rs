@@ -4,13 +4,7 @@ use bytes::Bytes;
 use dashmap::DashMap;
 use lttcore::id::GameId;
 use lttcore::{Play, Player};
-use serde::Serialize;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-
-pub trait Encoder {
-    fn serialize<T: Serialize>(value: &T) -> Bytes;
-    // fn deserialize<T: Deserialize>(bytes: Bytes) -> Option<T>
-}
 
 pub type ToByteSink = UnboundedSender<Bytes>;
 pub type ByteStream = UnboundedReceiver<Bytes>;
