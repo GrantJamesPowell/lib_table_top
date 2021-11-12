@@ -4,6 +4,7 @@ use crate::messages::{
 };
 use crate::runtime::{Encoder, ToByteSink};
 use lttcore::{id::ConnectionId, Play};
+use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
@@ -17,17 +18,33 @@ pub struct Outbox<T: Play> {
     pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
 }
 
-#[derive(Debug, Default)]
-struct State {
-    in_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 4]>,
-    needs_sync_conns: SmallVec<[(ConnectionId, ToByteSink); 1]>,
+#[derive(Debug)]
+struct Conn {
+    sink: ToByteSink,
+    id: ConnectionId,
+    in_sync: bool,
 }
 
-impl State {
-    fn all_conns(&self) -> impl Iterator<Item = &(ConnectionId, ToByteSink)> {
-        self.needs_sync_conns
-            .iter()
-            .chain(self.needs_sync_conns.iter())
+#[derive(Debug, Default)]
+struct State<E: Encoder> {
+    conns: SmallVec<[Conn; 2]>,
+    _phantom: std::marker::PhantomData<E>,
+}
+
+impl<E: Encoder> State<E> {
+    fn send_to<T: Serialize>(&mut self, msg: &T, f: impl Fn(&mut Conn) -> bool) {
+        let bytes = E::serialize(msg);
+        self.conns.retain(|conn| {
+            if f(conn) {
+                conn.sink.send(bytes.clone()).is_ok()
+            } else {
+                !conn.sink.is_closed()
+            }
+        });
+    }
+
+    fn are_all_in_sync(&self) -> bool {
+        self.conns.iter().all(|conn| conn.in_sync)
     }
 }
 
@@ -35,38 +52,40 @@ pub async fn observer_connections<T: Play, E: Encoder>(
     mut inbox: Inbox<T>,
     outbox: Outbox<T>,
 ) -> anyhow::Result<()> {
-    let mut state: State = Default::default();
+    let mut state: State<E> = State {
+        conns: Default::default(),
+        _phantom: std::marker::PhantomData,
+    };
 
     loop {
         select! {
-            Some(conn) = inbox.from_runtime.recv() => {
-                if state.needs_sync_conns.is_empty() {
+            Some((id, sink)) = inbox.from_runtime.recv() => {
+                if state.are_all_in_sync() {
                     outbox.to_game_host.send(RequestObserverState)?;
                 }
-                state.needs_sync_conns.push(conn)
+                state.conns.push(Conn {
+                    id,
+                    sink,
+                    in_sync: false
+                })
             }
             Some(msg) = inbox.from_game_host.recv() => {
                  match msg {
                      SyncState(_) => {
-                         let msg = E::serialize(&msg);
-                         let mut needs_sync = std::mem::take(&mut state.needs_sync_conns);
-                         needs_sync.retain(|(_id, conn)| {
-                             conn.send(msg.clone()).is_ok()
+                         state.send_to(&msg, |conn| {
+                             if conn.in_sync {
+                                 false
+                             } else {
+                                 conn.in_sync = true;
+                                 true
+                             }
                          });
-                         state.in_sync_conns.extend(needs_sync);
                      }
                      Update(_) => {
-                         let msg = E::serialize(&msg);
-                         state.in_sync_conns.retain(|(_id, conn)| {
-                             conn.send(msg.clone()).is_ok()
-                         });
+                         state.send_to(&msg, |conn| conn.in_sync);
                      }
                      GameOver => {
-                         let msg = E::serialize(&msg);
-                         state.all_conns().for_each(|(_id, conn)| {
-                             let _ = conn.send(msg.clone());
-                         });
-
+                         state.send_to(&msg, |_conn| true);
                          break
                      }
                  }

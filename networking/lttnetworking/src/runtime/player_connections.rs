@@ -39,7 +39,7 @@ impl<E: Encoder> State<E> {
             if f(conn) {
                 conn.sink.send(bytes.clone()).is_ok()
             } else {
-                true
+                !conn.sink.is_closed()
             }
         });
     }
