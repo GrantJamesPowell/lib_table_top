@@ -21,6 +21,8 @@ mod scenario;
 
 pub mod bots;
 pub mod common;
+#[cfg(feature = "encoder")]
+pub mod encoder;
 pub mod examples;
 pub mod id;
 pub mod play;
