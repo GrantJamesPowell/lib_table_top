@@ -5,7 +5,6 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::settings::NoCustomSettings,
     play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
@@ -15,6 +14,9 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::lazy::SyncLazy;
 use std::sync::Arc;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct NoCustomSettings;
 
 static GAME_MODES: SyncLazy<HashMap<&'static str, Arc<NoCustomSettings>>> = SyncLazy::new(|| {
     [("default", Arc::new(NoCustomSettings))]
@@ -511,6 +513,7 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
+    type Settings = NoCustomSettings;
 
     fn game_modes() -> &'static HashMap<&'static str, Arc<Self::Settings>> {
         &GAME_MODES

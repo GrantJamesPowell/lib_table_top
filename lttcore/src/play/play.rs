@@ -1,6 +1,4 @@
-use super::{
-    game_advance::GameAdvance, settings::NoCustomSettings, view::NoSecretPlayerInfo, View,
-};
+use super::{game_advance::GameAdvance, view::NoSecretPlayerInfo, View};
 use crate::{utilities::PlayerIndexedData, NumberOfPlayers, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
@@ -54,7 +52,7 @@ pub trait Play:
         + Sync
         + Serialize
         + DeserializeOwned
-        + 'static = NoCustomSettings;
+        + 'static;
 
     type PublicInfo: View + Send + Sync + 'static;
     type PlayerSecretInfo: View + Send + Sync + 'static = NoSecretPlayerInfo;

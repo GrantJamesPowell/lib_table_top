@@ -1,7 +1,6 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::examples::guess_the_number::Settings;
 use lttcore::examples::GuessTheNumber;
-use lttcore::play::settings::NoCustomSettings;
 use lttcore::seed::SEED_42;
 use lttcore::utilities::number_of_players::FOUR_PLAYER;
 use lttcore::{GamePlayer, GameProgression, NumberOfPlayers, Player, PlayerSet, Seed};
@@ -183,11 +182,6 @@ fn test_serialize_draw_pile() {
     assert_eq!(serialized, json!({"offset": 1, "pile": [1,2,3]}));
     let deserialized: DrawPile<usize> = serde_json::from_value(serialized).unwrap();
     assert_eq!(draw_pile, deserialized);
-}
-
-#[test]
-fn test_serialize_no_custom_settings_and_error() {
-    test_simple_serialization((NoCustomSettings, Null));
 }
 
 #[test]
