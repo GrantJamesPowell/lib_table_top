@@ -44,6 +44,33 @@ pub fn to_observer<T: Play>() -> (ToObserverMsgSender<T>, ToObserverMsgReceiver<
     unbounded_channel()
 }
 
+pub fn from_player_msgs<T: Play>(
+    players: PlayerSet,
+) -> (
+    PID<FromPlayerMsgWithConnectionIdSender<T>>,
+    PID<FromPlayerMsgWithConnectionIdReceiver<T>>,
+) {
+    players
+        .into_iter()
+        .map(|player| {
+            let (sender, receiver) = unbounded_channel();
+            ((player, sender), (player, receiver))
+        })
+        .unzip()
+}
+
+pub fn add_player_connections(
+    players: PlayerSet,
+) -> (PID<AddConnectionSender>, PID<AddConnectionReceiver>) {
+    players
+        .into_iter()
+        .map(|player| {
+            let (sender, receiver) = add_connection();
+            ((player, sender), (player, receiver))
+        })
+        .unzip()
+}
+
 pub fn to_players<T: Play>(
     players: PlayerSet,
 ) -> (PID<ToPlayerMsgSender<T>>, PID<ToPlayerMsgReceiver<T>>) {

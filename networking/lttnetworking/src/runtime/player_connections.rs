@@ -62,13 +62,13 @@ impl<E: Encoder> State<E> {
 }
 
 pub struct Inbox<T: Play> {
-    pub from_connections: FromPlayerMsgWithConnectionIdReceiver<T>,
-    pub from_game_host: ToPlayerMsgReceiver<T>,
-    pub from_runtime: AddConnectionReceiver,
+    pub from_player_msg_receiver: FromPlayerMsgWithConnectionIdReceiver<T>,
+    pub to_player_msg_receiver: ToPlayerMsgReceiver<T>,
+    pub add_player_connection_receiver: AddConnectionReceiver,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: ToGameHostMsgSender<T>,
+    pub to_game_host_msg_sender: ToGameHostMsgSender<T>,
 }
 
 pub async fn player_connections<T: Play, E: Encoder>(
@@ -91,10 +91,10 @@ pub async fn player_connections<T: Play, E: Encoder>(
     loop {
         select! {
             // Adding a new connection
-            Some((id, sender)) = inbox.from_runtime.recv() => {
+            Some((id, sender)) = inbox.add_player_connection_receiver.recv() => {
                 // Request state if we haven't already
                 if state.are_all_in_sync() {
-                    outbox.to_game_host.send(RequestPlayerState {
+                    outbox.to_game_host_msg_sender.send(RequestPlayerState {
                         player: state.player,
                     })?;
                 }
@@ -102,12 +102,12 @@ pub async fn player_connections<T: Play, E: Encoder>(
             }
 
             // Messages hot off the wire from clients
-            Some(msg) = inbox.from_connections.recv() => {
+            Some(msg) = inbox.from_player_msg_receiver.recv() => {
                 process_from_connection::<T, E>(msg, &mut state, &outbox)?;
             }
 
             // Messages from the game host
-            Some(msg) = inbox.from_game_host.recv() => {
+            Some(msg) = inbox.to_player_msg_receiver.recv() => {
                 let is_game_over = process_from_game_host(msg, &mut state)?;
 
                 if is_game_over {
@@ -125,7 +125,7 @@ pub async fn player_connections<T: Play, E: Encoder>(
                     let msg: ToPlayerMsg<T> = SubmitActionError(Timeout { turn_num });
                     state.send_to(&msg, |conn| conn.in_sync);
 
-                    outbox.to_game_host.send(SubmitActionResponse {
+                    outbox.to_game_host_msg_sender.send(SubmitActionResponse {
                         player: state.player,
                         response: ActionResponse::Timeout,
                     })?;
@@ -155,7 +155,7 @@ fn process_from_connection<T: Play, E: Encoder>(
             let is_connection_primary = state.primary() == Some(from);
 
             if is_correct_turn && is_connection_primary {
-                outbox.to_game_host.send(SubmitActionResponse {
+                outbox.to_game_host_msg_sender.send(SubmitActionResponse {
                     player: state.player,
                     response: ActionResponse::Response(action),
                 })?;
@@ -241,10 +241,10 @@ mod tests {
     use tokio::time::sleep;
 
     struct MailboxHandles<T: Play> {
-        to_from_connections: FromPlayerMsgWithConnectionIdSender<T>,
-        to_from_game_host: ToPlayerMsgSender<T>,
-        to_from_runtime: AddConnectionSender,
-        from_to_game_host: ToGameHostMsgReceiver<T>,
+        from_player_msg_sender: FromPlayerMsgWithConnectionIdSender<T>,
+        to_player_msg_sender: ToPlayerMsgSender<T>,
+        add_player_connection_sender: AddConnectionSender,
+        to_game_host_msg_receiver: ToGameHostMsgReceiver<T>,
     }
 
     #[tokio::test]
@@ -269,28 +269,28 @@ mod tests {
 
         // On the first connections added, it sends a request for the game state
         mailbox_handles
-            .to_from_runtime
+            .add_player_connection_sender
             .send(connections[0].clone())
             .unwrap();
         assert_eq!(
-            mailbox_handles.from_to_game_host.recv().await,
+            mailbox_handles.to_game_host_msg_receiver.recv().await,
             Some(RequestPlayerState { player })
         );
 
         // On the second, it does not re-request the game state
         mailbox_handles
-            .to_from_runtime
+            .add_player_connection_sender
             .send(connections[1].clone())
             .unwrap();
         sleep(Duration::from_millis(50)).await;
         assert_eq!(
-            mailbox_handles.from_to_game_host.try_recv(),
+            mailbox_handles.to_game_host_msg_receiver.try_recv(),
             Err(TryRecvError::Empty)
         );
 
         // If an update arrives it doesn't get sent out to connections awaiting the full sync
         mailbox_handles
-            .to_from_game_host
+            .to_player_msg_sender
             .send(player_update.clone().into())
             .unwrap();
 
@@ -301,7 +301,7 @@ mod tests {
 
         // If the state arrives it gets sent to awaiting connections
         mailbox_handles
-            .to_from_game_host
+            .to_player_msg_sender
             .send(game_player.clone().into())
             .unwrap();
         for stream in connection_streams.iter_mut().take(2) {
@@ -312,13 +312,13 @@ mod tests {
 
         // Add connection id 3 which doesn't have the state yet
         mailbox_handles
-            .to_from_runtime
+            .add_player_connection_sender
             .send(connections[2].clone())
             .unwrap();
 
         // Get an update (only 1 & 2 get it because 3 is waiting on the state)
         mailbox_handles
-            .to_from_game_host
+            .to_player_msg_sender
             .send(player_update.clone().into())
             .unwrap();
 
@@ -333,7 +333,7 @@ mod tests {
 
         // Once the state is sent, only connections waiting on it get it
         mailbox_handles
-            .to_from_game_host
+            .to_player_msg_sender
             .send(game_player.clone().into())
             .unwrap();
 
@@ -360,7 +360,7 @@ mod tests {
     //     process_manage_connections(Add(new_conn_1.into()), &mut state, &outbox).unwrap();
 
     //     assert_eq!(
-    //         handles.from_to_game_host.recv().await.unwrap(),
+    //         handles.to_game_host_msg_receiver.recv().await.unwrap(),
     //         RequestPlayerState {
     //             player: state.player
     //         }
@@ -370,7 +370,7 @@ mod tests {
     //     process_manage_connections(Add(new_conn_2.into()), &mut state, &outbox).unwrap();
 
     //     tokio::time::sleep(Duration::from_millis(50)).await;
-    //     assert!(handles.from_to_game_host.try_recv().is_err());
+    //     assert!(handles.to_game_host_msg_receiver.try_recv().is_err());
 
     //     // You can remove connections
     //     assert!(state.needs_sync_conns.contains(&new_conn_1));
@@ -396,7 +396,7 @@ mod tests {
     //     );
 
     //     assert_eq!(
-    //         handles.from_to_game_host.recv().await.unwrap(),
+    //         handles.to_game_host_msg_receiver.recv().await.unwrap(),
     //         SubmitActionResponse {
     //             player: state.player,
     //             response: ActionResponse::Timeout
@@ -426,24 +426,26 @@ mod tests {
     }
 
     fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, MailboxHandles<T>) {
-        let (to_from_connections, from_connections) = unbounded_channel();
-        let (to_from_game_host, from_game_host) = unbounded_channel();
-        let (to_from_runtime, from_runtime) = unbounded_channel();
-        let (to_game_host, from_to_game_host) = unbounded_channel();
+        let (from_player_msg_sender, from_player_msg_receiver) = unbounded_channel();
+        let (to_player_msg_sender, to_player_msg_receiver) = unbounded_channel();
+        let (add_player_connection_sender, add_player_connection_receiver) = unbounded_channel();
+        let (to_game_host_msg_sender, to_game_host_msg_receiver) = unbounded_channel();
 
         let inbox = Inbox {
-            from_connections,
-            from_game_host,
-            from_runtime,
+            from_player_msg_receiver,
+            to_player_msg_receiver,
+            add_player_connection_receiver,
         };
 
-        let outbox = Outbox { to_game_host };
+        let outbox = Outbox {
+            to_game_host_msg_sender,
+        };
 
         let handles = MailboxHandles {
-            to_from_connections,
-            to_from_game_host,
-            to_from_runtime,
-            from_to_game_host,
+            from_player_msg_sender,
+            to_player_msg_sender,
+            add_player_connection_sender,
+            to_game_host_msg_receiver,
         };
 
         (inbox, outbox, handles)

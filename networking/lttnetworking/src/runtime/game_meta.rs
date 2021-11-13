@@ -43,20 +43,20 @@ impl ObserverConnection {
 #[derive(Debug)]
 pub struct GameMeta<T: Play> {
     connection_id_source: ConnectionIdSource,
-    add_observer_chan: AddConnectionSender,
-    add_player_chan: PID<AddConnectionSender>,
+    add_observer_connection_sender: AddConnectionSender,
+    add_player_connections_senders: PID<AddConnectionSender>,
     player_inputs: PID<FromPlayerMsgWithConnectionIdSender<T>>,
 }
 
 impl<T: Play> GameMeta<T> {
     pub fn new(
-        add_observer_chan: AddConnectionSender,
-        add_player_chan: PID<AddConnectionSender>,
+        add_observer_connection_sender: AddConnectionSender,
+        add_player_connections_senders: PID<AddConnectionSender>,
         player_inputs: PID<FromPlayerMsgWithConnectionIdSender<T>>,
     ) -> Self {
         Self {
-            add_observer_chan,
-            add_player_chan,
+            add_observer_connection_sender,
+            add_player_connections_senders,
             player_inputs,
             connection_id_source: Default::default(),
         }
@@ -65,7 +65,7 @@ impl<T: Play> GameMeta<T> {
     pub fn add_observer(&self) -> ObserverConnection {
         let (sender, receiver) = unbounded_channel();
         let connection_id = self.connection_id_source.next();
-        self.add_observer_chan
+        self.add_observer_connection_sender
             .send((connection_id, sender))
             .expect("observer connections is alive as long as game meta is");
 
@@ -80,7 +80,7 @@ impl<T: Play> GameMeta<T> {
         let connection_id = self.connection_id_source.next();
         let (bytes_sender, bytes_receiver) = unbounded_channel::<Bytes>();
 
-        self.add_player_chan
+        self.add_player_connections_senders
             .get(player)?
             .send((connection_id, bytes_sender))
             .ok()?;
