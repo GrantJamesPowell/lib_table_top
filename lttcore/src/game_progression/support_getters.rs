@@ -1,5 +1,5 @@
-use crate::play::PlayerSecretInfos;
-use crate::{GameProgression, NumberOfPlayers, Play, PlayerSet, TurnNum};
+use crate::{GameProgression, NumberOfPlayers, Play, Player, PlayerSet, TurnNum};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 impl<T: Play> GameProgression<T> {
@@ -23,12 +23,12 @@ impl<T: Play> GameProgression<T> {
         Arc::clone(&self.settings)
     }
 
-    pub fn public_info(&self) -> T::PublicInfo {
+    pub fn public_info(&self) -> Cow<'_, T::PublicInfo> {
         self.state.public_info(&self.settings)
     }
 
-    pub fn player_secret_info(&self) -> PlayerSecretInfos<T> {
-        self.state.player_secret_info(&self.settings)
+    pub fn player_secret_info(&self, player: Player) -> Cow<'_, T::PlayerSecretInfo> {
+        self.state.player_secret_info(&self.settings, player)
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {

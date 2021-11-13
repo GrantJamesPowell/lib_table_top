@@ -5,7 +5,7 @@ use crate::{
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
 use lttcore::{
-    play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfos},
+    play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
 };
@@ -510,8 +510,8 @@ impl Play for TicTacToe {
         }
     }
 
-    fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
-        PublicInfo::from_ttt(self.clone())
+    fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
+        Cow::Owned(PublicInfo::from_ttt(self.clone()))
     }
 
     fn initial_state_for_settings(
@@ -525,11 +525,12 @@ impl Play for TicTacToe {
         TWO_PLAYER
     }
 
-    fn player_secret_info(&self, _settings: &<Self as Play>::Settings) -> PlayerSecretInfos<Self> {
-        TWO_PLAYER
-            .players()
-            .map(|player| (player, Default::default()))
-            .collect()
+    fn player_secret_info(
+        &self,
+        _: &<Self as Play>::Settings,
+        _: Player,
+    ) -> Cow<'_, Self::PlayerSecretInfo> {
+        Cow::Owned(Default::default())
     }
 
     fn advance<'a>(

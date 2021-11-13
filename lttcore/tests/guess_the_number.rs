@@ -36,7 +36,11 @@ fn test_it_shows_the_player_the_correct_things() {
     let mut game: GameProgression<GuessTheNumber> =
         GameProgression::from_settings_and_seed(settings, SEED_42);
 
-    let mut players: Vec<GamePlayer<GuessTheNumber>> = game.game_players().collect();
+    let mut players: Vec<GamePlayer<GuessTheNumber>> = game
+        .players()
+        .into_iter()
+        .map(|player| game.game_player(player))
+        .collect();
 
     assert_eq!(players.len(), 2);
 
