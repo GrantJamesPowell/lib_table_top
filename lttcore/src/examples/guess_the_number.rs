@@ -129,18 +129,18 @@ impl Play for GuessTheNumber {
         settings.num_players
     }
 
-    fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Self::PlayerSecretInfo {
-        Default::default()
+    fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
+        Cow::Owned(Default::default())
     }
 
-    fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
-        match self.guesses {
+    fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
+        Cow::Owned(match self.guesses {
             None => PublicInfo::InProgress,
             Some(ref guesses) => PublicInfo::Completed {
                 secret_number: self.secret_number,
                 guesses: guesses.clone(),
             },
-        }
+        })
     }
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {

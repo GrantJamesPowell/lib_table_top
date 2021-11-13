@@ -510,8 +510,8 @@ impl Play for TicTacToe {
         }
     }
 
-    fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {
-        PublicInfo::from_ttt(self.clone())
+    fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
+        Cow::Owned(PublicInfo::from_ttt(self.clone()))
     }
 
     fn initial_state_for_settings(
@@ -529,8 +529,8 @@ impl Play for TicTacToe {
         &self,
         _: &<Self as Play>::Settings,
         _: Player,
-    ) -> Self::PlayerSecretInfo {
-        Default::default()
+    ) -> Cow<'_, Self::PlayerSecretInfo> {
+        Cow::Owned(Default::default())
     }
 
     fn advance<'a>(

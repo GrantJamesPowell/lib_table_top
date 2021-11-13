@@ -62,8 +62,8 @@ pub trait Play:
         &self,
         settings: &Self::Settings,
         player: Player,
-    ) -> Self::PlayerSecretInfo;
-    fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
+    ) -> Cow<'_, Self::PlayerSecretInfo>;
+    fn public_info(&self, settings: &Self::Settings) -> Cow<'_, Self::PublicInfo>;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
 
