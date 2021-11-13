@@ -6,6 +6,7 @@
 #![feature(const_option)]
 #![feature(array_zip)]
 #![feature(type_alias_impl_trait)]
+#![feature(once_cell)]
 
 #[macro_use]
 extern crate derive_builder;

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(once_cell)]
 
 mod action;
 mod board;

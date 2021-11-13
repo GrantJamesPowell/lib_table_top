@@ -5,8 +5,31 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::collections::HashMap;
+use std::lazy::SyncLazy;
 use std::ops::RangeInclusive;
+use std::sync::Arc;
 use thiserror::Error;
+
+static GAME_MODES: SyncLazy<HashMap<&'static str, Arc<Settings>>> = SyncLazy::new(|| {
+    let mut modes = HashMap::new();
+    for num_players in 1..=4 {
+        for (range_name, range) in [("1-10", 1..=10), ("u64", 0..=u64::MAX)] {
+            let name: &'static str =
+                Box::leak(format!("players-{}-range-{}", num_players, range_name).into_boxed_str());
+
+            let settings = SettingsBuilder::default()
+                .num_players(num_players.try_into().unwrap())
+                .range(range)
+                .build()
+                .unwrap();
+
+            modes.insert(name, Arc::new(settings));
+        }
+    }
+
+    modes
+});
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct GuessTheNumber {
@@ -124,6 +147,10 @@ impl Play for GuessTheNumber {
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type Settings = Settings;
+
+    fn game_modes() -> &'static HashMap<&'static str, Arc<Self::Settings>> {
+        &GAME_MODES
+    }
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
