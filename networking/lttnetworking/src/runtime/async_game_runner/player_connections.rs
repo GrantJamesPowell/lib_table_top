@@ -1,3 +1,8 @@
+use super::channels::{
+    AddConnectionReceiver, BytesSender, FromPlayerMsgWithConnectionIdReceiver, ToGameHostMsgSender,
+    ToPlayerMsgReceiver,
+};
+use super::id::ConnectionId;
 use crate::messages::{
     game_host::ToGameHostMsg::*,
     player::{
@@ -6,11 +11,6 @@ use crate::messages::{
         ToPlayerMsg::{self, *},
     },
 };
-use crate::runtime::channels::{
-    AddConnectionReceiver, BytesSender, FromPlayerMsgWithConnectionIdReceiver, ToGameHostMsgSender,
-    ToPlayerMsgReceiver,
-};
-use crate::runtime::id::ConnectionId;
 use lttcore::{encoder::Encoder, play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
@@ -225,12 +225,12 @@ fn process_from_game_host<T: Play, E: Encoder>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::runtime::channels::{
+    use super::super::channels::{
         AddConnectionSender, FromPlayerMsgWithConnectionIdSender, ToGameHostMsgReceiver,
         ToPlayerMsgSender,
     };
-    use crate::runtime::id::ConnectionIdSource;
+    use super::super::id::ConnectionIdSource;
+    use super::*;
     use lttcore::encoder::json::JsonEncoder;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
