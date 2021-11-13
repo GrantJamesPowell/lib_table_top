@@ -1,17 +1,15 @@
 use crate::messages::player::FromPlayerMsg;
+use crate::runtime::channels::{ByteSink, ByteStream};
 use crate::runtime::error::GameNotFound;
-use crate::runtime::{
-    id::{ConnectionId, ConnectionIdSource},
-    ByteStream, ToByteSink,
-};
+use crate::runtime::id::{ConnectionId, ConnectionIdSource};
 use bytes::Bytes;
 use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{Play, Player};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender as US};
 
 #[derive(Debug)]
 pub struct PlayerConnection<T: Play> {
-    sink: UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>,
+    sink: US<(ConnectionId, FromPlayerMsg<T>)>,
     stream: ByteStream,
     connection_id: ConnectionId,
 }
@@ -43,9 +41,9 @@ impl ObserverConnection {
 #[derive(Debug)]
 pub struct GameMeta<T: Play> {
     connection_id_source: ConnectionIdSource,
-    add_observer_chan: UnboundedSender<(ConnectionId, ToByteSink)>,
-    add_player_chan: PID<UnboundedSender<(ConnectionId, ToByteSink)>>,
-    player_inputs: PID<UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>>,
+    add_observer_chan: US<(ConnectionId, ByteSink)>,
+    add_player_chan: PID<US<(ConnectionId, ByteSink)>>,
+    player_inputs: PID<US<(ConnectionId, FromPlayerMsg<T>)>>,
 }
 
 impl<T: Play> GameMeta<T> {

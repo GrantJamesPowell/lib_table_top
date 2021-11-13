@@ -2,7 +2,8 @@ use crate::messages::{
     game_host::ToGameHostMsg::{self, *},
     observer::ToObserverMsg::{self, *},
 };
-use crate::runtime::{id::ConnectionId, ToByteSink};
+use crate::runtime::channels::ByteSink;
+use crate::runtime::id::ConnectionId;
 use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
@@ -11,7 +12,7 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub struct Inbox<T: Play> {
     pub from_game_host: UnboundedReceiver<ToObserverMsg<T>>,
-    pub from_runtime: UnboundedReceiver<(ConnectionId, ToByteSink)>,
+    pub from_runtime: UnboundedReceiver<(ConnectionId, ByteSink)>,
 }
 
 pub struct Outbox<T: Play> {
@@ -20,7 +21,7 @@ pub struct Outbox<T: Play> {
 
 #[derive(Debug)]
 struct Conn {
-    sink: ToByteSink,
+    sink: ByteSink,
     id: ConnectionId,
     in_sync: bool,
 }
@@ -212,7 +213,7 @@ mod tests {
 
     struct MailboxHandles<T: Play> {
         to_from_game_host: UnboundedSender<ToObserverMsg<T>>,
-        to_from_runtime: UnboundedSender<(ConnectionId, ToByteSink)>,
+        to_from_runtime: UnboundedSender<(ConnectionId, ByteSink)>,
         from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
     }
 

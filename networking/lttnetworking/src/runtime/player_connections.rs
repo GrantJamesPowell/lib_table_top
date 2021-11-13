@@ -6,17 +6,18 @@ use crate::messages::{
         ToPlayerMsg::{self, *},
     },
 };
-use crate::runtime::{id::ConnectionId, ToByteSink};
+use crate::runtime::channels::ByteSink;
+use crate::runtime::id::ConnectionId;
 use lttcore::{encoder::Encoder, play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;
 use tokio::select;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver as UR, UnboundedSender as US};
 
 #[derive(Debug)]
 struct Conn {
-    sink: ToByteSink,
+    sink: ByteSink,
     id: ConnectionId,
     primary: bool,
     in_sync: bool,
@@ -28,7 +29,7 @@ struct State<E: Encoder> {
     awaiting_turn: Option<TurnNum>,
     player: Player,
     timeout: Duration,
-    timeout_tx: UnboundedSender<TurnNum>,
+    timeout_tx: US<TurnNum>,
     _phantom: std::marker::PhantomData<E>,
 }
 
@@ -58,13 +59,13 @@ impl<E: Encoder> State<E> {
 }
 
 pub struct Inbox<T: Play> {
-    pub from_connections: UnboundedReceiver<(ConnectionId, FromPlayerMsg<T>)>,
-    pub from_game_host: UnboundedReceiver<ToPlayerMsg<T>>,
-    pub from_runtime: UnboundedReceiver<(ConnectionId, ToByteSink)>,
+    pub from_connections: UR<(ConnectionId, FromPlayerMsg<T>)>,
+    pub from_game_host: UR<ToPlayerMsg<T>>,
+    pub from_runtime: UR<(ConnectionId, ByteSink)>,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
+    pub to_game_host: US<ToGameHostMsg<T>>,
 }
 
 pub async fn player_connections<T: Play, E: Encoder>(
@@ -233,10 +234,10 @@ mod tests {
     use tokio::time::sleep;
 
     struct MailboxHandles<T: Play> {
-        to_from_connections: UnboundedSender<(ConnectionId, FromPlayerMsg<T>)>,
-        to_from_game_host: UnboundedSender<ToPlayerMsg<T>>,
-        to_from_runtime: UnboundedSender<(ConnectionId, ToByteSink)>,
-        from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
+        to_from_connections: US<(ConnectionId, FromPlayerMsg<T>)>,
+        to_from_game_host: US<ToPlayerMsg<T>>,
+        to_from_runtime: US<(ConnectionId, ToByteSink)>,
+        from_to_game_host: UR<ToGameHostMsg<T>>,
     }
 
     #[tokio::test]
