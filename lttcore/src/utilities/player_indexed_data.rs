@@ -208,6 +208,14 @@ impl<T> FromIterator<(Player, T)> for PlayerIndexedData<T> {
     }
 }
 
+impl<T> Extend<(Player, T)> for PlayerIndexedData<T> {
+    fn extend<I: IntoIterator<Item=(Player, T)>>(&mut self, iter: I) {
+        for (player, elem) in iter {
+            self.insert(player, elem);
+        }
+    }
+}
+
 impl<T> std::ops::Index<Player> for PlayerIndexedData<T> {
     type Output = T;
 

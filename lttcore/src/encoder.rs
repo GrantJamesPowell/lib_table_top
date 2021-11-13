@@ -2,7 +2,7 @@ use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
-pub trait Encoder {
+pub trait Encoder: Send + Sync + 'static {
     type Error: Debug + std::error::Error;
 
     fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error>;
@@ -47,5 +47,20 @@ pub mod json {
         fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
             serde_json::from_slice(&bytes)
         }
+    }
+
+    pub struct PrettyJsonEncoder;
+
+    impl Encoder for PrettyJsonEncoder {
+        type Error = serde_json::error::Error;
+
+        fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error> {
+            serde_json::to_vec_pretty(value).map(|vec| vec.into())
+        }
+
+        fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
+            serde_json::from_slice(&bytes)
+        }
+
     }
 }

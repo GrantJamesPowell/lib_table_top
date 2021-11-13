@@ -1,26 +1,25 @@
-use crate::messages::{
-    game_host::ToGameHostMsg::{self, *},
-    observer::ToObserverMsg::{self, *},
+use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
+use crate::runtime::channels::{
+    AddConnectionReceiver, BytesSender, ToGameHostMsgSender, ToObserverMsgReceiver,
 };
-use crate::runtime::ToByteSink;
-use lttcore::{encoder::Encoder, id::ConnectionId, Play};
+use crate::runtime::id::ConnectionId;
+use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub struct Inbox<T: Play> {
-    pub from_game_host: UnboundedReceiver<ToObserverMsg<T>>,
-    pub from_runtime: UnboundedReceiver<(ConnectionId, ToByteSink)>,
+    pub to_observer_msg_receiver: ToObserverMsgReceiver<T>,
+    pub add_observer_connection_receiver: AddConnectionReceiver,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
+    pub to_game_host_msg_sender: ToGameHostMsgSender<T>,
 }
 
 #[derive(Debug)]
 struct Conn {
-    sink: ToByteSink,
+    sender: BytesSender,
     id: ConnectionId,
     in_sync: bool,
 }
@@ -36,9 +35,9 @@ impl<E: Encoder> State<E> {
         let bytes = E::serialize(msg).expect("All game messages are serializable");
         self.conns.retain(|conn| {
             if f(conn) {
-                conn.sink.send(bytes.clone()).is_ok()
+                conn.sender.send(bytes.clone()).is_ok()
             } else {
-                !conn.sink.is_closed()
+                !conn.sender.is_closed()
             }
         });
     }
@@ -59,17 +58,17 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 
     loop {
         select! {
-            Some((id, sink)) = inbox.from_runtime.recv() => {
+            Some((id, sender)) = inbox.add_observer_connection_receiver.recv() => {
                 if state.are_all_in_sync() {
-                    outbox.to_game_host.send(RequestObserverState)?;
+                    outbox.to_game_host_msg_sender.send(RequestObserverState)?;
                 }
                 state.conns.push(Conn {
                     id,
-                    sink,
+                    sender,
                     in_sync: false
                 })
             }
-            Some(msg) = inbox.from_game_host.recv() => {
+            Some(msg) = inbox.to_observer_msg_receiver.recv() => {
                  match msg {
                      SyncState(_) => {
                          state.send_to(&msg, |conn| {
@@ -97,159 +96,165 @@ pub async fn observer_connections<T: Play, E: Encoder>(
     Ok(())
 }
 
-// #[cfg(test)]
-// // mod tests {
-// //     use super::*;
-// //     use lttcore::examples::{
-// //         guess_the_number::{Guess, Settings},
-// //         GuessTheNumber,
-// //     };
-// //     use lttcore::{play::ActionResponse, pov::ObserverUpdate};
-// //     use lttcore::{GameObserver, GameProgression};
-// //
-// //     use tokio::sync::mpsc::error::TryRecvError;
-// //     use tokio::sync::mpsc::unbounded_channel;
-// //     use tokio::time::{sleep, Duration};
-// //
-// //     #[tokio::test]
-// //     async fn test_observer_connections() {
-// //         let (inbox, outbox, mut mailbox_handles) = setup_test_infra::<GuessTheNumber>();
-// //         let (_game_progression, game_observer, observer_update) = setup_guess_the_number();
-// //
-// //         let connection_id_1 = ConnectionId::new();
-// //         let connection_id_2 = ConnectionId::new();
-// //         let connection_id_3 = ConnectionId::new();
-// //
-// //         let _handle = tokio::spawn(observer_connections(inbox, outbox));
-// //
-// //         // On the first connections added, it sends a request for the game state
-// //         mailbox_handles
-// //             .to_from_runtime
-// //             .send(Add(connection_id_1.into()))
-// //             .unwrap();
-// //         assert_eq!(
-// //             mailbox_handles.from_to_game_host.recv().await,
-// //             Some(RequestObserverState)
-// //         );
-// //
-// //         // On the second, it does not re-request the game state
-// //         mailbox_handles
-// //             .to_from_runtime
-// //             .send(Add(connection_id_2.into()))
-// //             .unwrap();
-// //         sleep(Duration::from_millis(50)).await;
-// //         assert_eq!(
-// //             mailbox_handles.from_to_game_host.try_recv(),
-// //             Err(TryRecvError::Empty)
-// //         );
-// //
-// //         // If an update arrives it doesn't get sent out to connections awaiting the full sync
-// //         mailbox_handles
-// //             .to_from_game_host
-// //             .send(observer_update.clone().into())
-// //             .unwrap();
-// //         assert_eq!(
-// //             mailbox_handles.from_to_connections.recv().await.unwrap(),
-// //             ToConnections {
-// //                 // Empty
-// //                 to: Default::default(),
-// //                 msg: observer_update.clone().into()
-// //             }
-// //         );
-// //
-// //         // If the state arrives it gets sent to awaiting connections
-// //         mailbox_handles
-// //             .to_from_game_host
-// //             .send(game_observer.clone().into())
-// //             .unwrap();
-// //         assert_eq!(
-// //             mailbox_handles.from_to_connections.recv().await.unwrap(),
-// //             ToConnections {
-// //                 to: [connection_id_1, connection_id_2].into_iter().collect(),
-// //                 msg: game_observer.clone().into()
-// //             }
-// //         );
-// //
-// //         // Add connection id 3 which doesn't have the state yet
-// //         mailbox_handles
-// //             .to_from_runtime
-// //             .send(Add(connection_id_3.into()))
-// //             .unwrap();
-// //
-// //         // Get an update (only 1 & 2 get it because 3 is waiting on the state)
-// //         mailbox_handles
-// //             .to_from_game_host
-// //             .send(observer_update.clone().into())
-// //             .unwrap();
-// //         assert_eq!(
-// //             mailbox_handles.from_to_connections.recv().await.unwrap(),
-// //             ToConnections {
-// //                 // Empty
-// //                 to: [connection_id_1, connection_id_2].into_iter().collect(),
-// //                 msg: observer_update.clone().into()
-// //             }
-// //         );
-// //
-// //         // Once the state is sent, only connections waiting on it get it
-// //         mailbox_handles
-// //             .to_from_game_host
-// //             .send(game_observer.clone().into())
-// //             .unwrap();
-// //         assert_eq!(
-// //             mailbox_handles.from_to_connections.recv().await.unwrap(),
-// //             ToConnections {
-// //                 to: connection_id_3.into(),
-// //                 msg: game_observer.clone().into()
-// //             }
-// //         );
-// //     }
-// //
-// //     struct MailboxHandles<T: Play> {
-// //         to_from_game_host: UnboundedSender<ToObserverMsg<T>>,
-// //         to_from_runtime: UnboundedSender<ManageConnections>,
-// //         from_to_connections: UnboundedReceiver<ToConnections<ToObserverMsg<T>>>,
-// //         from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
-// //     }
-// //
-// //     fn setup_guess_the_number() -> (
-// //         GameProgression<GuessTheNumber>,
-// //         GameObserver<GuessTheNumber>,
-// //         ObserverUpdate<'static, GuessTheNumber>,
-// //     ) {
-// //         let settings: Settings = (0..=10).try_into().unwrap();
-// //         let mut game_progression = GameProgression::from_settings(settings);
-// //         let guess: Guess = 4.into();
-// //         let update = game_progression.submit_actions([(0.into(), ActionResponse::Response(guess))]);
-// //         let observer_update = update.observer_update().into_owned();
-// //         let game_observer = game_progression.game_observer();
-// //
-// //         (game_progression, game_observer, observer_update)
-// //     }
-// //
-// //     fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, MailboxHandles<T>) {
-// //         let (to_from_game_host, from_game_host) = unbounded_channel();
-// //         let (to_from_runtime, from_runtime) = unbounded_channel();
-// //
-// //         let (to_connections, from_to_connections) = unbounded_channel();
-// //         let (to_game_host, from_to_game_host) = unbounded_channel();
-// //
-// //         let inbox = Inbox {
-// //             from_game_host,
-// //             from_runtime,
-// //         };
-// //
-// //         let outbox = Outbox {
-// //             to_connections,
-// //             to_game_host,
-// //         };
-// //
-// //         let handles = MailboxHandles {
-// //             to_from_game_host,
-// //             to_from_runtime,
-// //             from_to_connections,
-// //             from_to_game_host,
-// //         };
-// //
-// //         (inbox, outbox, handles)
-// //     }
-// // }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::messages::observer::ToObserverMsg;
+    use crate::runtime::id::ConnectionIdSource;
+    use lttcore::encoder::json::JsonEncoder;
+    use lttcore::examples::{
+        guess_the_number::{Guess, Settings},
+        GuessTheNumber,
+    };
+    use lttcore::{play::ActionResponse, pov::ObserverUpdate};
+    use lttcore::{GameObserver, GameProgression};
+
+    use crate::runtime::channels::{
+        AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender,
+    };
+    use tokio::sync::mpsc::error::TryRecvError;
+    use tokio::sync::mpsc::unbounded_channel;
+    use tokio::time::{sleep, Duration};
+
+    #[tokio::test]
+    async fn test_observer_connections() {
+        let (inbox, outbox, mut mailbox_handles) = setup_test_infra::<GuessTheNumber>();
+        let (_game_progression, game_observer, observer_update) = setup_guess_the_number();
+        let connection_id_source = ConnectionIdSource::new();
+
+        let (connections, mut connection_streams): (Vec<_>, Vec<_>) = (0..=2)
+            .map(|_| {
+                let (sink, stream) = unbounded_channel();
+                ((connection_id_source.next(), sink), stream)
+            })
+            .unzip();
+
+        let _handle = tokio::spawn(observer_connections::<GuessTheNumber, JsonEncoder>(
+            inbox, outbox,
+        ));
+
+        // On the first connections added, it sends a request for the game state
+        mailbox_handles
+            .add_observer_connection_sender
+            .send(connections[0].clone())
+            .unwrap();
+        assert_eq!(
+            mailbox_handles.to_game_host_msg_receiver.recv().await,
+            Some(RequestObserverState)
+        );
+
+        // On the second, it does not re-request the game state
+        mailbox_handles
+            .add_observer_connection_sender
+            .send(connections[1].clone())
+            .unwrap();
+        sleep(Duration::from_millis(50)).await;
+        assert_eq!(
+            mailbox_handles.to_game_host_msg_receiver.try_recv(),
+            Err(TryRecvError::Empty)
+        );
+
+        // If an update arrives it doesn't get sent out to connections awaiting the full sync
+        mailbox_handles
+            .to_observer_msg_sender
+            .send(observer_update.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        for stream in connection_streams.iter_mut().take(2) {
+            assert!(stream.try_recv().is_err());
+        }
+
+        // If the state arrives it gets sent to awaiting connections
+        mailbox_handles
+            .to_observer_msg_sender
+            .send(game_observer.clone().into())
+            .unwrap();
+        for stream in connection_streams.iter_mut().take(2) {
+            let msg = stream.recv().await.unwrap();
+            let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            assert_eq!(decoded, SyncState(game_observer.clone()));
+        }
+
+        // Add connection id 3 which doesn't have the state yet
+        mailbox_handles
+            .add_observer_connection_sender
+            .send(connections[2].clone())
+            .unwrap();
+
+        // Get an update (only 1 & 2 get it because 3 is waiting on the state)
+        mailbox_handles
+            .to_observer_msg_sender
+            .send(observer_update.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        assert!(connection_streams[2].try_recv().is_err());
+
+        for stream in connection_streams.iter_mut().take(2) {
+            let msg = stream.recv().await.unwrap();
+            let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            assert_eq!(decoded, Update(observer_update.clone()))
+        }
+
+        // Once the state is sent, only connections waiting on it get it
+        mailbox_handles
+            .to_observer_msg_sender
+            .send(game_observer.clone().into())
+            .unwrap();
+
+        sleep(Duration::from_millis(50)).await;
+        for stream in connection_streams.iter_mut().take(2) {
+            assert!(stream.try_recv().is_err());
+        }
+
+        let msg = connection_streams[2].recv().await.unwrap();
+        let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+        assert_eq!(decoded, SyncState(game_observer.clone()));
+    }
+
+    struct MailboxHandles<T: Play> {
+        to_observer_msg_sender: ToObserverMsgSender<T>,
+        add_observer_connection_sender: AddConnectionSender,
+        to_game_host_msg_receiver: ToGameHostMsgReceiver<T>,
+    }
+
+    fn setup_guess_the_number() -> (
+        GameProgression<GuessTheNumber>,
+        GameObserver<GuessTheNumber>,
+        ObserverUpdate<'static, GuessTheNumber>,
+    ) {
+        let settings: Settings = (0..=10).try_into().unwrap();
+        let mut game_progression = GameProgression::from_settings(settings);
+        let guess: Guess = 4.into();
+        let update = game_progression.submit_actions([(0.into(), ActionResponse::Response(guess))]);
+        let observer_update = update.observer_update().into_owned();
+        let game_observer = game_progression.game_observer();
+
+        (game_progression, game_observer, observer_update)
+    }
+
+    fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, MailboxHandles<T>) {
+        let (to_observer_msg_sender, to_observer_msg_receiver) = unbounded_channel();
+        let (add_observer_connection_sender, add_observer_connection_receiver) =
+            unbounded_channel();
+        let (to_game_host_msg_sender, to_game_host_msg_receiver) = unbounded_channel();
+
+        let inbox = Inbox {
+            to_observer_msg_receiver,
+            add_observer_connection_receiver,
+        };
+
+        let outbox = Outbox {
+            to_game_host_msg_sender,
+        };
+
+        let handles = MailboxHandles {
+            to_observer_msg_sender,
+            add_observer_connection_sender,
+            to_game_host_msg_receiver,
+        };
+
+        (inbox, outbox, handles)
+    }
+}

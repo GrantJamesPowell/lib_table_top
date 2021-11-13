@@ -1,16 +1,16 @@
-use crate::messages::game_host::ToGameHostMsg::{self, *};
+use crate::messages::game_host::ToGameHostMsg::*;
 use crate::messages::observer::ToObserverMsg;
 use crate::messages::player::ToPlayerMsg;
+use crate::runtime::channels::{ToGameHostMsgReceiver, ToObserverMsgSender, ToPlayerMsgSender};
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
 use lttcore::{GameProgression, Play};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,
-    mut mailbox: UnboundedReceiver<ToGameHostMsg<T>>,
-    to_players: PID<UnboundedSender<ToPlayerMsg<T>>>,
-    to_observer: UnboundedSender<ToObserverMsg<T>>,
+    mut mailbox: ToGameHostMsgReceiver<T>,
+    to_players: PID<ToPlayerMsgSender<T>>,
+    to_observer: ToObserverMsgSender<T>,
 ) -> GameProgression<T> {
     while !game.is_concluded() {
         let mut returned_actions: PIC<ActionResponse<T>> = game.which_players_input_needed().into();
@@ -45,8 +45,8 @@ pub async fn game_host<T: Play>(
 
 async fn send_update<T: Play>(
     update: EnumeratedGameAdvance<T>,
-    to_players: &PID<UnboundedSender<ToPlayerMsg<T>>>,
-    to_observer: &UnboundedSender<ToObserverMsg<T>>,
+    to_players: &PID<ToPlayerMsgSender<T>>,
+    to_observer: &ToObserverMsgSender<T>,
 ) {
     let observer_update = update.observer_update().into_owned();
     to_observer
