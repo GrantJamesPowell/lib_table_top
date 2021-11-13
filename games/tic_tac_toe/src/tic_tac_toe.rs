@@ -1,3 +1,4 @@
+use super::Settings;
 use crate::{
     helpers::opponent,
     Action,
@@ -12,17 +13,6 @@ use lttcore::{
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::lazy::SyncLazy;
-use std::sync::Arc;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct NoCustomSettings;
-
-static GAME_MODES: SyncLazy<HashMap<&'static str, Arc<NoCustomSettings>>> = SyncLazy::new(|| {
-    [("default", Arc::new(NoCustomSettings))]
-        .into_iter()
-        .collect()
-});
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -513,11 +503,7 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
-    type Settings = NoCustomSettings;
-
-    fn game_modes() -> &'static HashMap<&'static str, Arc<Self::Settings>> {
-        &GAME_MODES
-    }
+    type Settings = Settings;
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
         match self.status() {
@@ -535,10 +521,6 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
     ) -> Self {
         Default::default()
-    }
-
-    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> NumberOfPlayers {
-        TWO_PLAYER
     }
 
     fn player_secret_info(

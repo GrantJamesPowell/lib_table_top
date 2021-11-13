@@ -200,7 +200,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     "start": 1,
                     "end":10
                 },
-                "num_players": 1
+                "number_of_players": 1
             },
             "initial_state": Null,
             "turn_num": 0,
@@ -224,7 +224,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                 "start": 1,
                 "end": 10
               },
-              "num_players": 1
+              "number_of_players": 1
             },
             "public_info": "InProgress"
           },

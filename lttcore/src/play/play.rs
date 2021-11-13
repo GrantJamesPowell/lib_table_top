@@ -1,10 +1,9 @@
-use super::{game_advance::GameAdvance, view::NoSecretPlayerInfo, View};
-use crate::{utilities::PlayerIndexedData, NumberOfPlayers, Player, PlayerSet};
+use super::{game_advance::GameAdvance, view::NoSecretPlayerInfo, LttSettings, View};
+use crate::{utilities::PlayerIndexedData, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
-use std::collections::HashMap;
+
 use std::fmt::Debug;
-use std::sync::Arc;
 
 pub type Actions<T> = PlayerIndexedData<ActionResponse<T>>;
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
@@ -43,22 +42,10 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type Settings: Clone
-        + Debug
-        + PartialEq
-        + Eq
-        + Default
-        + Send
-        + Sync
-        + Serialize
-        + DeserializeOwned
-        + 'static;
+    type Settings: LttSettings;
+    type PublicInfo: View;
+    type PlayerSecretInfo: View = NoSecretPlayerInfo;
 
-    type PublicInfo: View + Send + Sync + 'static;
-    type PlayerSecretInfo: View + Send + Sync + 'static = NoSecretPlayerInfo;
-
-    fn game_modes() -> &'static HashMap<&'static str, Arc<Self::Settings>>;
-    fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
     fn player_secret_info(
         &self,
         settings: &Self::Settings,
