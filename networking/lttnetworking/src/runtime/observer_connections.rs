@@ -1,27 +1,25 @@
-use crate::messages::{
-    game_host::ToGameHostMsg::{self, *},
-    observer::ToObserverMsg::{self, *},
+use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
+use crate::runtime::channels::{
+    AddConnectionReceiver, BytesSender, ToGameHostMsgSender, ToObserverMsgReceiver,
 };
-use crate::runtime::channels::ByteSink;
 use crate::runtime::id::ConnectionId;
 use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub struct Inbox<T: Play> {
-    pub from_game_host: UnboundedReceiver<ToObserverMsg<T>>,
-    pub from_runtime: UnboundedReceiver<(ConnectionId, ByteSink)>,
+    pub from_game_host: ToObserverMsgReceiver<T>,
+    pub from_runtime: AddConnectionReceiver,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: UnboundedSender<ToGameHostMsg<T>>,
+    pub to_game_host: ToGameHostMsgSender<T>,
 }
 
 #[derive(Debug)]
 struct Conn {
-    sink: ByteSink,
+    sender: BytesSender,
     id: ConnectionId,
     in_sync: bool,
 }
@@ -37,9 +35,9 @@ impl<E: Encoder> State<E> {
         let bytes = E::serialize(msg).expect("All game messages are serializable");
         self.conns.retain(|conn| {
             if f(conn) {
-                conn.sink.send(bytes.clone()).is_ok()
+                conn.sender.send(bytes.clone()).is_ok()
             } else {
-                !conn.sink.is_closed()
+                !conn.sender.is_closed()
             }
         });
     }
@@ -60,13 +58,13 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 
     loop {
         select! {
-            Some((id, sink)) = inbox.from_runtime.recv() => {
+            Some((id, sender)) = inbox.from_runtime.recv() => {
                 if state.are_all_in_sync() {
                     outbox.to_game_host.send(RequestObserverState)?;
                 }
                 state.conns.push(Conn {
                     id,
-                    sink,
+                    sender,
                     in_sync: false
                 })
             }
@@ -101,6 +99,7 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::messages::observer::ToObserverMsg;
     use crate::runtime::id::ConnectionIdSource;
     use lttcore::encoder::json::JsonEncoder;
     use lttcore::examples::{
@@ -110,6 +109,9 @@ mod tests {
     use lttcore::{play::ActionResponse, pov::ObserverUpdate};
     use lttcore::{GameObserver, GameProgression};
 
+    use crate::runtime::channels::{
+        AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender,
+    };
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::sync::mpsc::unbounded_channel;
     use tokio::time::{sleep, Duration};
@@ -212,9 +214,9 @@ mod tests {
     }
 
     struct MailboxHandles<T: Play> {
-        to_from_game_host: UnboundedSender<ToObserverMsg<T>>,
-        to_from_runtime: UnboundedSender<(ConnectionId, ByteSink)>,
-        from_to_game_host: UnboundedReceiver<ToGameHostMsg<T>>,
+        to_from_game_host: ToObserverMsgSender<T>,
+        to_from_runtime: AddConnectionSender,
+        from_to_game_host: ToGameHostMsgReceiver<T>,
     }
 
     fn setup_guess_the_number() -> (

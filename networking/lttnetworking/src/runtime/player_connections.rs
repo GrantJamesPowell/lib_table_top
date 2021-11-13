@@ -1,23 +1,26 @@
 use crate::messages::{
-    game_host::ToGameHostMsg::{self, *},
+    game_host::ToGameHostMsg::*,
     player::{
         FromPlayerMsg::{self, *},
         SubmitActionErrorKind::*,
         ToPlayerMsg::{self, *},
     },
 };
-use crate::runtime::channels::ByteSink;
+use crate::runtime::channels::{
+    AddConnectionReceiver, BytesSender, FromPlayerMsgWithConnectionIdReceiver, ToGameHostMsgSender,
+    ToPlayerMsgReceiver,
+};
 use crate::runtime::id::ConnectionId;
 use lttcore::{encoder::Encoder, play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;
 use tokio::select;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver as UR, UnboundedSender as US};
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 #[derive(Debug)]
 struct Conn {
-    sink: ByteSink,
+    sender: BytesSender,
     id: ConnectionId,
     primary: bool,
     in_sync: bool,
@@ -29,7 +32,7 @@ struct State<E: Encoder> {
     awaiting_turn: Option<TurnNum>,
     player: Player,
     timeout: Duration,
-    timeout_tx: US<TurnNum>,
+    timeout_tx: UnboundedSender<TurnNum>,
     _phantom: std::marker::PhantomData<E>,
 }
 
@@ -38,9 +41,9 @@ impl<E: Encoder> State<E> {
         let bytes = E::serialize(msg).expect("All game messages are serializable");
         self.conns.retain(|conn| {
             if f(conn) {
-                conn.sink.send(bytes.clone()).is_ok()
+                conn.sender.send(bytes.clone()).is_ok()
             } else {
-                !conn.sink.is_closed()
+                !conn.sender.is_closed()
             }
         });
     }
@@ -59,13 +62,13 @@ impl<E: Encoder> State<E> {
 }
 
 pub struct Inbox<T: Play> {
-    pub from_connections: UR<(ConnectionId, FromPlayerMsg<T>)>,
-    pub from_game_host: UR<ToPlayerMsg<T>>,
-    pub from_runtime: UR<(ConnectionId, ByteSink)>,
+    pub from_connections: FromPlayerMsgWithConnectionIdReceiver<T>,
+    pub from_game_host: ToPlayerMsgReceiver<T>,
+    pub from_runtime: AddConnectionReceiver,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: US<ToGameHostMsg<T>>,
+    pub to_game_host: ToGameHostMsgSender<T>,
 }
 
 pub async fn player_connections<T: Play, E: Encoder>(
@@ -88,14 +91,14 @@ pub async fn player_connections<T: Play, E: Encoder>(
     loop {
         select! {
             // Adding a new connection
-            Some((id, sink)) = inbox.from_runtime.recv() => {
+            Some((id, sender)) = inbox.from_runtime.recv() => {
                 // Request state if we haven't already
                 if state.are_all_in_sync() {
                     outbox.to_game_host.send(RequestPlayerState {
                         player: state.player,
                     })?;
                 }
-                state.conns.push(Conn { id, sink, primary: false, in_sync: false });
+                state.conns.push(Conn { id, sender, primary: false, in_sync: false });
             }
 
             // Messages hot off the wire from clients
@@ -223,6 +226,10 @@ fn process_from_game_host<T: Play, E: Encoder>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::runtime::channels::{
+        AddConnectionSender, FromPlayerMsgWithConnectionIdSender, ToGameHostMsgReceiver,
+        ToPlayerMsgSender,
+    };
     use crate::runtime::id::ConnectionIdSource;
     use lttcore::encoder::json::JsonEncoder;
     use lttcore::examples::{
@@ -234,10 +241,10 @@ mod tests {
     use tokio::time::sleep;
 
     struct MailboxHandles<T: Play> {
-        to_from_connections: US<(ConnectionId, FromPlayerMsg<T>)>,
-        to_from_game_host: US<ToPlayerMsg<T>>,
-        to_from_runtime: US<(ConnectionId, ToByteSink)>,
-        from_to_game_host: UR<ToGameHostMsg<T>>,
+        to_from_connections: FromPlayerMsgWithConnectionIdSender<T>,
+        to_from_game_host: ToPlayerMsgSender<T>,
+        to_from_runtime: AddConnectionSender,
+        from_to_game_host: ToGameHostMsgReceiver<T>,
     }
 
     #[tokio::test]
@@ -248,8 +255,8 @@ mod tests {
         let connection_id_source = ConnectionIdSource::new();
         let (connections, mut connection_streams): (Vec<_>, Vec<_>) = (0..=2)
             .map(|_| {
-                let (sink, stream) = unbounded_channel();
-                ((connection_id_source.next(), sink), stream)
+                let (sender, receiver) = unbounded_channel();
+                ((connection_id_source.next(), sender), receiver)
             })
             .unzip();
 

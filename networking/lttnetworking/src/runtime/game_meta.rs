@@ -1,80 +1,81 @@
 use crate::messages::player::FromPlayerMsg;
-use crate::runtime::channels::{ByteSink, ByteStream};
+use crate::runtime::channels::{
+    AddConnectionSender, BytesReceiver, FromPlayerMsgWithConnectionIdSender,
+};
 use crate::runtime::error::GameNotFound;
 use crate::runtime::id::{ConnectionId, ConnectionIdSource};
 use bytes::Bytes;
 use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{Play, Player};
-use tokio::sync::mpsc::{unbounded_channel, UnboundedSender as US};
+use tokio::sync::mpsc::unbounded_channel;
 
 #[derive(Debug)]
 pub struct PlayerConnection<T: Play> {
-    sink: US<(ConnectionId, FromPlayerMsg<T>)>,
-    stream: ByteStream,
+    sender: FromPlayerMsgWithConnectionIdSender<T>,
+    receiver: BytesReceiver,
     connection_id: ConnectionId,
 }
 
 impl<T: Play> PlayerConnection<T> {
     pub async fn send(&self, msg: FromPlayerMsg<T>) -> Result<(), GameNotFound> {
-        self.sink
+        self.sender
             .send((self.connection_id, msg))
             .map_err(|_| GameNotFound)
     }
 
     pub async fn next_msg(&mut self) -> Option<Bytes> {
-        self.stream.recv().await
+        self.receiver.recv().await
     }
 }
 
 #[derive(Debug)]
 pub struct ObserverConnection {
-    stream: ByteStream,
+    receiver: BytesReceiver,
     connection_id: ConnectionId,
 }
 
 impl ObserverConnection {
     pub async fn next_msg(&mut self) -> Option<Bytes> {
-        self.stream.recv().await
+        self.receiver.recv().await
     }
 }
 
 #[derive(Debug)]
 pub struct GameMeta<T: Play> {
     connection_id_source: ConnectionIdSource,
-    add_observer_chan: US<(ConnectionId, ByteSink)>,
-    add_player_chan: PID<US<(ConnectionId, ByteSink)>>,
-    player_inputs: PID<US<(ConnectionId, FromPlayerMsg<T>)>>,
+    add_observer_chan: AddConnectionSender,
+    add_player_chan: PID<AddConnectionSender>,
+    player_inputs: PID<FromPlayerMsgWithConnectionIdSender<T>>,
 }
 
 impl<T: Play> GameMeta<T> {
     pub fn add_observer(&self) -> ObserverConnection {
-        let (updates_sender, stream) = unbounded_channel();
+        let (sender, receiver) = unbounded_channel();
         let connection_id = self.connection_id_source.next();
         self.add_observer_chan
-            .send((connection_id, updates_sender))
+            .send((connection_id, sender))
             .expect("observer connections is alive as long as game meta is");
 
         ObserverConnection {
-            stream,
+            receiver,
             connection_id,
         }
     }
 
     pub fn add_player(&self, player: Player) -> Option<PlayerConnection<T>> {
-        let sink = self.player_inputs.get(player)?.clone();
-
+        let sender = self.player_inputs.get(player)?.clone();
         let connection_id = self.connection_id_source.next();
-        let (updates_sender, stream) = unbounded_channel();
+        let (bytes_sender, bytes_receiver) = unbounded_channel::<Bytes>();
 
         self.add_player_chan
             .get(player)?
-            .send((connection_id, updates_sender))
+            .send((connection_id, bytes_sender))
             .ok()?;
 
         Some(PlayerConnection {
             connection_id,
-            sink,
-            stream,
+            sender,
+            receiver: bytes_receiver,
         })
     }
 }
