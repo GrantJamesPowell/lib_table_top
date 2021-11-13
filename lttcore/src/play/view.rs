@@ -1,10 +1,9 @@
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
-
 use std::fmt::Debug;
 
 pub trait View:
-    Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned
+    Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned + 'static
 {
     type Update: Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned;
 

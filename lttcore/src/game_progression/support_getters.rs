@@ -1,3 +1,4 @@
+use crate::play::settings::LttSettings;
 use crate::{GameProgression, NumberOfPlayers, Play, Player, PlayerSet, TurnNum};
 use std::borrow::Cow;
 use std::sync::Arc;
@@ -32,7 +33,7 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
-        T::number_of_players_for_settings(&self.settings)
+        self.settings.number_of_players()
     }
 
     pub fn players(&self) -> PlayerSet {

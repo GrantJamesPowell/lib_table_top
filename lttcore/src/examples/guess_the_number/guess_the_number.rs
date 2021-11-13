@@ -1,7 +1,8 @@
+use super::Settings;
 use crate::{
     play::{ActionResponse, DebugMsgs, GameAdvance},
-    utilities::{number_of_players::ONE_PLAYER, PlayerIndexedData},
-    NumberOfPlayers, Play, Player, PlayerSet, View,
+    utilities::PlayerIndexedData,
+    Play, Player, PlayerSet, View,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -36,51 +37,6 @@ pub enum ActionError {
 }
 
 use ActionError::*;
-
-#[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-#[builder(derive(Debug), build_fn(validate = "Self::validate"))]
-pub struct Settings {
-    #[builder(default = "0..=u64::MAX")]
-    range: RangeInclusive<u64>,
-    #[builder(default = "ONE_PLAYER")]
-    num_players: NumberOfPlayers,
-}
-
-impl TryFrom<RangeInclusive<u64>> for Settings {
-    type Error = SettingsBuilderError;
-
-    fn try_from(range: RangeInclusive<u64>) -> Result<Self, SettingsBuilderError> {
-        SettingsBuilder::default().range(range).build()
-    }
-}
-
-impl SettingsBuilder {
-    fn validate(&self) -> Result<(), String> {
-        if let Some(range) = &self.range {
-            if range.is_empty() {
-                return Err("range must not be empty".into());
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl Settings {
-    pub fn range(&self) -> RangeInclusive<u64> {
-        self.range.clone()
-    }
-
-    pub fn num_players(&self) -> NumberOfPlayers {
-        self.num_players
-    }
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        SettingsBuilder::default().build().unwrap()
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum PublicInfo {
@@ -125,10 +81,6 @@ impl Play for GuessTheNumber {
     type PublicInfo = PublicInfo;
     type Settings = Settings;
 
-    fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
-        settings.num_players
-    }
-
     fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
         Cow::Owned(Default::default())
     }
@@ -145,7 +97,7 @@ impl Play for GuessTheNumber {
 
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
         Self {
-            secret_number: rng.gen_range(settings.range.clone()),
+            secret_number: rng.gen_range(settings.range()),
             guesses: None,
         }
     }
@@ -153,7 +105,7 @@ impl Play for GuessTheNumber {
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet {
         match self.guesses {
             Some(_) => PlayerSet::empty(),
-            None => settings.num_players.player_set(),
+            None => settings.number_of_players().player_set(),
         }
     }
 
@@ -173,7 +125,7 @@ impl Play for GuessTheNumber {
                     (!settings.range().contains(&guess)).then(|| {
                         let err = GuessOutOfRange {
                             guess: guess.clone(),
-                            range: settings.range.clone(),
+                            range: settings.range(),
                         };
                         (player, err)
                     })

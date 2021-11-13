@@ -12,7 +12,7 @@ use lttcore::{GamePlayer, GameProgression, Player};
 fn test_building_default_settings() {
     let settings: Settings = SettingsBuilder::default().build().unwrap();
     assert_eq!(settings.range(), 0..=u64::MAX);
-    assert_eq!(settings.num_players(), ONE_PLAYER);
+    assert_eq!(settings.number_of_players(), ONE_PLAYER);
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn test_it_rejects_settings_where_range_is_empty() {
 fn test_it_shows_the_player_the_correct_things() {
     let settings: Settings = SettingsBuilder::default()
         .range(1..=10)
-        .num_players(TWO_PLAYER)
+        .number_of_players(TWO_PLAYER)
         .build()
         .unwrap();
 

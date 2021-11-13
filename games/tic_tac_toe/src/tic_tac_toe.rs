@@ -1,3 +1,4 @@
+use super::Settings;
 use crate::{
     helpers::opponent,
     Action,
@@ -502,6 +503,7 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
+    type Settings = Settings;
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
         match self.status() {
@@ -519,10 +521,6 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
     ) -> Self {
         Default::default()
-    }
-
-    fn number_of_players_for_settings(_settings: &<Self as Play>::Settings) -> NumberOfPlayers {
-        TWO_PLAYER
     }
 
     fn player_secret_info(

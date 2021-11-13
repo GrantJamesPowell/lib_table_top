@@ -1,7 +1,6 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::examples::guess_the_number::Settings;
 use lttcore::examples::GuessTheNumber;
-use lttcore::play::settings::NoCustomSettings;
 use lttcore::seed::SEED_42;
 use lttcore::utilities::number_of_players::FOUR_PLAYER;
 use lttcore::{GamePlayer, GameProgression, NumberOfPlayers, Player, PlayerSet, Seed};
@@ -186,11 +185,6 @@ fn test_serialize_draw_pile() {
 }
 
 #[test]
-fn test_serialize_no_custom_settings_and_error() {
-    test_simple_serialization((NoCustomSettings, Null));
-}
-
-#[test]
 fn test_serializing_game_player_and_observer_and_updates() {
     let settings: Settings = (1..=10).try_into().unwrap();
     let game: GameProgression<GuessTheNumber> =
@@ -206,7 +200,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     "start": 1,
                     "end":10
                 },
-                "num_players": 1
+                "number_of_players": 1
             },
             "initial_state": Null,
             "turn_num": 0,
@@ -230,7 +224,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                 "start": 1,
                 "end": 10
               },
-              "num_players": 1
+              "number_of_players": 1
             },
             "public_info": "InProgress"
           },
