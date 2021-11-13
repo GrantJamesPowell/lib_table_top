@@ -1,4 +1,4 @@
-use crate::{GameObserver, GamePlayer, GameProgression, Play};
+use crate::{GameObserver, GamePlayer, GameProgression, Play, Player};
 use std::sync::Arc;
 
 impl<T: Play> GameProgression<T> {
@@ -11,15 +11,14 @@ impl<T: Play> GameProgression<T> {
         }
     }
 
-    pub fn game_players(&self) -> impl Iterator<Item = GamePlayer<T>> + '_ {
-        let observer = self.game_observer();
-
-        self.player_secret_info()
-            .into_iter()
-            .map(move |(player, secret_info)| GamePlayer {
-                player,
-                secret_info,
-                game_observer: observer.clone(),
-            })
+    pub fn game_player(&self, player: impl Into<Player>) -> GamePlayer<T> {
+        let player = player.into();
+        let game_observer = self.game_observer();
+        let secret_info = self.player_secret_info(player);
+        GamePlayer {
+            player,
+            secret_info,
+            game_observer,
+        }
     }
 }

@@ -217,7 +217,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
         })
     );
 
-    let game_player = game.game_players().next().unwrap();
+    let game_player = game.game_player(0);
     let serialized = serde_json::to_value(&game_player).unwrap();
     assert_eq!(
         serialized,

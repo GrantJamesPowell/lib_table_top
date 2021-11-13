@@ -58,7 +58,11 @@ pub trait Play:
     type PlayerSecretInfo: View + Send + Sync + 'static = NoSecretPlayerInfo;
 
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers;
-    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self>;
+    fn player_secret_info(
+        &self,
+        settings: &Self::Settings,
+        player: Player,
+    ) -> Self::PlayerSecretInfo;
     fn public_info(&self, settings: &Self::Settings) -> Self::PublicInfo;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
     fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;

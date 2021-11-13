@@ -61,6 +61,5 @@ pub mod json {
         fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
             serde_json::from_slice(&bytes)
         }
-
     }
 }

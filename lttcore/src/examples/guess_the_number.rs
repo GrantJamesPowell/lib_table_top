@@ -1,5 +1,5 @@
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance, PlayerSecretInfos},
+    play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::{number_of_players::ONE_PLAYER, PlayerIndexedData},
     NumberOfPlayers, Play, Player, PlayerSet, View,
 };
@@ -128,12 +128,9 @@ impl Play for GuessTheNumber {
     fn number_of_players_for_settings(settings: &Self::Settings) -> NumberOfPlayers {
         settings.num_players
     }
-    fn player_secret_info(&self, settings: &Self::Settings) -> PlayerSecretInfos<Self> {
-        settings
-            .num_players
-            .players()
-            .map(|player| (player, Default::default()))
-            .collect()
+
+    fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Self::PlayerSecretInfo {
+        Default::default()
     }
 
     fn public_info(&self, _settings: &Self::Settings) -> Self::PublicInfo {

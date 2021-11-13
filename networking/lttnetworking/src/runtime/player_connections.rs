@@ -416,11 +416,7 @@ mod tests {
         let guess: Guess = 4.into();
         let update = game_progression.submit_actions([(0.into(), ActionResponse::Response(guess))]);
         let player_update = update.player_update(player).into_owned();
-        let game_player = game_progression
-            .game_players()
-            .filter(|p| p.player() == player)
-            .next()
-            .unwrap();
+        let game_player = game_progression.game_player(player);
 
         (game_progression, game_player, player_update)
     }

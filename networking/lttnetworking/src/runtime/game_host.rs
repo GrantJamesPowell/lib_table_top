@@ -21,13 +21,15 @@ pub async fn game_host<T: Play>(
                 Some(msg) => match msg {
                     RequestObserverState => {
                         let msg = ToObserverMsg::SyncState(game.game_observer());
-                        to_observer.send(msg).unwrap();
+                        to_observer
+                            .send(msg)
+                            .expect("observer connections multiplexer is still alive");
                     }
                     RequestPlayerState { player } => {
-                        for gp in game.game_players().filter(|x| x.player() == player) {
-                            let player = gp.player();
-                            to_players[player].send(ToPlayerMsg::SyncState(gp)).unwrap();
-                        }
+                        let game_player = game.game_player(player);
+                        to_players[player]
+                            .send(ToPlayerMsg::SyncState(game_player))
+                            .expect("player connections multiplexer is still alive");
                     }
                     SubmitActionResponse { player, response } => {
                         returned_actions.add(player, response);
