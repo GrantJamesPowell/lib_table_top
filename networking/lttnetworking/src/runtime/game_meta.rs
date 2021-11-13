@@ -49,6 +49,19 @@ pub struct GameMeta<T: Play> {
 }
 
 impl<T: Play> GameMeta<T> {
+    pub fn new(
+        add_observer_chan: AddConnectionSender,
+        add_player_chan: PID<AddConnectionSender>,
+        player_inputs: PID<FromPlayerMsgWithConnectionIdSender<T>>,
+    ) -> Self {
+        Self {
+            add_observer_chan,
+            add_player_chan,
+            player_inputs,
+            connection_id_source: Default::default(),
+        }
+    }
+
     pub fn add_observer(&self) -> ObserverConnection {
         let (sender, receiver) = unbounded_channel();
         let connection_id = self.connection_id_source.next();

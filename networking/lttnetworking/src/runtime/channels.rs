@@ -32,7 +32,19 @@ pub type ToObserverMsgReceiver<T> = UnboundedReceiver<ToObserverMsg<T>>;
 pub type ToGameHostMsgSender<T> = UnboundedSender<ToGameHostMsg<T>>;
 pub type ToGameHostMsgReceiver<T> = UnboundedReceiver<ToGameHostMsg<T>>;
 
-fn to_players<T: Play>(
+pub fn add_connection() -> (AddConnectionSender, AddConnectionReceiver) {
+    unbounded_channel()
+}
+
+pub fn to_game_host<T: Play>() -> (ToGameHostMsgSender<T>, ToGameHostMsgReceiver<T>) {
+    unbounded_channel()
+}
+
+pub fn to_observer<T: Play>() -> (ToObserverMsgSender<T>, ToObserverMsgReceiver<T>) {
+    unbounded_channel()
+}
+
+pub fn to_players<T: Play>(
     players: PlayerSet,
 ) -> (PID<ToPlayerMsgSender<T>>, PID<ToPlayerMsgReceiver<T>>) {
     players

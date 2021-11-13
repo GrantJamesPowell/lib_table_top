@@ -9,12 +9,12 @@ use smallvec::SmallVec;
 use tokio::select;
 
 pub struct Inbox<T: Play> {
-    pub from_game_host: ToObserverMsgReceiver<T>,
-    pub from_runtime: AddConnectionReceiver,
+    pub to_observer_msg_receiver: ToObserverMsgReceiver<T>,
+    pub add_observer_connection_receiver: AddConnectionReceiver,
 }
 
 pub struct Outbox<T: Play> {
-    pub to_game_host: ToGameHostMsgSender<T>,
+    pub to_game_host_msg_sender: ToGameHostMsgSender<T>,
 }
 
 #[derive(Debug)]
@@ -58,9 +58,9 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 
     loop {
         select! {
-            Some((id, sender)) = inbox.from_runtime.recv() => {
+            Some((id, sender)) = inbox.add_observer_connection_receiver.recv() => {
                 if state.are_all_in_sync() {
-                    outbox.to_game_host.send(RequestObserverState)?;
+                    outbox.to_game_host_msg_sender.send(RequestObserverState)?;
                 }
                 state.conns.push(Conn {
                     id,
@@ -68,7 +68,7 @@ pub async fn observer_connections<T: Play, E: Encoder>(
                     in_sync: false
                 })
             }
-            Some(msg) = inbox.from_game_host.recv() => {
+            Some(msg) = inbox.to_observer_msg_receiver.recv() => {
                  match msg {
                      SyncState(_) => {
                          state.send_to(&msg, |conn| {
@@ -135,28 +135,28 @@ mod tests {
 
         // On the first connections added, it sends a request for the game state
         mailbox_handles
-            .to_from_runtime
+            .add_observer_connection_sender
             .send(connections[0].clone())
             .unwrap();
         assert_eq!(
-            mailbox_handles.from_to_game_host.recv().await,
+            mailbox_handles.to_game_host_msg_receiver.recv().await,
             Some(RequestObserverState)
         );
 
         // On the second, it does not re-request the game state
         mailbox_handles
-            .to_from_runtime
+            .add_observer_connection_sender
             .send(connections[1].clone())
             .unwrap();
         sleep(Duration::from_millis(50)).await;
         assert_eq!(
-            mailbox_handles.from_to_game_host.try_recv(),
+            mailbox_handles.to_game_host_msg_receiver.try_recv(),
             Err(TryRecvError::Empty)
         );
 
         // If an update arrives it doesn't get sent out to connections awaiting the full sync
         mailbox_handles
-            .to_from_game_host
+            .to_observer_msg_sender
             .send(observer_update.clone().into())
             .unwrap();
 
@@ -167,7 +167,7 @@ mod tests {
 
         // If the state arrives it gets sent to awaiting connections
         mailbox_handles
-            .to_from_game_host
+            .to_observer_msg_sender
             .send(game_observer.clone().into())
             .unwrap();
         for stream in connection_streams.iter_mut().take(2) {
@@ -178,13 +178,13 @@ mod tests {
 
         // Add connection id 3 which doesn't have the state yet
         mailbox_handles
-            .to_from_runtime
+            .add_observer_connection_sender
             .send(connections[2].clone())
             .unwrap();
 
         // Get an update (only 1 & 2 get it because 3 is waiting on the state)
         mailbox_handles
-            .to_from_game_host
+            .to_observer_msg_sender
             .send(observer_update.clone().into())
             .unwrap();
 
@@ -199,7 +199,7 @@ mod tests {
 
         // Once the state is sent, only connections waiting on it get it
         mailbox_handles
-            .to_from_game_host
+            .to_observer_msg_sender
             .send(game_observer.clone().into())
             .unwrap();
 
@@ -214,9 +214,9 @@ mod tests {
     }
 
     struct MailboxHandles<T: Play> {
-        to_from_game_host: ToObserverMsgSender<T>,
-        to_from_runtime: AddConnectionSender,
-        from_to_game_host: ToGameHostMsgReceiver<T>,
+        to_observer_msg_sender: ToObserverMsgSender<T>,
+        add_observer_connection_sender: AddConnectionSender,
+        to_game_host_msg_receiver: ToGameHostMsgReceiver<T>,
     }
 
     fn setup_guess_the_number() -> (
@@ -235,21 +235,24 @@ mod tests {
     }
 
     fn setup_test_infra<T: Play>() -> (Inbox<T>, Outbox<T>, MailboxHandles<T>) {
-        let (to_from_game_host, from_game_host) = unbounded_channel();
-        let (to_from_runtime, from_runtime) = unbounded_channel();
-        let (to_game_host, from_to_game_host) = unbounded_channel();
+        let (to_observer_msg_sender, to_observer_msg_receiver) = unbounded_channel();
+        let (add_observer_connection_sender, add_observer_connection_receiver) =
+            unbounded_channel();
+        let (to_game_host_msg_sender, to_game_host_msg_receiver) = unbounded_channel();
 
         let inbox = Inbox {
-            from_game_host,
-            from_runtime,
+            to_observer_msg_receiver,
+            add_observer_connection_receiver,
         };
 
-        let outbox = Outbox { to_game_host };
+        let outbox = Outbox {
+            to_game_host_msg_sender,
+        };
 
         let handles = MailboxHandles {
-            to_from_game_host,
-            to_from_runtime,
-            from_to_game_host,
+            to_observer_msg_sender,
+            add_observer_connection_sender,
+            to_game_host_msg_receiver,
         };
 
         (inbox, outbox, handles)
