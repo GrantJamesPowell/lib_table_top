@@ -1,8 +1,8 @@
-use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
-use crate::runtime::channels::{
+use super::channels::{
     AddConnectionReceiver, BytesSender, ToGameHostMsgSender, ToObserverMsgReceiver,
 };
-use crate::runtime::id::ConnectionId;
+use super::id::ConnectionId;
+use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
 use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
@@ -98,9 +98,9 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 
 #[cfg(test)]
 mod tests {
+    use super::super::id::ConnectionIdSource;
     use super::*;
     use crate::messages::observer::ToObserverMsg;
-    use crate::runtime::id::ConnectionIdSource;
     use lttcore::encoder::json::JsonEncoder;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
@@ -109,9 +109,7 @@ mod tests {
     use lttcore::{play::ActionResponse, pov::ObserverUpdate};
     use lttcore::{GameObserver, GameProgression};
 
-    use crate::runtime::channels::{
-        AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender,
-    };
+    use super::super::channels::{AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender};
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::sync::mpsc::unbounded_channel;
     use tokio::time::{sleep, Duration};
