@@ -1,5 +1,5 @@
 use super::game_runner::GameRunner;
-use super::match_maker::match_maker::{MatchMakerQueues};
+use super::match_maker::match_maker::MatchMakerQueues;
 
 use lttcore::encoder::Encoder;
 use lttcore::Play;

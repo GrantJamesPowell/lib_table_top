@@ -1,8 +1,6 @@
 use crate::play::LttSettings;
 use crate::Play;
 
-
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Mode<T: Play> {
     name: &'static str,

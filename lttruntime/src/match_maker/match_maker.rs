@@ -1,5 +1,5 @@
 use super::messages::MatchMakerRequestReceiver;
-use crate::runtime::game_runner::GameRunner;
+use crate::game_runner::GameRunner;
 use lttcore::encoder::Encoder;
 use lttcore::play::LttSettings;
 use lttcore::{
@@ -9,8 +9,8 @@ use lttcore::{
 };
 use smallvec::SmallVec;
 use std::collections::HashMap;
-use std::sync::{Arc};
-use tokio::sync::oneshot::{Sender};
+use std::sync::Arc;
+use tokio::sync::oneshot::Sender;
 
 #[derive(Debug)]
 pub(crate) struct PendingRequest {
