@@ -1,4 +1,4 @@
-use super::messages::MatchMakerRequestReceiver;
+use super::channels::MatchMakerRequestReceiver;
 use crate::game_runner::GameRunner;
 use lttcore::encoder::Encoder;
 use lttcore::play::LttSettings;

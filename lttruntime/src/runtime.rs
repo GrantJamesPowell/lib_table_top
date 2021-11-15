@@ -1,5 +1,7 @@
-use super::game_runner::{GameRunner, ObserverConnection, PlayerConnection};
-use super::match_maker::match_maker::MatchMakerQueues;
+use super::game_runner::GameRunner;
+use super::match_maker::{GameRequestTicket, MatchMakerQueues};
+use crate::messages::MatchMakerRequest;
+use crate::{ObserverConnection, PlayerConnection};
 use lttcore::encoder::Encoder;
 use lttcore::{id::GameId, Play, Player};
 use std::sync::Arc;
@@ -19,6 +21,10 @@ impl<T: Play, E: Encoder> Runtime<T, E> {
             game_runner,
             match_maker_queues,
         }
+    }
+
+    pub fn match_make(_request: MatchMakerRequest<T>) -> GameRequestTicket {
+        todo!()
     }
 
     pub fn play_game(&self, game_id: GameId, player: Player) -> Option<PlayerConnection<T>> {
