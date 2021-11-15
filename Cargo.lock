@@ -501,21 +501,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lttws"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bincode",
- "futures-util",
- "lttcore",
- "lttnetworking",
- "serde",
- "tokio",
- "tokio-tungstenite",
-]
-
-[[package]]
 name = "matches"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
