@@ -1,11 +1,14 @@
 use crate::messages::MatchMakerRequest;
-use lttcore::id::GameId;
-
 use lttcore::Player;
+use lttcore::id::GameId;
+use tokio::sync::{oneshot, mpsc};
 
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::sync::oneshot::Receiver as OneShotReceiver;
+pub type GameRequestTicket = oneshot::Receiver<(GameId, Player)>;
+pub type GameRequestTicketResolver = oneshot::Sender<(GameId, Player)>;
 
-pub type GameRequestTicket = OneShotReceiver<(GameId, Player)>;
-pub type MatchMakerRequestReceiver<T> = UnboundedReceiver<MatchMakerRequest<T>>;
-pub type MatchMakerRequestSender<T> = UnboundedSender<MatchMakerRequest<T>>;
+pub type MatchMakerRequestReceiver<T> = mpsc::UnboundedReceiver<
+    (MatchMakerRequest<T>, GameRequestTicketResolver)
+>;
+pub type MatchMakerRequestSender<T> = mpsc::UnboundedSender<
+    (MatchMakerRequest<T>, GameRequestTicketResolver)
+>;
