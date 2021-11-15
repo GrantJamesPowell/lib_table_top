@@ -1,7 +1,7 @@
 pub mod error;
 
 mod match_maker;
-pub use match_maker::{MatchMakerRequest, MatchMakerTicket};
+pub use match_maker::messages::{MatchMakerRequest, MatchMakerTicket};
 
 mod runtime;
 pub use runtime::Runtime;

@@ -1,2 +1,2 @@
-pub struct MatchMakerRequest;
-pub struct MatchMakerTicket;
+pub mod messages;
+pub mod match_maker;
