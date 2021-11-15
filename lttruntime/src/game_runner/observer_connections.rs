@@ -2,7 +2,7 @@ use super::channels::{
     AddConnectionReceiver, BytesSender, ToGameHostMsgSender, ToObserverMsgReceiver,
 };
 use super::id::ConnectionId;
-use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
+use crate::messages::{ToGameHostMsg::*, ToObserverMsg::*};
 use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
@@ -100,7 +100,7 @@ pub async fn observer_connections<T: Play, E: Encoder>(
 mod tests {
     use super::super::id::ConnectionIdSource;
     use super::*;
-    use crate::messages::observer::ToObserverMsg;
+    use crate::messages::ToObserverMsg;
     use lttcore::encoder::json::JsonEncoder;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},

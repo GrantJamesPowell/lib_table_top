@@ -1,7 +1,5 @@
 use super::channels::{ToGameHostMsgReceiver, ToObserverMsgSender, ToPlayerMsgSender};
-use crate::messages::game_host::ToGameHostMsg::*;
-use crate::messages::observer::ToObserverMsg;
-use crate::messages::player::ToPlayerMsg;
+use crate::messages::{ToGameHostMsg::*, ToObserverMsg, ToPlayerMsg};
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
 use lttcore::{GameProgression, Play};

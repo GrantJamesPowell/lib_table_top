@@ -4,12 +4,10 @@ use super::channels::{
 };
 use super::id::ConnectionId;
 use crate::messages::{
-    game_host::ToGameHostMsg::*,
-    player::{
-        FromPlayerMsg::{self, *},
-        SubmitActionErrorKind::*,
-        ToPlayerMsg::{self, *},
-    },
+    FromPlayerMsg::{self, *},
+    SubmitActionErrorKind::*,
+    ToGameHostMsg::*,
+    ToPlayerMsg::{self, *},
 };
 use lttcore::{encoder::Encoder, play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;

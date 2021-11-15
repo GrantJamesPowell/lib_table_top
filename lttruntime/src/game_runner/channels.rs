@@ -1,9 +1,5 @@
 use super::id::ConnectionId;
-use crate::messages::{
-    game_host::ToGameHostMsg,
-    observer::ToObserverMsg,
-    player::{FromPlayerMsg, ToPlayerMsg},
-};
+use crate::messages::{FromPlayerMsg, ToGameHostMsg, ToObserverMsg, ToPlayerMsg};
 use bytes::Bytes;
 use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{Play, PlayerSet};

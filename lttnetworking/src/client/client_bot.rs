@@ -1,6 +1,6 @@
 use lttcore::bots::Bot;
 use lttcore::{GamePlayer, Play, Seed};
-use lttruntime::messages::player::{
+use lttruntime::messages::{
     FromPlayerMsg::{self, *},
     SubmitActionErrorKind::*,
     ToPlayerMsg::{self, *},
