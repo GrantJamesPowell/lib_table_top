@@ -6,5 +6,5 @@ pub use match_maker::{MatchMakerRequest, MatchMakerTicket};
 mod runtime;
 pub use runtime::Runtime;
 
-mod async_game_runner;
-pub use async_game_runner::{ObserverConnection, PlayerConnection};
+mod game_runner;
+pub use game_runner::{ObserverConnection, PlayerConnection};
