@@ -1,4 +1,4 @@
-use crate::play::settings::LttSettings;
+use crate::play::LttSettings;
 use crate::{GameProgression, NumberOfPlayers, Play, Player, PlayerSet, TurnNum};
 use std::borrow::Cow;
 use std::sync::Arc;
