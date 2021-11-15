@@ -474,33 +474,30 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "bincode",
  "bytes",
- "dashmap",
  "futures-util",
  "hex",
  "lttcore",
+ "lttruntime",
  "rand",
  "serde",
- "serde_json",
  "smallvec",
  "tokio",
  "uuid",
 ]
 
 [[package]]
-name = "lttws"
+name = "lttruntime"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "bincode",
- "futures-util",
+ "bytes",
+ "dashmap",
  "lttcore",
- "lttnetworking",
  "serde",
+ "smallvec",
  "tokio",
- "tokio-tungstenite",
 ]
 
 [[package]]

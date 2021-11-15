@@ -6,16 +6,17 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::hash::Hash;
 use std::ops::RangeInclusive;
 use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct GuessTheNumber {
     secret_number: u64,
     guesses: Option<Guesses>,
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct Guess(pub u64);
 
 impl From<u64> for Guess {

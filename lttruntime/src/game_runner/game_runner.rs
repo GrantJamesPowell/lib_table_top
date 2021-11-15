@@ -8,12 +8,12 @@ use lttcore::{GameProgression, Play, Player};
 use std::time::Duration;
 
 #[derive(Debug)]
-pub struct AsyncGameRunner<T: Play, E: Encoder> {
+pub struct GameRunner<T: Play, E: Encoder> {
     games: DashMap<GameId, GameMeta<T>>,
     _phantom: std::marker::PhantomData<E>,
 }
 
-impl<T: Play, E: Encoder> AsyncGameRunner<T, E> {
+impl<T: Play, E: Encoder> GameRunner<T, E> {
     pub fn new() -> Self {
         Self {
             games: Default::default(),

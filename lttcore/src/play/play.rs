@@ -2,8 +2,8 @@ use super::{game_advance::GameAdvance, view::NoSecretPlayerInfo, LttSettings, Vi
 use crate::{utilities::PlayerIndexedData, Player, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
-
 use std::fmt::Debug;
+use std::hash::Hash;
 
 pub type Actions<T> = PlayerIndexedData<ActionResponse<T>>;
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
@@ -20,7 +20,7 @@ pub enum ActionResponse<T: Play> {
 }
 
 pub trait Play:
-    Sized + Clone + Debug + Send + Sync + Serialize + DeserializeOwned + 'static
+    Sized + Clone + Debug + Send + Sync + PartialEq + Eq + Hash + Serialize + DeserializeOwned + 'static
 {
     type Action: Clone
         + Debug

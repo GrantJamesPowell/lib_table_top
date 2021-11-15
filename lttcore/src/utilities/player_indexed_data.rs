@@ -1,8 +1,9 @@
 use crate::{Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::hash::Hash;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerIndexedData<T> {
     players: PlayerSet,
     data: SmallVec<[T; 6]>,

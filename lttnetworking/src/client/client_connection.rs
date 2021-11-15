@@ -1,8 +1,10 @@
 use crate::connection::ConnectionIO;
-use crate::messages::Closed;
-use crate::messages::hello::{ClientHello, ServerHello};
-use crate::messages::mode::{Mode::*, JoinAs};
 use crate::{Token, User, SupportedGames};
+use lttruntime::messages::{
+    Closed, 
+    mode::{Mode::*, JoinAs},
+    hello::{ClientHello, ServerHello}
+};
 
 pub async fn observe_game<SG: SupportedGames>(
     token: Token,

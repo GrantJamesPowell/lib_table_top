@@ -1,7 +1,7 @@
 use super::channels::{AddConnectionSender, BytesReceiver, FromPlayerMsgWithConnectionIdSender};
 use super::id::{ConnectionId, ConnectionIdSource};
+use crate::error::GameNotFound;
 use crate::messages::player::FromPlayerMsg;
-use crate::runtime::error::GameNotFound;
 use bytes::Bytes;
 use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{Play, Player};
