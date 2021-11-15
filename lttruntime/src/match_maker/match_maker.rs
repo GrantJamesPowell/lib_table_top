@@ -20,7 +20,7 @@ pub(crate) struct PendingRequest {
 
 type PendingRequests = SmallVec<[PendingRequest; 4]>;
 
-pub(crate) struct MatchMakerQueues<T: Play> {
+pub struct MatchMakerQueues<T: Play> {
     queues: HashMap<Mode<T>, PendingRequests>,
 }
 
@@ -38,7 +38,7 @@ impl<T: Play> MatchMakerQueues<T> {
     }
 }
 
-pub(crate) async fn run_match_maker<T: Play, E: Encoder>(
+pub async fn run_match_maker<T: Play, E: Encoder>(
     _mailbox: MatchMakerRequestReceiver<T>,
     _game_runner: Arc<GameRunner<T, E>>,
     _queues: MatchMakerQueues<T>,

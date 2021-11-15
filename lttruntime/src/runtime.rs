@@ -1,6 +1,5 @@
 use super::game_runner::GameRunner;
 use super::match_maker::match_maker::MatchMakerQueues;
-
 use lttcore::encoder::Encoder;
 use lttcore::Play;
 use std::sync::Arc;
@@ -12,7 +11,7 @@ pub struct Runtime<T: Play, E: Encoder> {
 }
 
 impl<T: Play, E: Encoder> Runtime<T, E> {
-    fn start() -> Self {
+    pub fn start() -> Self {
         let game_runner = Arc::new(GameRunner::new());
         let match_maker_queues = MatchMakerQueues::new();
 

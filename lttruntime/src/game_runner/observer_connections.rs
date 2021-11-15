@@ -2,7 +2,7 @@ use super::channels::{
     AddConnectionReceiver, BytesSender, ToGameHostMsgSender, ToObserverMsgReceiver,
 };
 use super::id::ConnectionId;
-use crate::messages::{game_host::ToGameHostMsg::*, observer::ToObserverMsg::*};
+use crate::messages::{ToGameHostMsg::*, ToObserverMsg::*};
 use lttcore::{encoder::Encoder, Play};
 use serde::Serialize;
 use smallvec::SmallVec;
