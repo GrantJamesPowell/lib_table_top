@@ -1,4 +1,5 @@
-use crate::id::SubConnectionId;
+use crate::connection::SubConnectionId;
+use crate::messages::closed::Closed;
 use crate::SupportedGames;
 use bytes::Bytes;
 use lttcore::id::GameId;
@@ -17,6 +18,7 @@ pub enum ClientConnControlMsg<S: SupportedGames> {
 pub enum ServerConnControlMsg<S: SupportedGames> {
     SubConnStarted { id: SubConnectionId, game_type: S },
     SubConnMsg { id: SubConnectionId, bytes: Bytes },
+    SubConnClosed { id: SubConnectionId, reason: Closed },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

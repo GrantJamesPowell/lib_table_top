@@ -3,7 +3,6 @@
 pub mod auth;
 pub mod client;
 pub mod connection;
-mod id;
 pub mod messages;
 pub mod server;
 
