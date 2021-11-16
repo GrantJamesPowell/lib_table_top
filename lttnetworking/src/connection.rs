@@ -7,11 +7,17 @@ use tokio::sync::mpsc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct SubConnectionId(Uuid);
+pub struct SubConnId(Uuid);
 
-impl SubConnectionId {
+impl SubConnId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
+    }
+}
+
+impl std::fmt::Display for SubConnId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "sc:{:?}", self.0)
     }
 }
 
@@ -30,9 +36,9 @@ pub trait RawConnection<E: Encoder>: Sync + Send {
 }
 
 pub struct SubConnection<E: Encoder> {
-    pub id: SubConnectionId,
+    pub id: SubConnId,
     pub receiver: mpsc::UnboundedReceiver<Bytes>,
-    pub sender: Option<mpsc::UnboundedSender<(SubConnectionId, Bytes)>>,
+    pub sender: Option<mpsc::UnboundedSender<(SubConnId, Bytes)>>,
     pub _encoder: std::marker::PhantomData<E>,
 }
 
@@ -73,8 +79,9 @@ impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
         }
     }
 
-    async fn send<T: Send + Serialize>(&mut self, _msg: T) -> Result<(), Closed> {
-        todo!()
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed> {
+        let serialized = E::serialize(&msg).map_err(|_| Closed::ServerError)?;
+        self.send_bytes(serialized).await
     }
 
     async fn close(&mut self) {

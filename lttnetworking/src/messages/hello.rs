@@ -14,5 +14,5 @@ pub struct ServerHello {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServerInfo {
-    pub max_sub_connections: u64,
+    pub max_sub_connections: u8,
 }

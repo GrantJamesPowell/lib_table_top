@@ -8,5 +8,6 @@ pub enum Closed {
     Unauthorized,
     InvalidCredentials,
     ServerError,
+    Unsupported(String),
     ClientError(String),
 }

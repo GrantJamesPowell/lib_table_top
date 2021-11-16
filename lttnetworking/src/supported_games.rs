@@ -18,4 +18,6 @@ pub trait SupportedGames<E: Encoder>:
         conn: C,
         runtimes: Arc<Self::Runtimes>,
     ) -> Result<(), Closed>;
+
+    fn try_from_str(s: &str) -> Option<Self>;
 }
