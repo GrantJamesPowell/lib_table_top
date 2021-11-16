@@ -14,13 +14,11 @@ use lttruntime::Runtime;
 use std::collections::HashMap;
 use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn server_connection<S: SupportedGames, E: Encoder, R: RawConnection<E>>(
+pub async fn server_connection<S: SupportedGames, E: Encoder>(
     authenticate: &impl Authenticate,
     server_info: &ServerInfo,
-    conn: R,
+    mut conn: impl RawConnection<E>,
 ) -> Closed {
-    let mut conn: ConnectionIO<R, E> = conn.into();
-
     let user = match authenticate_conn(authenticate, server_info, &mut conn).await {
         Ok(user) => user,
         Err(closed) => {
@@ -56,10 +54,10 @@ pub async fn server_connection<S: SupportedGames, E: Encoder, R: RawConnection<E
     Closed::Normal
 }
 
-pub async fn authenticate_conn<R: RawConnection<E>, E: Encoder>(
+pub async fn authenticate_conn<E: Encoder>(
     auth: &impl Authenticate,
     server_info: &ServerInfo,
-    conn: &mut ConnectionIO<R, E>,
+    conn: &mut impl ConnectionIO<E>,
 ) -> Result<User, Closed> {
     let ClientHello { credentials } = conn.next().await?;
 

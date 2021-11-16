@@ -3,7 +3,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 
 pub trait Encoder: Send + Sync + 'static {
-    type Error: Debug + std::error::Error;
+    type Error: Send + Sync + Debug + std::error::Error;
 
     fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error>;
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error>;

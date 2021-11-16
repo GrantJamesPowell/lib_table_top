@@ -6,35 +6,54 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::sync::mpsc;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SubConnectionId(Uuid);
 
 #[async_trait]
-pub trait RawConnection<E: Encoder> {
+pub trait ConnectionIO<E: Encoder> {
+    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed>;
+    async fn close(&mut self);
+}
+
+#[async_trait]
+pub trait RawConnection<E: Encoder>: Sync + Send {
     async fn next_bytes(&mut self) -> Result<Bytes, Closed>;
     async fn send_bytes(&mut self, bytes: Bytes) -> Result<(), Closed>;
     async fn close(&mut self);
 }
 
-pub struct ConnectionIO<R: RawConnection<E>, E: Encoder> {
-    raw: R,
-    _phantom: std::marker::PhantomData<E>,
+pub struct SubConnection<E: Encoder> {
+    id: SubConnectionId,
+    receiver: mpsc::Receiver<Bytes>,
+    sender: Option<mpsc::Sender<(SubConnectionId, Bytes)>>,
+    _encoder: std::marker::PhantomData<E>,
 }
 
-impl<R: RawConnection<E>, E: Encoder> From<R> for ConnectionIO<R, E> {
-    fn from(raw: R) -> Self {
-        Self {
-            raw,
-            _phantom: Default::default(),
-        }
+#[async_trait]
+impl<E: Encoder> RawConnection<E> for SubConnection<E> {
+    async fn next_bytes(&mut self) -> Result<Bytes, Closed> {
+        self.receiver.recv().await.ok_or(Closed::Hangup)
+    }
+
+    async fn send_bytes(&mut self, bytes: Bytes) -> Result<(), Closed> {
+        let sender = self.sender.as_ref().ok_or(Closed::Hangup)?;
+        sender
+            .send((self.id, bytes))
+            .await
+            .map_err(|_| Closed::Hangup)
+    }
+
+    async fn close(&mut self) {
+        self.receiver.close();
+        self.sender.take();
     }
 }
 
-pub struct SubConnection;
-
-impl<R: RawConnection<E>, E: Encoder> ConnectionIO<R, E> {
-    pub async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed> {
-        let bytes = match self.raw.next_bytes().await {
+#[async_trait]
+impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
+    async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed> {
+        let bytes = match self.next_bytes().await {
             Ok(bytes) => bytes,
             _ => {
                 self.close().await;
@@ -51,11 +70,11 @@ impl<R: RawConnection<E>, E: Encoder> ConnectionIO<R, E> {
         }
     }
 
-    pub async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed> {
+    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed> {
         todo!()
     }
 
-    pub async fn close(&mut self) {
-        self.raw.close().await;
+    async fn close(&mut self) {
+        self.close().await;
     }
 }
