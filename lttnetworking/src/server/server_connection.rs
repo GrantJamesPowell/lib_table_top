@@ -8,8 +8,8 @@ use crate::messages::{
 use crate::SupportedGames;
 use crate::User;
 use bytes::Bytes;
-use lttcore::{encoder::Encoder, Play};
-use lttruntime::Runtime;
+use lttcore::{encoder::Encoder};
+
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;
@@ -19,7 +19,7 @@ pub async fn server_connection<S: SupportedGames, E: Encoder>(
     server_info: &ServerInfo,
     mut conn: impl RawConnection<E>,
 ) -> Closed {
-    let user = match authenticate_conn(authenticate, server_info, &mut conn).await {
+    let _user = match authenticate_conn(authenticate, server_info, &mut conn).await {
         Ok(user) => user,
         Err(closed) => {
             conn.close().await;
@@ -127,5 +127,3 @@ pub async fn authenticate_conn<E: Encoder>(
         }
     }
 }
-
-pub async fn run_server_sub_conn<T: Play, E: Encoder, C: ConnectionIO<E>>(conn: C) {}

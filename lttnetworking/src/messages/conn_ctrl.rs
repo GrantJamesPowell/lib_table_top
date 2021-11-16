@@ -22,11 +22,6 @@ pub enum ServerConnControlMsg<S: SupportedGames> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum SubConnStartErrorKind {
-    TooManySubConns,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SubConnMode {
     JoinGame(GameId, JoinAs),
 }

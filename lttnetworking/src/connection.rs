@@ -67,7 +67,7 @@ impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
         }
     }
 
-    async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed> {
+    async fn send<T: Send + Serialize>(&mut self, _msg: T) -> Result<(), Closed> {
         todo!()
     }
 
