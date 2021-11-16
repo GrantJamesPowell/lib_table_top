@@ -25,6 +25,7 @@ pub mod bincode {
         fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error> {
             bincode::serialize(value).map(|vec| vec.into())
         }
+
         fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
             bincode::deserialize(&bytes)
         }

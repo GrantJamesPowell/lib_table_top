@@ -1,5 +1,5 @@
 use crate::auth::Authenticate;
-use crate::connection::{ConnectionIO, RawConnection, SubConnection, SubConnectionId};
+use crate::connection::{ConnectionIO, RawConnection, SubConnId, SubConnection};
 use crate::messages::{
     closed::Closed,
     conn_ctrl::{ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg},
@@ -19,87 +19,67 @@ pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
     server_info: &ServerInfo,
     runtimes: Arc<S::Runtimes>,
     mut conn: impl RawConnection<E>,
-) -> Closed {
-    let _user = match authenticate_conn(authenticate, server_info, &mut conn).await {
-        Ok(user) => user,
-        Err(closed) => {
-            conn.close().await;
-            return closed;
-        }
-    };
-
+) -> Result<Closed, Closed> {
+    let _user = authenticate_conn(authenticate, server_info, &mut conn).await?;
     let (from_sub_connections_sender, mut from_sub_connections_receiver) =
-        mpsc::unbounded_channel::<(SubConnectionId, Bytes)>();
+        mpsc::unbounded_channel::<(SubConnId, Bytes)>();
 
-    let mut sub_connections: HashMap<SubConnectionId, mpsc::UnboundedSender<Bytes>> =
-        Default::default();
+    let mut sub_connections: HashMap<SubConnId, mpsc::UnboundedSender<Bytes>> = Default::default();
 
     loop {
         select! {
             biased;
-            msg = conn.next::<CCCMsg<S, E>>() => {
-                match msg {
-                    Ok(CCCMsg::StartSubConn { id, game_type, .. }) => {
-                        if !sub_connections.contains_key(&id) {
-                            let (sender, receiver) = mpsc::unbounded_channel();
+            msg = conn.next::<CCCMsg>() => {
+                match msg? {
+                    CCCMsg::StartSubConn { id, game_type, .. } => {
+                        if sub_connections.contains_key(&id) {
+                            // Sub connection id was taken
+                            let msg = SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("subconnection {} already exists", id))};
+                            conn.send(msg).await?;
+                            continue
+                        }
 
-                            let sub_conn: SubConnection<E> = SubConnection {
-                                id,
-                                receiver,
-                                sender: Some(from_sub_connections_sender.clone()),
-                                _encoder: Default::default(),
-                            };
+                        match S::try_from_str(&game_type) {
+                            Some(game_type) => {
+                                let (sender, receiver) = mpsc::unbounded_channel();
 
-                            sub_connections.insert(id, sender);
-                            tokio::spawn(game_type.run_server_sub_conn(sub_conn, Arc::clone(&runtimes)));
+                                let sub_conn: SubConnection<E> = SubConnection {
+                                    id,
+                                    receiver,
+                                    sender: Some(from_sub_connections_sender.clone()),
+                                    _encoder: Default::default(),
+                                };
 
-                            let msg: SCCMsg<S, E> = SCCMsg::SubConnStarted { id, game_type, _encoder: Default::default() };
-
-                            if let Err(closed) = conn.send(msg).await {
-                                return closed
+                                sub_connections.insert(id, sender);
+                                tokio::spawn(game_type.run_server_sub_conn(sub_conn, Arc::clone(&runtimes)));
+                                conn.send(SCCMsg::SubConnStarted { id }).await?;
                             }
-                        } else {
-                            // Client provided an already in use sub connection id
-                            let msg: SCCMsg<S, E> = SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} already exists", id)), _encoder: Default::default() };
-
-                            if let Err(closed) = conn.send(msg).await {
-                                return closed
+                            None => {
+                                // game_type wasn't a supported game
+                                let reason = Closed::Unsupported(format!("game type '{}' is not supported", game_type));
+                                conn.send(SCCMsg::SubConnClosed { id, reason }).await?;
                             }
                         }
                     }
-                    Ok(CCCMsg::SubConnMsg { id, bytes, .. }) => {
+                    CCCMsg::SubConnMsg { id, bytes, .. } => {
                         match sub_connections.get(&id).map(|sender| sender.send(bytes)) {
                             Some(Ok(())) => continue,
                             Some(Err(_)) => {
                                 // The server sub conn state machine died
-                                let msg: SCCMsg<S, E> = SCCMsg::SubConnClosed { id, reason: Closed::ServerError, _encoder: Default::default() };
                                 sub_connections.remove(&id);
-
-                                if let Err(closed) = conn.send(msg).await {
-                                    return closed
-                                }
+                                conn.send(SCCMsg::SubConnClosed { id, reason: Closed::ServerError }).await?;
                             }
                             None => {
                                 // The client sent a message to a dead/non-existant server sub connection
-                                let msg: SCCMsg<S, E>= SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} doesn't exist", id)), _encoder: Default::default() };
-
-                                if let Err(closed) = conn.send(msg).await {
-                                    return closed
-                                }
+                                let err = format!("subconnection {} doesn't exist", id);
+                                conn.send(SCCMsg::SubConnClosed { id, reason: Closed::ClientError(err) }).await?;
                             }
                         }
-                    }
-                    Err(closed) => {
-                        // The Client closed the connection
-                        return closed
                     }
                 }
             }
             Some((id, bytes)) = from_sub_connections_receiver.recv() => {
-                let msg: SCCMsg<S, E> = SCCMsg::SubConnMsg { id, bytes, _encoder: Default::default() };
-                if let Err(_closed) = conn.send(msg).await {
-                    return Closed::Normal
-                }
+                conn.send(SCCMsg::SubConnMsg { id, bytes }).await?;
             }
         }
     }
@@ -124,6 +104,7 @@ pub async fn authenticate_conn<E: Encoder>(
         None => {
             let err: Result<ServerHello, Closed> = Err(Closed::InvalidCredentials);
             conn.send(err).await?;
+            conn.close().await;
             Err(Closed::InvalidCredentials)
         }
     }

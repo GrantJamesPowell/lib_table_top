@@ -11,6 +11,11 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::Arc;
 
+/// This will eventually be the output from a macro
+/// Something like `supported_games!(GuessTheNumber, TicTacToe)` or
+/// `supported_games!(./path/to/config.toml)`, I'm writing it out by hand here to figure out how
+/// the macro should work
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ExampleSupportedGames<E: Encoder> {
     GuessTheNumber(std::marker::PhantomData<E>),
@@ -60,6 +65,13 @@ impl<E: Encoder> SupportedGames<E> for ExampleSupportedGames<E> {
                 let runtime = runtimes.get_guess_the_number_run_time();
                 run_server_sub_conn::<GuessTheNumber, E, C>(conn, runtime).await
             }
+        }
+    }
+
+    fn try_from_str(s: &str) -> Option<Self> {
+        match s {
+            "GuessTheNumber" => Some(ExampleSupportedGames::GuessTheNumber(Default::default())),
+            _ => None,
         }
     }
 }
