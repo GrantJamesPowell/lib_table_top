@@ -16,6 +16,10 @@ smallvec = { version = "1.7.0", features = ["serde"] }
 tokio = { version = "1", features = ["rt", "test-util", "macros"] }
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 async-trait = "0.1.51"
+tokio-tungstenite = { version = "0.16.0", optional = true }
+
+[features]
+ws = ["tokio-tungstenite"]
 
 [dev-dependencies]
 lttcore = { path = "../lttcore", features = ["encoder", "json_encoder", "bincode_encoder"] }
