@@ -9,6 +9,12 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SubConnectionId(Uuid);
 
+impl SubConnectionId {
+    pub fn new() -> Self {
+        Self(Uuid::new_v4())
+    }
+}
+
 #[async_trait]
 pub trait ConnectionIO<E: Encoder>: Send + Sync {
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;

@@ -13,11 +13,13 @@ pub enum ClientConnControlMsg<S: SupportedGames<E>, E: Encoder> {
     StartSubConn {
         id: SubConnectionId,
         game_type: S,
+        #[serde(skip)]
         _encoder: std::marker::PhantomData<E>,
     },
     SubConnMsg {
         id: SubConnectionId,
         bytes: Bytes,
+        #[serde(skip)]
         _encoder: std::marker::PhantomData<E>,
     },
 }
@@ -28,16 +30,19 @@ pub enum ServerConnControlMsg<S: SupportedGames<E>, E: Encoder> {
     SubConnStarted {
         id: SubConnectionId,
         game_type: S,
+        #[serde(skip)]
         _encoder: std::marker::PhantomData<E>,
     },
     SubConnMsg {
         id: SubConnectionId,
         bytes: Bytes,
+        #[serde(skip)]
         _encoder: std::marker::PhantomData<E>,
     },
     SubConnClosed {
         id: SubConnectionId,
         reason: Closed,
+        #[serde(skip)]
         _encoder: std::marker::PhantomData<E>,
     },
 }
