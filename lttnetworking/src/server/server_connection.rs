@@ -14,13 +14,19 @@ use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc;
 
-pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
-    authenticate: &impl Authenticate,
+pub async fn run_server_connection<Games, Enc, Conn, Auth>(
+    authenticate: Auth,
     server_info: &ServerInfo,
-    runtimes: Arc<S::Runtimes>,
-    mut conn: impl RawConnection<E>,
-) -> Result<Closed, Closed> {
-    let _user = authenticate_conn(authenticate, server_info, &mut conn).await?;
+    runtimes: Arc<Games::Runtimes>,
+    mut conn: Conn,
+) -> Result<Closed, Closed>
+where
+    Games: SupportedGames<Enc>,
+    Enc: Encoder,
+    Conn: RawConnection<Enc>,
+    Auth: Authenticate,
+{
+    let _user = authenticate_conn(&authenticate, server_info, &mut conn).await?;
     let (from_sub_connections_sender, mut from_sub_connections_receiver) =
         mpsc::unbounded_channel::<(SubConnId, Bytes)>();
 
@@ -39,11 +45,11 @@ pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
                             continue
                         }
 
-                        match S::try_from_str(&game_type) {
+                        match Games::try_from_str(&game_type) {
                             Some(game_type) => {
                                 let (sender, receiver) = mpsc::unbounded_channel();
 
-                                let sub_conn: SubConnection<E> = SubConnection {
+                                let sub_conn: SubConnection<Enc> = SubConnection {
                                     id,
                                     receiver,
                                     sender: Some(from_sub_connections_sender.clone()),
@@ -85,10 +91,10 @@ pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
     }
 }
 
-pub async fn authenticate_conn<E: Encoder>(
-    auth: &impl Authenticate,
+pub async fn authenticate_conn<Enc: Encoder>(
+    auth: &dyn Authenticate,
     server_info: &ServerInfo,
-    conn: &mut impl ConnectionIO<E>,
+    conn: &mut impl ConnectionIO<Enc>,
 ) -> Result<User, Closed> {
     let ClientHello { credentials } = conn.next().await?;
 

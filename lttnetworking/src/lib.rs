@@ -10,6 +10,9 @@ mod example_supported_games;
 mod supported_games;
 pub use supported_games::SupportedGames;
 
+#[cfg(feature = "ws")]
+pub mod ws;
+
 mod user;
 pub use user::User;
 
