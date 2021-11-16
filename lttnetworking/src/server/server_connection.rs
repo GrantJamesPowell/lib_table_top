@@ -9,14 +9,15 @@ use crate::SupportedGames;
 use crate::User;
 use bytes::Bytes;
 use lttcore::encoder::Encoder;
-
 use std::collections::HashMap;
+use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc;
 
 pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
     authenticate: &impl Authenticate,
     server_info: &ServerInfo,
+    runtimes: Arc<S::Runtimes>,
     mut conn: impl RawConnection<E>,
 ) -> Closed {
     let _user = match authenticate_conn(authenticate, server_info, &mut conn).await {
@@ -50,7 +51,7 @@ pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
                             };
 
                             sub_connections.insert(id, sender);
-                            tokio::spawn(game_type.run_server_sub_conn(sub_conn));
+                            tokio::spawn(game_type.run_server_sub_conn(sub_conn, Arc::clone(&runtimes)));
 
                             let msg: SCCMsg<S, E> = SCCMsg::SubConnStarted { id, game_type, _encoder: Default::default() };
 

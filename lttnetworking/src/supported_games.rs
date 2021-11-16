@@ -5,10 +5,17 @@ use lttcore::encoder::Encoder;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::sync::Arc;
 
 #[async_trait]
 pub trait SupportedGames<E: Encoder>:
     Debug + Clone + Copy + PartialEq + Eq + Send + Sync + Hash + Serialize + DeserializeOwned + 'static
 {
-    async fn run_server_sub_conn<C: ConnectionIO<E>>(self, conn: C) -> Result<(), Closed>;
+    type Runtimes;
+
+    async fn run_server_sub_conn<C: ConnectionIO<E>>(
+        self,
+        conn: C,
+        runtimes: Arc<Self::Runtimes>,
+    ) -> Result<(), Closed>;
 }

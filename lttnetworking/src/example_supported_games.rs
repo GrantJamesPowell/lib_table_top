@@ -25,13 +25,13 @@ pub struct ExampleSupportedGamesRuntimes<E: Encoder> {
 }
 
 impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
-    pub fn init() -> Self {
-        Self {
+    pub fn init() -> Arc<Self> {
+        Arc::new(Self {
             runtimes: HashMap::from([(
                 ExampleSupportedGames::GuessTheNumber(Default::default()),
                 ExampleSupportedRuntimesEnum::GuessTheNumber(Arc::new(Runtime::start())),
             )]),
-        }
+        })
     }
 
     pub fn get_guess_the_number_run_time(&self) -> Arc<Runtime<GuessTheNumber, E>> {
@@ -48,10 +48,17 @@ impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
 
 #[async_trait]
 impl<E: Encoder> SupportedGames<E> for ExampleSupportedGames<E> {
-    async fn run_server_sub_conn<C: ConnectionIO<E>>(self, conn: C) -> Result<(), Closed> {
+    type Runtimes = ExampleSupportedGamesRuntimes<E>;
+
+    async fn run_server_sub_conn<C: ConnectionIO<E>>(
+        self,
+        conn: C,
+        runtimes: Arc<Self::Runtimes>,
+    ) -> Result<(), Closed> {
         match self {
             ExampleSupportedGames::GuessTheNumber(_) => {
-                run_server_sub_conn::<GuessTheNumber, E, C>(conn).await
+                let runtime = runtimes.get_guess_the_number_run_time();
+                run_server_sub_conn::<GuessTheNumber, E, C>(conn, runtime).await
             }
         }
     }
