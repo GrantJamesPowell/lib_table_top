@@ -1,9 +1,10 @@
 use bytes::Bytes;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
+use std::hash::Hash;
 
-pub trait Encoder: Send + Sync + 'static {
-    type Error: Debug + std::error::Error;
+pub trait Encoder: Debug + Clone + Copy + PartialEq + Eq + Hash + Send + Sync + 'static {
+    type Error: Debug + Send + Sync + std::error::Error;
 
     fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error>;
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error>;
@@ -15,6 +16,7 @@ pub mod bincode {
     use bytes::Bytes;
     use serde::{de::DeserializeOwned, Serialize};
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct BincodeEncoder;
 
     impl Encoder for BincodeEncoder {
@@ -35,6 +37,7 @@ pub mod json {
     use bytes::Bytes;
     use serde::{de::DeserializeOwned, Serialize};
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct JsonEncoder;
 
     impl Encoder for JsonEncoder {
@@ -49,6 +52,7 @@ pub mod json {
         }
     }
 
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct PrettyJsonEncoder;
 
     impl Encoder for PrettyJsonEncoder {

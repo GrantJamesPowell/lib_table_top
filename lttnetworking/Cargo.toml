@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bytes = "1.1.0"
+bytes = { version = "1", features = ["serde"] }
 lttcore = { path = "../lttcore", features = ["encoder"] }
 lttruntime = { path = "../lttruntime" }
 rand = "0.8.0"

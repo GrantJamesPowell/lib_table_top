@@ -6,8 +6,9 @@ pub mod connection;
 pub mod messages;
 pub mod server;
 
-mod supported_game;
-pub use supported_game::SupportedGames;
+mod example_supported_games;
+mod supported_games;
+pub use supported_games::SupportedGames;
 
 mod user;
 pub use user::User;
