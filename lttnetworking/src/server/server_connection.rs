@@ -8,13 +8,13 @@ use crate::messages::{
 use crate::SupportedGames;
 use crate::User;
 use bytes::Bytes;
-use lttcore::{encoder::Encoder};
+use lttcore::encoder::Encoder;
 
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;
 
-pub async fn server_connection<S: SupportedGames, E: Encoder>(
+pub async fn server_connection<S: SupportedGames<E>, E: Encoder>(
     authenticate: &impl Authenticate,
     server_info: &ServerInfo,
     mut conn: impl RawConnection<E>,
@@ -36,9 +36,9 @@ pub async fn server_connection<S: SupportedGames, E: Encoder>(
     loop {
         select! {
             biased;
-            msg = conn.next::<CCCMsg<S>>() => {
+            msg = conn.next::<CCCMsg<S, E>>() => {
                 match msg {
-                    Ok(CCCMsg::StartSubConn { id, game_type }) => {
+                    Ok(CCCMsg::StartSubConn { id, game_type, .. }) => {
                         if !sub_connections.contains_key(&id) {
                             let (sender, receiver) = mpsc::unbounded_channel();
 
@@ -52,26 +52,26 @@ pub async fn server_connection<S: SupportedGames, E: Encoder>(
                             sub_connections.insert(id, sender);
                             tokio::spawn(game_type.run_server_sub_conn(sub_conn));
 
-                            let msg: SCCMsg<S> = SCCMsg::SubConnStarted { id, game_type };
+                            let msg: SCCMsg<S, E> = SCCMsg::SubConnStarted { id, game_type, _encoder: Default::default() };
 
                             if let Err(closed) = conn.send(msg).await {
                                 return closed
                             }
                         } else {
                             // Client provided an already in use sub connection id
-                            let msg: SCCMsg<S> = SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} already exists", id)) };
+                            let msg: SCCMsg<S, E> = SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} already exists", id)), _encoder: Default::default() };
 
                             if let Err(closed) = conn.send(msg).await {
                                 return closed
                             }
                         }
                     }
-                    Ok(CCCMsg::SubConnMsg { id, bytes }) => {
+                    Ok(CCCMsg::SubConnMsg { id, bytes, .. }) => {
                         match sub_connections.get(&id).map(|sender| sender.send(bytes)) {
                             Some(Ok(())) => continue,
                             Some(Err(_)) => {
                                 // The server sub conn state machine died
-                                let msg: SCCMsg<S> = SCCMsg::SubConnClosed { id, reason: Closed::ServerError };
+                                let msg: SCCMsg<S, E> = SCCMsg::SubConnClosed { id, reason: Closed::ServerError, _encoder: Default::default() };
                                 sub_connections.remove(&id);
 
                                 if let Err(closed) = conn.send(msg).await {
@@ -80,7 +80,7 @@ pub async fn server_connection<S: SupportedGames, E: Encoder>(
                             }
                             None => {
                                 // The client sent a message to a dead/non-existant server sub connection
-                                let msg: SCCMsg<S>= SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} doesn't exist", id)) };
+                                let msg: SCCMsg<S, E>= SCCMsg::SubConnClosed { id, reason: Closed::ClientError(format!("{:?} doesn't exist", id)), _encoder: Default::default() };
 
                                 if let Err(closed) = conn.send(msg).await {
                                     return closed
@@ -95,7 +95,7 @@ pub async fn server_connection<S: SupportedGames, E: Encoder>(
                 }
             }
             Some((id, bytes)) = from_sub_connections_receiver.recv() => {
-                let msg: SCCMsg<S> = SCCMsg::SubConnMsg { id, bytes };
+                let msg: SCCMsg<S, E> = SCCMsg::SubConnMsg { id, bytes, _encoder: Default::default() };
                 if let Err(_closed) = conn.send(msg).await {
                     return Closed::Normal
                 }
