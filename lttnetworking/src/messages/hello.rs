@@ -9,4 +9,10 @@ pub struct ClientHello {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServerHello {
     pub user: User,
+    pub server_info: ServerInfo,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ServerInfo {
+    pub max_sub_connections: usize,
 }

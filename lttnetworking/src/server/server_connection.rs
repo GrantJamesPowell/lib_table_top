@@ -1,25 +1,74 @@
 use crate::auth::Authenticate;
-use crate::connection::ConnectionIO;
-use crate::messages::hello::{ClientHello, ServerHello};
-use crate::messages::Closed;
-use crate::{SupportedGames, User};
+use crate::connection::{ConnectionIO, RawConnection};
+use crate::id::SubConnectionId;
+use crate::messages::{
+    closed::Closed,
+    conn_ctrl::{ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg},
+    hello::{ClientHello, ServerHello, ServerInfo},
+};
+use crate::SupportedGames;
+use crate::User;
+use bytes::Bytes;
+use lttcore::encoder::Encoder;
+use lttruntime::Runtime;
+use std::collections::HashMap;
+use tokio::sync::mpsc::UnboundedSender;
 
-pub async fn server_connection<SG: SupportedGames>(
-    _authenticate: &mut impl Authenticate,
-    _conn: &mut impl ConnectionIO,
-) {
-    todo!()
+pub async fn server_connection<S: SupportedGames, E: Encoder, R: RawConnection<E>>(
+    authenticate: &impl Authenticate,
+    server_info: &ServerInfo,
+    conn: R,
+) -> Closed {
+    let mut conn: ConnectionIO<R, E> = conn.into();
+
+    let user = match authenticate_conn(authenticate, server_info, &mut conn).await {
+        Ok(user) => user,
+        Err(closed) => {
+            conn.close().await;
+            return closed;
+        }
+    };
+
+    let sub_connections: HashMap<SubConnectionId, UnboundedSender<Bytes>> = Default::default();
+
+    while let Ok(msg) = conn.next::<CCCMsg<S>>().await {
+        match msg {
+            CCCMsg::StartSubConn {
+                id: _,
+                game_type: _,
+            } => {
+                todo!()
+            }
+            CCCMsg::SubConnMsg { id, bytes } => {
+                match sub_connections.get(&id).map(|sender| sender.send(bytes)) {
+                    Some(Ok(())) => continue,
+                    Some(Err(_)) => {
+                        todo!("When the sender fails")
+                    }
+                    None => {
+                        todo!("client sent an invalid sub connection id")
+                    }
+                }
+            }
+        }
+    }
+
+    Closed::Normal
 }
 
-pub async fn authenticate(
-    auth: &mut impl Authenticate,
-    conn: &mut impl ConnectionIO,
+pub async fn authenticate_conn<R: RawConnection<E>, E: Encoder>(
+    auth: &impl Authenticate,
+    server_info: &ServerInfo,
+    conn: &mut ConnectionIO<R, E>,
 ) -> Result<User, Closed> {
     let ClientHello { credentials } = conn.next().await?;
 
     match auth.authenticate(&credentials).await {
         Some(user) => {
-            let hello: Result<ServerHello, Closed> = Ok(ServerHello { user: user.clone() });
+            let hello: Result<ServerHello, Closed> = Ok(ServerHello {
+                user: user.clone(),
+                server_info: server_info.clone(),
+            });
             conn.send(hello).await?;
             Ok(user)
         }
@@ -30,21 +79,3 @@ pub async fn authenticate(
         }
     }
 }
-
-// pub async fn choose_and_authorize_mode<SG: SupportedGames>(
-//     user: &User,
-//     auth: &mut impl Authorize<SG>,
-//     conn: &mut impl ConnectionIO,
-// ) -> Result<Mode<SG>, Closed> {
-//     let mode: Mode<SG> = conn.next().await?;
-//
-//     if auth.authorize(user, &mode).await {
-//         let msg: Result<Mode<SG>, Closed> = Ok(mode);
-//         conn.send(msg.clone()).await?;
-//         msg
-//     } else {
-//         let msg: Result<Mode<SG>, Closed> = Err(Closed::Unauthorized);
-//         conn.send(msg.clone()).await?;
-//         msg
-//     }
-// }

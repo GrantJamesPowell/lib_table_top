@@ -19,7 +19,7 @@ impl<T: Play> ModeSelection<T> {
     pub fn contains(&self, mode: &Mode<T>) -> bool {
         match self {
             ModeSelection::All => true,
-            ModeSelection::Specific(set) => set.contains(mode)
+            ModeSelection::Specific(set) => set.contains(mode),
         }
     }
 }

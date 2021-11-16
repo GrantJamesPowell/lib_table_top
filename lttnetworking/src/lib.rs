@@ -3,11 +3,12 @@
 pub mod auth;
 pub mod client;
 pub mod connection;
+mod id;
 pub mod messages;
 pub mod server;
 
-mod supported_game;
-pub use supported_game::SupportedGames;
+mod supported_games;
+pub use supported_games::SupportedGames;
 
 mod user;
 pub use user::User;
