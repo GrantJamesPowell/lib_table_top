@@ -26,7 +26,7 @@ where
     Conn: RawConnection<Enc>,
     Auth: Authenticate,
 {
-    let _user = authenticate_conn(&authenticate, server_info, &mut conn).await?;
+    let _user = authenticate_conn(&authenticate, &server_info, &mut conn).await?;
     let (from_sub_connections_sender, mut from_sub_connections_receiver) =
         mpsc::unbounded_channel::<(SubConnId, Bytes)>();
 

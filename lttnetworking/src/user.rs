@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use lttcore::id::UserId;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct User {
     pub username: String,
-    pub user_id: Uuid,
+    pub user_id: UserId,
 }

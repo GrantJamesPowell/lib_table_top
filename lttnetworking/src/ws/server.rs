@@ -10,7 +10,7 @@ use tokio::net::TcpStream;
 
 pub async fn accept_connection<Games, Enc, Auth>(
     authenticate: Auth,
-    server_info: &ServerInfo,
+    server_info: Arc<ServerInfo>,
     runtimes: Arc<Games::Runtimes>,
     stream: TcpStream,
 ) -> Result<Closed, Closed>
@@ -24,5 +24,5 @@ where
         .map_err(|_| Closed::Hangup)?;
 
     let ws: WSConnection<_, Enc> = ws.into();
-    run_server_connection::<Games, Enc, _, _>(authenticate, server_info, runtimes, ws).await
+    run_server_connection::<Games, Enc, _, _>(authenticate, &server_info, runtimes, ws).await
 }
