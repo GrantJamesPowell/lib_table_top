@@ -35,9 +35,9 @@ impl PartialEq<Player> for Marker {
     }
 }
 
-impl Into<Player> for Marker {
-    fn into(self) -> Player {
-        match self {
+impl From<Marker> for Player {
+    fn from(marker: Marker) -> Player {
+        match marker {
             Marker::X => 0.into(),
             Marker::O => 1.into(),
         }

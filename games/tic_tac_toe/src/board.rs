@@ -1,30 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Col(u8);
 
-impl Default for Col {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
-impl Into<u8> for Col {
-    fn into(self) -> u8 {
-        self.0
-    }
-}
-
-impl Into<usize> for Col {
-    fn into(self) -> usize {
-        self.0 as usize
+impl From<Col> for u8 {
+    fn from(Col(n): Col) -> Self {
+        n
     }
 }
 
 impl Col {
     /// Returns the column as a usize
     pub fn as_usize(&self) -> usize {
-        (*self).into()
+        self.0 as usize
     }
 
     /// Returns the next column, wrapping back to 0 after 2
@@ -95,28 +83,16 @@ impl Col {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Row(u8);
 
-impl Default for Row {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
-impl Into<u8> for Row {
-    fn into(self) -> u8 {
-        self.0
-    }
-}
-
-impl Into<usize> for Row {
-    fn into(self) -> usize {
-        self.0 as usize
+impl From<Row> for u8 {
+    fn from(Row(n): Row) -> Self {
+        n
     }
 }
 
 impl Row {
     /// Returns the column as a usize
     pub fn as_usize(&self) -> usize {
-        (*self).into()
+        self.0 as usize
     }
 
     /// Returns the next column, wrapping back to 0 after 2

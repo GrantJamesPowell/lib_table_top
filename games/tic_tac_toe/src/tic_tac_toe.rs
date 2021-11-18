@@ -109,7 +109,7 @@ impl TicTacToe {
 
         POSSIBLE_WINS
             .iter()
-            .filter_map(|&positions| {
+            .find_map(|&positions| {
                 let [a, b, c] = positions.map(|pos| self.at_position(pos));
 
                 if a == b && b == c {
@@ -118,7 +118,6 @@ impl TicTacToe {
                     None
                 }
             })
-            .next()
             .unwrap_or_else(|| {
                 if !self.has_open_spaces() {
                     Draw
@@ -248,8 +247,8 @@ impl TicTacToe {
     /// assert_eq!(game.at((1000, 0)), None);
     /// ```
     pub fn at(&self, (c, r): (usize, usize)) -> Option<Player> {
-        let col = Col::try_new(c.try_into().ok()?)?;
-        let row = Row::try_new(r.try_into().ok()?)?;
+        let col = Col::try_new(c)?;
+        let row = Row::try_new(r)?;
 
         self.at_position((col, row))
     }
@@ -319,15 +318,9 @@ impl TicTacToe {
     /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Player>)> + '_ {
         self.board.iter().enumerate().flat_map(|(col_num, col)| {
-            col.iter().enumerate().map(move |(row_num, &player)| {
-                (
-                    (
-                        Col::new(col_num.try_into().unwrap()),
-                        Row::new(row_num.try_into().unwrap()),
-                    ),
-                    player,
-                )
-            })
+            col.iter()
+                .enumerate()
+                .map(move |(row_num, &player)| ((Col::new(col_num), Row::new(row_num)), player))
         })
     }
 
@@ -399,7 +392,7 @@ impl TicTacToe {
         TWO_PLAYER
             .players()
             .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
-            .unwrap_or(NumberOfPlayers::starting_player())
+            .unwrap_or_else(NumberOfPlayers::starting_player)
     }
 
     /// Convenience method to construct a board from arrays of ints, mostly used as the

@@ -84,7 +84,7 @@ async fn main() -> Result<()> {
             .value_of("SERVER")
             // TODO: // Handle bad urls
             .map(|server| Url::parse(server).unwrap())
-            .unwrap_or(Url::parse("localhost:8080").unwrap());
+            .unwrap_or_else(|| Url::parse("localhost:8080").unwrap());
 
         if matches.subcommand_matches("whoami").is_some() {
             let jobs = [].into_iter();
