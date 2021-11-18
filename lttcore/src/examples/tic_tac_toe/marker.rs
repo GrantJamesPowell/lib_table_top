@@ -1,4 +1,4 @@
-use lttcore::Player;
+use crate::Player;
 
 /// Conveniences for Player 0 and Player 1
 ///
@@ -7,7 +7,7 @@ use lttcore::Player;
 /// can be used in their stead
 /// ```
 /// use lttcore::Player;
-/// use tic_tac_toe::Marker::*;
+/// use lttcore::examples::tic_tac_toe::Marker::*;
 ///
 /// let p0: Player = 0.into();
 /// let p1: Player = 1.into();

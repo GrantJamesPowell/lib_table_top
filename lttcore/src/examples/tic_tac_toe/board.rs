@@ -52,7 +52,7 @@ impl BoardIndex {
     /// Returns the next `BoardIndex`, wrapping back to 0 after 2
     ///
     /// ```
-    /// use tic_tac_toe::BoardIndex;
+    /// use lttcore::examples::tic_tac_toe::BoardIndex;
     ///
     /// assert_eq!(BoardIndex::new(0).next(), BoardIndex::new(1));
     /// assert_eq!(BoardIndex::new(1).next(), BoardIndex::new(2));
@@ -70,7 +70,7 @@ impl BoardIndex {
     /// Returns the previous `BoardIndex`, wrapping back to 2 after 0
     ///
     /// ```
-    /// use tic_tac_toe::BoardIndex;
+    /// use lttcore::examples::tic_tac_toe::BoardIndex;
     ///
     /// assert_eq!(BoardIndex::new(2).previous(), BoardIndex::new(1));
     /// assert_eq!(BoardIndex::new(1).previous(), BoardIndex::new(0));
@@ -92,7 +92,7 @@ impl BoardIndex {
     /// panics if n is outside of 0..=2
     ///
     /// ```should_panic
-    /// use tic_tac_toe::BoardIndex;
+    /// use lttcore::examples::tic_tac_toe::BoardIndex;
     /// BoardIndex::new(1000);
     /// ```
     pub fn new(n: usize) -> Self {
@@ -102,7 +102,7 @@ impl BoardIndex {
     /// Try to construct a `BoardIndex`, returning None if n is out of bounds
     ///
     /// ```
-    /// use tic_tac_toe::BoardIndex;
+    /// use lttcore::examples::tic_tac_toe::BoardIndex;
     /// assert!(BoardIndex::try_new(1).is_some());
     /// assert!(BoardIndex::try_new(1000).is_none());
     /// ```

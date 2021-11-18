@@ -1,7 +1,6 @@
 [workspace]
 
 members = [
-    "games/tic_tac_toe",
     "lttcore",
     "lttruntime",
     "lttnetworking",

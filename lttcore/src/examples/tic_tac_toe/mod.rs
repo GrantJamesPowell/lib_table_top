@@ -1,12 +1,18 @@
-use super::Settings;
+mod action;
+mod board;
+pub mod helpers;
+mod marker;
+mod public_info;
+mod settings;
+
+pub use action::{Action, ActionError};
+pub use board::{BoardIndex, Col, Position, Row, POSSIBLE_WINS};
+pub use marker::Marker;
+pub use public_info::{PublicInfo, PublicInfoUpdate};
+pub use settings::Settings;
+
+use crate::play::view::NoSecretPlayerInfo;
 use crate::{
-    helpers::opponent,
-    Action,
-    ActionError::{self, *},
-    Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
-};
-use lttcore::play::view::NoSecretPlayerInfo;
-use lttcore::{
     play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
     NumberOfPlayers, Play, Player, PlayerSet,
@@ -43,7 +49,7 @@ impl TicTacToe {
     ///
     /// ```
     /// use lttcore::Play;
-    /// use tic_tac_toe::{TicTacToe, Status::*, Marker::*, PublicInfoUpdate::*};
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Status::*, Marker::*, PublicInfoUpdate::*};
     ///
     /// let mut game: TicTacToe = Default::default();
     /// assert_eq!(game.status(), InProgress{ next_up: X.into() });
@@ -63,7 +69,8 @@ impl TicTacToe {
     /// Returns the status of the current game
     /// ```
     /// use lttcore::{Play, Player};
-    /// use tic_tac_toe::{ttt, TicTacToe, Row, Col, Status::*, Marker::*};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Row, Col, Status::*, Marker::*};
     ///
     /// // In progress
     /// let game: TicTacToe = Default::default();
@@ -104,7 +111,7 @@ impl TicTacToe {
     pub fn status(&self) -> Status {
         if let Some(loser) = self.resigned().players().next() {
             return WinByResignation {
-                winner: opponent(loser),
+                winner: helpers::opponent(loser),
             };
         }
 
@@ -133,7 +140,7 @@ impl TicTacToe {
     /// Claims a space for a marker, returns an error if that space is taken
     ///
     /// ```
-    /// use tic_tac_toe::{TicTacToe, Marker::*, Col, Row, ActionError::*};
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Marker::*, Col, Row, ActionError::*};
     ///
     /// let mut game: TicTacToe = Default::default();
     /// let pos = (Col::new(0), Row::new(0));
@@ -153,7 +160,7 @@ impl TicTacToe {
         let player = player.into();
 
         if self.at_position(position).is_some() {
-            return Err(SpaceIsTaken {
+            return Err(ActionError::SpaceIsTaken {
                 attempted: position,
             });
         }
@@ -168,7 +175,8 @@ impl TicTacToe {
     /// Designed to be deterministic to be used for defaulting moves
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Marker::*, PublicInfoUpdate::*, Col, Row};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{Marker::*, PublicInfoUpdate::*, Col, Row};
     ///
     /// let mut game = ttt!([
     ///     - - -
@@ -207,7 +215,10 @@ impl TicTacToe {
         &mut self,
         player: impl Into<Player>,
     ) -> Result<PublicInfoUpdate, ActionError> {
-        let position = self.empty_spaces().next().ok_or(AllSpacesTaken)?;
+        let position = self
+            .empty_spaces()
+            .next()
+            .ok_or(ActionError::AllSpacesTaken)?;
         self.claim_space(player, position)
     }
 
@@ -215,7 +226,8 @@ impl TicTacToe {
     /// the indexing will always be inbound
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{Row, Col, Marker::*};
     ///
     /// let game = ttt!([
     ///   X - -
@@ -235,7 +247,8 @@ impl TicTacToe {
     /// Returns a marker at a position, if the row or col is greater than 2, this returns None
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{Row, Col, Marker::*};
     ///
     /// let game = ttt!([
     ///   X - -
@@ -260,7 +273,8 @@ impl TicTacToe {
     /// Iterator over the empty spaces on the board
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, TicTacToe, Row, Col, Marker::*, Position};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Row, Col, Marker::*, Position};
     ///
     /// let game: TicTacToe = Default::default();
     /// assert_eq!(game.empty_spaces().count(), 9);
@@ -298,7 +312,8 @@ impl TicTacToe {
     /// Iterate over the spaces on the board and the marker in the space (if there is one)
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Row, Col, Marker::*, Position};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{Row, Col, Marker::*, Position};
     ///
     /// let game = ttt!([
     ///   X O X
@@ -331,7 +346,8 @@ impl TicTacToe {
     /// Iterate over the spaces on the board that are taken
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, Row, Col, Marker::*};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{Row, Col, Marker::*};
     ///
     /// let game = ttt!([
     ///   X O X
@@ -356,7 +372,8 @@ impl TicTacToe {
     /// Return the marker who's turn it is
     ///
     /// ```
-    /// use tic_tac_toe::{ttt, TicTacToe, Marker::*};
+    /// use lttcore::ttt;
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Marker::*};
     ///
     /// // Starts with X
     /// let game: TicTacToe = Default::default();
@@ -399,20 +416,16 @@ impl TicTacToe {
             .unwrap_or_else(NumberOfPlayers::starting_player)
     }
 
-    /// Convenience method to construct a board from arrays of ints, mostly used as the
+    /// Convenience method to construct a board from arrays of `Option<Marker>`, mostly used as the
     /// implementation of the `ttt!` macro
-    /// 0 => None
-    /// 1 => Some(X | Player::new(0))
-    /// 2 => Some(O | Player::new(1))
-    ///
     /// ```
     /// // An empty board
-    /// use tic_tac_toe::{TicTacToe, Col, Row, Marker::*};
-    /// let game = TicTacToe::from_ints(
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Col, Row, Marker::*};
+    /// let game = TicTacToe::from_markers(
     ///   [
-    ///     [0, 0, 0],
-    ///     [0, 0, 0],
-    ///     [0, 0, 0]
+    ///     [None, None, None],
+    ///     [None, None, None],
+    ///     [None, None, None]
     ///   ]
     /// );
     ///
@@ -420,11 +433,11 @@ impl TicTacToe {
     ///
     /// // With some things on the board
     ///
-    /// let game = TicTacToe::from_ints(
+    /// let game = TicTacToe::from_markers(
     ///   [
-    ///     [1, 0, 0],
-    ///     [2, 1, 0],
-    ///     [0, 0, 0]
+    ///     [Some(X), None, None],
+    ///     [Some(O), Some(X), None],
+    ///     [None, None, None]
     ///   ]
     /// );
     ///
@@ -437,31 +450,8 @@ impl TicTacToe {
     ///   ]
     /// )
     /// ```
-    ///
-    /// # Panics
-    ///
-    /// Will panic if the number is outside of 0..=2
-    ///
-    /// ```should_panic
-    /// use tic_tac_toe::TicTacToe;
-    ///
-    /// TicTacToe::from_ints(
-    ///   [
-    ///     [0, 0, 0],
-    ///     [0, 3, 0],
-    ///     [0, 0, 0]
-    ///   ]
-    /// );
-    /// ```
-    pub fn from_ints(board: [[u16; 3]; 3]) -> Self {
-        let board = board.map(|col| {
-            col.map(|n| match n {
-                0 => None,
-                1 => Some(0.into()),
-                2 => Some(1.into()),
-                _ => panic!("Invalid number, must ints must be within 0..=2"),
-            })
-        });
+    pub fn from_markers(board: [[Option<Marker>; 3]; 3]) -> Self {
+        let board = board.map(|col| col.map(|opt_marker| opt_marker.map(|marker| marker.into())));
 
         Self {
             board,
@@ -472,7 +462,7 @@ impl TicTacToe {
     /// is the board full?
     ///
     /// ```
-    /// use tic_tac_toe::ttt;
+    /// use lttcore::ttt;
     ///
     /// let game = ttt!([
     ///   X X X

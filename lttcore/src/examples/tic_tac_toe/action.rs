@@ -1,4 +1,4 @@
-use crate::Position;
+use super::Position;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 

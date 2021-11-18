@@ -1,7 +1,8 @@
+use lttcore::examples::tic_tac_toe::{Action, ActionError, Col, Row};
+use lttcore::ttt;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;
-use tic_tac_toe::{ttt, Action, ActionError, Col, Row};
 
 #[test]
 fn test_serde_row_col() {

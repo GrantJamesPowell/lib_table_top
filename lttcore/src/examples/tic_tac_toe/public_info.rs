@@ -1,5 +1,5 @@
-use crate::{Position, TicTacToe};
-use lttcore::{Player, View};
+use super::{Position, TicTacToe};
+use crate::{Player, View};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ops::Deref;
