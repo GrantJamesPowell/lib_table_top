@@ -4,18 +4,24 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0"
+async-trait = "0.1.51"
 bytes = { version = "1", features = ["serde"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+hex = { version = "0.4.3", features = ["serde"] }
 lttcore = { path = "../lttcore", features = ["encoder"] }
 lttruntime = { path = "../lttruntime" }
 rand = "0.8.0"
 serde = { version = "1.0", features = ["derive", "rc"] }
-hex = { version = "0.4.3", features = ["serde"] }
-uuid = { version = "0.8.2", features = ["serde", "v4"] }
-anyhow = "1.0"
 smallvec = { version = "1.7.0", features = ["serde"] }
+thiserror = "1.0.23"
 tokio = { version = "1", features = ["rt", "test-util", "macros"] }
-futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
-async-trait = "0.1.51"
+tokio-tungstenite = { version = "0.16.0", optional = true }
+url = "2.2.2"
+uuid = { version = "0.8.2", features = ["serde", "v4"] }
+
+[features]
+ws = ["tokio-tungstenite"]
 
 [dev-dependencies]
 lttcore = { path = "../lttcore", features = ["encoder", "json_encoder", "bincode_encoder"] }

@@ -1,30 +1,22 @@
+use super::Job;
 use crate::connection::{ConnectionIO, RawConnection, SubConnId, SubConnection};
 use crate::messages::closed::Closed;
-use crate::messages::conn_ctrl::{
-    ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg, SubConnMode,
-};
+use crate::messages::conn_ctrl::{ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg};
 use crate::messages::hello::{ClientHello, ServerHello, ServerInfo};
 use crate::{Token, User};
-use async_trait::async_trait;
+
 use bytes::Bytes;
 use lttcore::encoder::Encoder;
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;
 
-#[async_trait]
-pub trait Job<E: Encoder> {
-    async fn run(self, sub_conn: SubConnection<E>);
-    fn game_type(&self) -> &'static str;
-    fn sub_conn_mode(&self) -> SubConnMode;
-}
-
 struct State<E: Encoder> {
     pending: HashMap<SubConnId, Box<dyn Job<E>>>,
     running: HashMap<SubConnId, mpsc::UnboundedSender<Bytes>>,
 }
 
-pub async fn client_connection<E: Encoder>(
+pub async fn run_client_connection<E: Encoder>(
     credentials: Token,
     max_concurrency: u8,
     mut jobs: impl Iterator<Item = Box<dyn Job<E>>>,
