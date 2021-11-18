@@ -4,9 +4,10 @@ use crate::client::run_client_connection;
 use crate::messages::closed::Closed;
 use crate::ws::connection::WSConnection;
 use lttcore::encoder::Encoder;
+use url::Url;
 
 pub async fn run_jobs<Enc>(
-    addr: String,
+    addr: Url,
     credentials: Token,
     max_concurrency: u8,
     jobs: impl Iterator<Item = Box<dyn Job<Enc>>>,
