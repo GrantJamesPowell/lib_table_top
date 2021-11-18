@@ -1,9 +1,7 @@
 use super::Job;
 use crate::connection::{ConnectionIO, RawConnection, SubConnId, SubConnection};
 use crate::messages::closed::Closed;
-use crate::messages::conn_ctrl::{
-    ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg,
-};
+use crate::messages::conn_ctrl::{ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg};
 use crate::messages::hello::{ClientHello, ServerHello, ServerInfo};
 use crate::{Token, User};
 

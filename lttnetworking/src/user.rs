@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use lttcore::id::UserId;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct User {
