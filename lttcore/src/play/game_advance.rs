@@ -36,6 +36,10 @@ impl<T: Play> EnumeratedGameAdvance<T> {
             .find(|(p, _)| *p == player)
             .map(|(_, update)| Cow::Borrowed(update));
 
-        PlayerUpdate { player, observer_update, secret_info_update }
+        PlayerUpdate {
+            player,
+            observer_update,
+            secret_info_update,
+        }
     }
 }

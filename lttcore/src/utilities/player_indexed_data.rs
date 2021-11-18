@@ -56,7 +56,7 @@ impl<T> PlayerIndexedData<T> {
         let mut data = SmallVec::with_capacity(players.count().try_into().unwrap());
 
         for player in players {
-            data.push(func(player))
+            data.push(func(player));
         }
 
         Self { players, data }
@@ -73,7 +73,10 @@ impl<T> PlayerIndexedData<T> {
     /// assert_eq!(data.len(), 3);
     /// ```
     pub fn len(&self) -> usize {
-        self.players.count().try_into().unwrap()
+        self.players
+            .count()
+            .try_into()
+            .expect("player sets can hold up to 256 players, we don't support 16 bit platforms")
     }
 
     /// Iterate over (Player, &Item)
@@ -155,11 +158,12 @@ impl<T> PlayerIndexedData<T> {
     pub fn insert(&mut self, player: impl Into<Player>, item: T) -> Option<T> {
         let player = player.into();
 
+        #[allow(clippy::single_match_else)]
         match self.players.player_offset(player) {
             Some(idx) => Some(std::mem::replace(&mut self.data[idx as usize], item)),
             None => {
                 let idx = self.players.insert(player);
-                self.data.insert(idx.into(), item);
+                self.data.insert(idx as usize, item);
                 None
             }
         }

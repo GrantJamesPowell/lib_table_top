@@ -77,6 +77,13 @@ impl<T: Play> GameProgressionBuilder<T> {
             .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
         let history = Vector::new();
 
-        Ok(GameProgression { seed, settings, initial_state, turn_num, state, history })
+        Ok(GameProgression {
+            seed,
+            settings,
+            initial_state,
+            turn_num,
+            state,
+            history,
+        })
     }
 }

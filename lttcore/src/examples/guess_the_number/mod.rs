@@ -73,7 +73,8 @@ impl View for PublicInfo {
     type Update = PublicInfoUpdate;
 
     fn update(&mut self, update: Cow<'_, Self::Update>) {
-        let _ = std::mem::replace(self, update.into_owned().into());
+        let new: PublicInfo = update.into_owned().into();
+        let _old = std::mem::replace(self, new);
     }
 }
 
@@ -85,7 +86,7 @@ impl Play for GuessTheNumber {
     type PlayerSecretInfo = NoSecretPlayerInfo;
 
     fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
-        Cow::Owned(Default::default())
+        Cow::Owned(NoSecretPlayerInfo)
     }
 
     fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {

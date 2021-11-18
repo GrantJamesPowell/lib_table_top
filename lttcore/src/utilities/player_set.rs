@@ -60,13 +60,13 @@ fn offset(player: Player) -> usize {
 impl PlayerSet {
     /// Returns a new, empty player set
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
 
     /// The same as `new` or `Default::default` but declares intent that the programmer wants this
     /// to be empty
     pub fn empty() -> Self {
-        Default::default()
+        Self::default()
     }
 
     /// Returns the offset of the player relative to the playerset
@@ -98,7 +98,9 @@ impl PlayerSet {
             let section = self.0[section(player)];
             let mask: u64 = !(u64::MAX << offset(player));
             let section_ones = (mask & section).count_ones();
-            (initial_sections_sum + section_ones).try_into().unwrap()
+            (initial_sections_sum + section_ones)
+                .try_into()
+                .expect("offset is always 0-255")
         })
     }
 
@@ -115,12 +117,19 @@ impl PlayerSet {
     /// set.insert(1);
     /// assert_eq!(set.count(), 2);
     /// ```
-    pub fn count(&self) -> u32 {
-        self.0.iter().map(|&x| x.count_ones()).sum::<u32>()
+    pub fn count(&self) -> u16 {
+        // We use a u16 instead of a u8 because there are 257 possible numbers of players 0-256
+        // inclusive on both sides
+        self.0
+            .iter()
+            .map(|&x| x.count_ones())
+            .sum::<u32>()
+            .try_into()
+            .expect("there are between 0-256 players")
     }
 
     /// Alias for `count`
-    pub fn len(&self) -> u32 {
+    pub fn len(&self) -> u16 {
         self.count()
     }
 
@@ -213,7 +222,7 @@ impl PlayerSet {
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) {
         let player = player.into();
-        self.0[section(player)] &= !(1usize << offset(player)) as u64
+        self.0[section(player)] &= !(1usize << offset(player)) as u64;
     }
 
     /// The `PlayerSet` representing the union, i.e. the players that are in self, other, or both
@@ -465,7 +474,7 @@ mod tests {
     fn test_into_iter_for_player_set() {
         let players: Vec<Player> = [0, 1, 2, u8::MAX].into_iter().map(Player::new).collect();
         let player_set: PlayerSet = players.iter().copied().collect();
-        let mut result: Vec<Player> = Default::default();
+        let mut result: Vec<Player> = Vec::new();
 
         for player in player_set {
             result.push(player);
