@@ -2,24 +2,11 @@ use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
 use lttcore::encoder::Encoder;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use lttcore::uuid_id;
+use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::mpsc;
-use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct SubConnId(Uuid);
-
-impl SubConnId {
-    pub fn new() -> Self {
-        Self(Uuid::new_v4())
-    }
-}
-
-impl std::fmt::Display for SubConnId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "sc:{:?}", self.0)
-    }
-}
+uuid_id!(SubConnId);
 
 #[async_trait]
 pub trait ConnectionIO<E: Encoder>: Send + Sync {
