@@ -21,6 +21,7 @@ pub enum Rank {
     King = 13,
 }
 
+#[allow(clippy::enum_glob_use)]
 use Rank::*;
 
 impl Rank {

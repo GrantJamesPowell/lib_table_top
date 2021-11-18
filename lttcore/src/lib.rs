@@ -1,10 +1,13 @@
 #![warn(
-    // clippy::pedantic,
+    clippy::pedantic,
     missing_debug_implementations,
     //missing_docs,
     rust_2018_idioms,
     unreachable_pub
 )]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(redundant_closure_for_method_calls)]
 #![allow(dead_code)]
 
 #[macro_use]

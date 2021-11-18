@@ -37,6 +37,7 @@ impl Card {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(clippy::enum_glob_use)]
     use crate::common::deck::Rank::*;
     use crate::common::deck::Suit::*;
 

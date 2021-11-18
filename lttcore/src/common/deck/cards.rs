@@ -1,3 +1,4 @@
+#[allow(clippy::enum_glob_use)]
 use crate::common::deck::{Card, Rank::*, Suit::*};
 
 pub const ACE_OF_SPADES: Card = Card::new(Ace, Spades);
