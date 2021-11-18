@@ -6,11 +6,12 @@
 // )]
 
 #![allow(dead_code)]
-#![feature(const_option)]
-#![feature(once_cell)]
 
 #[macro_use]
 extern crate derive_builder;
+
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 extern crate static_assertions;

@@ -2,30 +2,31 @@ use crate::utilities::number_of_players::ONE_PLAYER;
 use crate::{play::LttSettings, NumberOfPlayers};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::lazy::SyncLazy;
 use std::ops::RangeInclusive;
 use std::sync::Arc;
 
-static GAME_MODES: SyncLazy<HashMap<&'static str, Arc<Settings>>> = SyncLazy::new(|| {
-    let mut modes = HashMap::new();
-    for number_of_players in 1..=4 {
-        for (range_name, range) in [("1-10", 1..=10), ("u64", 0..=u64::MAX)] {
-            let name: &'static str = Box::leak(
-                format!("players-{}-range-{}", number_of_players, range_name).into_boxed_str(),
-            );
+lazy_static! {
+    static ref GAME_MODES: HashMap<&'static str, Arc<Settings>> = {
+        let mut modes = HashMap::new();
+        for number_of_players in 1..=4 {
+            for (range_name, range) in [("1-10", 1..=10), ("u64", 0..=u64::MAX)] {
+                let name: &'static str = Box::leak(
+                    format!("players-{}-range-{}", number_of_players, range_name).into_boxed_str(),
+                );
 
-            let settings = SettingsBuilder::default()
-                .number_of_players(number_of_players.try_into().unwrap())
-                .range(range)
-                .build()
-                .unwrap();
+                let settings = SettingsBuilder::default()
+                    .number_of_players(number_of_players.try_into().unwrap())
+                    .range(range)
+                    .build()
+                    .unwrap();
 
-            modes.insert(name, Arc::new(settings));
+                modes.insert(name, Arc::new(settings));
+            }
         }
-    }
 
-    modes
-});
+        modes
+    };
+}
 
 #[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[builder(derive(Debug), build_fn(validate = "Self::validate"))]

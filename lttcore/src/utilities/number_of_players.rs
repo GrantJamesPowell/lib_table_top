@@ -78,14 +78,24 @@ impl NumberOfPlayers {
     }
 }
 
-pub const ONE_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(1).unwrap());
-pub const TWO_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(2).unwrap());
-pub const THREE_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(3).unwrap());
-pub const FOUR_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(4).unwrap());
-pub const FIVE_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(5).unwrap());
-pub const SIX_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(6).unwrap());
-pub const SEVEN_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(7).unwrap());
-pub const EIGHT_PLAYER: NumberOfPlayers = NumberOfPlayers::new(NonZeroU8::new(8).unwrap());
+// [const_option] isn't a feature yet, so I'm using new_unchecked. It's sound to do so because none
+// of the inputs are 0
+pub const ONE_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(1) });
+pub const TWO_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(2) });
+pub const THREE_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(3) });
+pub const FOUR_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(4) });
+pub const FIVE_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(5) });
+pub const SIX_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(6) });
+pub const SEVEN_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(7) });
+pub const EIGHT_PLAYER: NumberOfPlayers =
+    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(8) });
 
 impl TryFrom<u8> for NumberOfPlayers {
     type Error = TryFromIntError;
