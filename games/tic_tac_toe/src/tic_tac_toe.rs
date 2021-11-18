@@ -159,7 +159,8 @@ impl TicTacToe {
         }
 
         let (c, r) = position;
-        self.board[c.as_usize()][r.as_usize()] = Some(player);
+        let (c, r): (usize, usize) = (c.into(), r.into());
+        self.board[c][r] = Some(player);
         Ok(PublicInfoUpdate::Claim(player, position))
     }
 
@@ -226,7 +227,9 @@ impl TicTacToe {
     /// assert_eq!(game.at_position((Col::new(0), Row::new(0))), None);
     /// ```
     pub fn at_position(&self, (c, r): Position) -> Option<Player> {
-        self.board[c.as_usize()][r.as_usize()]
+        let c: usize = c.into();
+        let r: usize = r.into();
+        self.board[c][r]
     }
 
     /// Returns a marker at a position, if the row or col is greater than 2, this returns None
