@@ -6,13 +6,7 @@
 // )]
 
 #![allow(dead_code)]
-#![feature(associated_type_defaults)]
-#![feature(never_type)]
-#![feature(derive_default_enum)]
-#![feature(bool_to_option)]
 #![feature(const_option)]
-#![feature(array_zip)]
-#![feature(type_alias_impl_trait)]
 #![feature(once_cell)]
 
 #[macro_use]

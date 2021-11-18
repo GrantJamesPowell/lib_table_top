@@ -190,7 +190,10 @@ impl<T> PlayerIndexedData<T> {
 
 impl<T> IntoIterator for PlayerIndexedData<T> {
     type Item = (Player, T);
-    type IntoIter = impl Iterator<Item = Self::Item>;
+    // This would be much better served as type `IntoIter = impl Iterator<Item = Self::Item>;`
+    // Currently the above would require unstable feature`#![feature(type_alias_impl_trait)]`
+    type IntoIter =
+        core::iter::Zip<<PlayerSet as IntoIterator>::IntoIter, smallvec::IntoIter<[T; 6]>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.players.into_iter().zip(self.data.into_iter())

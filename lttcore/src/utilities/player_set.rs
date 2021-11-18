@@ -27,6 +27,22 @@ macro_rules! player_set {
     };
 }
 
+// [T; N].zip isn't stable yet, so working around
+// https://github.com/rust-lang/rust/issues/80094
+macro_rules! zip_with {
+    ($ps1:expr, $ps2:expr, $func:expr) => {{
+        let PlayerSet([a1, a2, a3, a4]) = $ps1;
+        let PlayerSet([b1, b2, b3, b4]) = $ps2;
+
+        PlayerSet([
+            $func((a1, b1)),
+            $func((a2, b2)),
+            $func((a3, b3)),
+            $func((a4, b4)),
+        ])
+    }};
+}
+
 /// High performance player set abstraction designd to be O(1) for
 /// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
 /// `Copy` which makes it super ergonomic to use
@@ -210,8 +226,8 @@ impl PlayerSet {
     ///
     /// assert_eq!(set1.union(set2), player_set![1, 2, 3, 4]);
     /// ```
-    pub fn union(&self, other: Self) -> Self {
-        Self(self.0.zip(other.0).map(|(x, y)| x | y))
+    pub fn union(self, other: Self) -> Self {
+        zip_with!(self, other, |(x, y)| { x | y })
     }
 
     /// The PlayerSet representing the intersection, i.e. the players that are in self and also in other
@@ -224,8 +240,8 @@ impl PlayerSet {
     ///
     /// assert_eq!(set1.intersection(set2), player_set![2, 3]);
     /// ```
-    pub fn intersection(&self, other: Self) -> Self {
-        Self(self.0.zip(other.0).map(|(x, y)| x & y))
+    pub fn intersection(self, other: Self) -> Self {
+        zip_with!(self, other, |(x, y)| { x & y })
     }
 
     /// The PlayerSet representing the difference, i.e., the players that are in self but not in other.
@@ -238,8 +254,8 @@ impl PlayerSet {
     ///
     /// assert_eq!(set1.difference(set2), player_set![1]);
     /// ```
-    pub fn difference(&self, other: Self) -> Self {
-        Self(self.0.zip(other.0).map(|(x, y)| x & !y))
+    pub fn difference(self, other: Self) -> Self {
+        zip_with!(self, other, |(x, y): (u64, u64)| { x & !y })
     }
 
     /// The PlayerSet representing the symmetric difference, i.e., the players in self or other but
@@ -253,8 +269,8 @@ impl PlayerSet {
     ///
     /// assert_eq!(set1.symmetric_difference(set2), player_set![1, 4])
     /// ```
-    pub fn symmetric_difference(&self, other: Self) -> Self {
-        Self(self.0.zip(other.0).map(|(x, y)| x ^ y))
+    pub fn symmetric_difference(self, other: Self) -> Self {
+        zip_with!(self, other, |(x, y)| { x ^ y })
     }
 
     /// Returns the next player to the right of the given player, wrapping around if required
