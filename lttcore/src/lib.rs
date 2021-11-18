@@ -1,3 +1,10 @@
+// #![warn(
+//     missing_debug_implementations,
+//     missing_docs,
+//     rust_2018_idioms,
+//     unreachable_pub
+// )]
+
 #![allow(dead_code)]
 #![feature(associated_type_defaults)]
 #![feature(never_type)]

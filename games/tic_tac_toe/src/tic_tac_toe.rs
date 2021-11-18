@@ -5,6 +5,7 @@ use crate::{
     ActionError::{self, *},
     Col, Position, PublicInfo, PublicInfoUpdate, Row, POSSIBLE_WINS,
 };
+use lttcore::play::view::NoSecretPlayerInfo;
 use lttcore::{
     play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::number_of_players::TWO_PLAYER,
@@ -496,6 +497,7 @@ impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
+    type PlayerSecretInfo = NoSecretPlayerInfo;
     type Settings = Settings;
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
