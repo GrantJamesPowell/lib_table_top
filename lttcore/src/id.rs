@@ -1,4 +1,4 @@
-/// Create Uuid NewType wrappers with all the fixin's
+/// Create Uuid `NewType` wrappers with all the fixin's
 #[macro_export]
 macro_rules! uuid_id {
     ($id:ident) => {

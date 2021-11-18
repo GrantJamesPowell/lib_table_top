@@ -3,7 +3,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 /// Designed to provide a structurally shared draw pile. Once created the draw pile is
-/// immutable, but it can be cloned very cheaply. DrawPile also deref's to a slice of T
+/// immutable, but it can be cloned very cheaply. `DrawPile` also deref's to a slice of T
 /// so it can be used anywhere you need an immutable slice
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DrawPile<T: Clone> {
@@ -43,18 +43,18 @@ mod tests {
     #[test]
     fn test_you_can_draw_from_the_draw_pile() {
         let mut pile: DrawPile<usize> = vec![1, 2, 3].into();
-        assert_eq!(pile.deref(), &[1, 2, 3]);
+        assert_eq!(&*pile, &[1, 2, 3]);
         assert_eq!(pile.len(), 3);
 
         assert!(pile.contains(&1));
         assert_eq!(pile.draw(), Some(1));
         assert!(!pile.contains(&1));
 
-        assert_eq!(pile.deref(), &[2, 3]);
+        assert_eq!(&*pile, &[2, 3]);
         assert_eq!(pile.len(), 2);
         assert_eq!(pile.draw(), Some(2));
 
-        assert_eq!(pile.deref(), &[3]);
+        assert_eq!(&*pile, &[3]);
         assert_eq!(pile.len(), 1);
         assert_eq!(pile.draw(), Some(3));
 

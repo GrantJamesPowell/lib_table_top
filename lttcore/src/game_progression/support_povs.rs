@@ -15,10 +15,6 @@ impl<T: Play> GameProgression<T> {
         let player = player.into();
         let game_observer = self.game_observer();
         let secret_info = self.player_secret_info(player).into_owned();
-        GamePlayer {
-            player,
-            secret_info,
-            game_observer,
-        }
+        GamePlayer { game_observer, player, secret_info }
     }
 }

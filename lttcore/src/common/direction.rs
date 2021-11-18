@@ -6,7 +6,7 @@ pub enum LeftOrRight {
     Right,
 }
 
-use LeftOrRight::*;
+use LeftOrRight::{Left, Right};
 
 impl LeftOrRight {
     /// Reverse the direction

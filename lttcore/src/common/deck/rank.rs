@@ -1,4 +1,4 @@
-use serde_repr::*;
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 /// The pips of a standard deck. Important note that the Ace is represented by 1 and not 14
 #[derive(

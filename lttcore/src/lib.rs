@@ -7,7 +7,7 @@
 )]
 #![allow(clippy::must_use_candidate)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(redundant_closure_for_method_calls)]
+#![allow(clippy::redundant_closure_for_method_calls)]
 #![allow(dead_code)]
 
 #[macro_use]

@@ -21,7 +21,7 @@ impl Player {
     }
 
     pub fn as_u64(&self) -> u64 {
-        self.0 as u64
+        u64::from(self.0)
     }
     /// Return the previous player, wrapping around from 0 => 255
     ///

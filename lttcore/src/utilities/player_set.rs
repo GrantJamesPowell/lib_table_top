@@ -1,4 +1,4 @@
-use crate::common::direction::LeftOrRight::{self, *};
+use crate::common::direction::LeftOrRight::{self, Left, Right};
 use crate::Player;
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
@@ -71,7 +71,7 @@ impl PlayerSet {
 
     /// Returns the offset of the player relative to the playerset
     ///
-    /// Note: PlayerSet is iterated in increasing order starting with Player 0
+    /// Note: `PlayerSet` is iterated in increasing order starting with Player 0
     ///
     /// ```
     /// use lttcore::player_set;
@@ -141,7 +141,7 @@ impl PlayerSet {
         (self.0[section(player)] & (1usize << offset(player)) as u64) > 0
     }
 
-    /// If a PlayerSet is empty
+    /// If a `PlayerSet` is empty
     ///
     /// ```
     /// use lttcore::PlayerSet;
@@ -216,7 +216,7 @@ impl PlayerSet {
         self.0[section(player)] &= !(1usize << offset(player)) as u64
     }
 
-    /// The PlayerSet representing the union, i.e. the players that are in self, other, or both
+    /// The `PlayerSet` representing the union, i.e. the players that are in self, other, or both
     ///
     /// ```
     /// use lttcore::player_set;
@@ -230,7 +230,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y)| { x | y })
     }
 
-    /// The PlayerSet representing the intersection, i.e. the players that are in self and also in other
+    /// The `PlayerSet` representing the intersection, i.e. the players that are in self and also in other
     ///
     /// ```
     /// use lttcore::player_set;
@@ -244,7 +244,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y)| { x & y })
     }
 
-    /// The PlayerSet representing the difference, i.e., the players that are in self but not in other.
+    /// The `PlayerSet` representing the difference, i.e., the players that are in self but not in other.
     ///
     /// ```
     /// use lttcore::player_set;
@@ -258,7 +258,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y): (u64, u64)| { x & !y })
     }
 
-    /// The PlayerSet representing the symmetric difference, i.e., the players in self or other but
+    /// The `PlayerSet` representing the symmetric difference, i.e., the players in self or other but
     /// not both
     ///
     /// ```
@@ -464,7 +464,7 @@ mod tests {
     #[test]
     fn test_into_iter_for_player_set() {
         let players: Vec<Player> = [0, 1, 2, u8::MAX].into_iter().map(Player::new).collect();
-        let player_set: PlayerSet = players.iter().cloned().collect();
+        let player_set: PlayerSet = players.iter().copied().collect();
         let mut result: Vec<Player> = Default::default();
 
         for player in player_set {

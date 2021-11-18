@@ -13,7 +13,7 @@ impl<Item> From<PlayerSet> for PlayerItemCollector<Item> {
 }
 
 impl<Item> PlayerItemCollector<Item> {
-    /// Returns a new PlayerItemCollector for a PlayerSet
+    /// Returns a new `PlayerItemCollector` for a `PlayerSet`
     ///
     /// ```
     /// use lttcore::{player_set, utilities::PlayerItemCollector};
@@ -142,7 +142,7 @@ impl<Item> PlayerItemCollector<Item> {
     ///
     /// # Panics
     ///
-    /// panics if the player isn't in the PlayerSet
+    /// panics if the player isn't in the `PlayerSet`
     ///
     /// ```should_panic
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};

@@ -22,8 +22,8 @@ pub enum Color {
     Black,
 }
 
-use Color::*;
-use Suit::*;
+use Color::{Black, Red};
+use Suit::{Clubs, Diamonds, Hearts, Spades};
 
 pub const SUITS: [Suit; 4] = [Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades];
 

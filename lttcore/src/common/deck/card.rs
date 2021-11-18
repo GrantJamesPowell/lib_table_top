@@ -39,7 +39,7 @@ mod tests {
     use super::*;
     #[allow(clippy::enum_glob_use)]
     use crate::common::deck::Rank::*;
-    use crate::common::deck::Suit::*;
+    use crate::common::deck::Suit::{Clubs, Diamonds, Hearts, Spades};
 
     #[test]
     fn test_display() {
@@ -50,7 +50,7 @@ mod tests {
             (Card::new(Two, Diamonds), "Two of Diamonds"),
         ];
 
-        for (card, expected) in test_cases.iter() {
+        for (card, expected) in &test_cases {
             let displayed = format!("{}", card);
             assert_eq!(displayed, *expected);
         }

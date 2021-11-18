@@ -16,12 +16,12 @@ impl<T> Default for PlayerIndexedData<T> {
 }
 
 impl<T> PlayerIndexedData<T> {
-    /// Returns a new PlayerIndexedData
+    /// Returns a new `PlayerIndexedData`
     pub fn new() -> Self {
         Self::with_capacity(0)
     }
 
-    /// Returns if the PlayerIndexedData is empty
+    /// Returns if the `PlayerIndexedData` is empty
     ///
     /// ```
     /// use lttcore::utilities::PlayerIndexedData;
@@ -62,7 +62,7 @@ impl<T> PlayerIndexedData<T> {
         Self { players, data }
     }
 
-    /// Returns the number of elements in the PlayerIndexedData
+    /// Returns the number of elements in the `PlayerIndexedData`
     ///
     /// ```
     /// use lttcore::{player_set, utilities::PlayerIndexedData};
@@ -86,7 +86,7 @@ impl<T> PlayerIndexedData<T> {
         self.players.into_iter().zip(self.data.iter_mut())
     }
 
-    /// Returns a new PlayerIndexedData with pre allocated capacity `n`
+    /// Returns a new `PlayerIndexedData` with pre allocated capacity `n`
     pub fn with_capacity(n: usize) -> Self {
         Self {
             players: PlayerSet::empty(),

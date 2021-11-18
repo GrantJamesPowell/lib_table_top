@@ -18,7 +18,7 @@ impl NumberOfPlayers {
         Player::new(0)
     }
 
-    /// Returns an iterator over the players for a NumberOfPlayers
+    /// Returns an iterator over the players for a `NumberOfPlayers`
     ///
     /// ```
     /// use lttcore::{Player, NumberOfPlayers, utilities::number_of_players::THREE_PLAYER};

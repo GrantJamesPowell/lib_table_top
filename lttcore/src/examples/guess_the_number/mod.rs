@@ -38,7 +38,7 @@ pub enum ActionError {
     },
 }
 
-use ActionError::*;
+use ActionError::GuessOutOfRange;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub enum PublicInfo {
@@ -118,7 +118,7 @@ impl Play for GuessTheNumber {
         actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
-        use ActionResponse::*;
+        use ActionResponse::Response;
         let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self>>> = actions.collect();
 
         let debug_msgs: DebugMsgs<Self> = actions

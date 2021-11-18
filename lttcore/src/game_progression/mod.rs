@@ -68,7 +68,7 @@ impl<T: Play> GameProgressionBuilder<T> {
             .unwrap_or_else(|| Arc::new(Seed::random()));
 
         let initial_state: Option<Arc<T>> = self.initial_state.as_ref().cloned().unwrap_or(None);
-        let turn_num = self.turn_num.as_ref().cloned().unwrap_or_default();
+        let turn_num = self.turn_num.as_ref().copied().unwrap_or_default();
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
         let state = initial_state
             .as_ref()
@@ -77,13 +77,6 @@ impl<T: Play> GameProgressionBuilder<T> {
             .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
         let history = Vector::new();
 
-        Ok(GameProgression {
-            seed,
-            settings,
-            state,
-            history,
-            initial_state,
-            turn_num,
-        })
+        Ok(GameProgression { seed, settings, initial_state, turn_num, state, history })
     }
 }
