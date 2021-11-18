@@ -468,6 +468,7 @@ dependencies = [
  "tic_tac_toe",
  "tokio",
  "tokio-tungstenite 0.15.0",
+ "url",
  "uuid",
 ]
 
@@ -485,8 +486,10 @@ dependencies = [
  "rand",
  "serde",
  "smallvec",
+ "thiserror",
  "tokio",
  "tokio-tungstenite 0.16.0",
+ "url",
  "uuid",
 ]
 
