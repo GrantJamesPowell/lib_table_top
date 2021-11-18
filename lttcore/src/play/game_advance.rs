@@ -32,9 +32,7 @@ impl<T: Play> EnumeratedGameAdvance<T> {
         let secret_info_update = self
             .game_advance
             .player_secret_info_updates
-            .iter()
-            .filter(|(p, _)| *p == player)
-            .next()
+            .iter().find(|(p, _)| *p == player)
             .map(|(_, update)| Cow::Borrowed(update));
 
         PlayerUpdate {

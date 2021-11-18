@@ -44,7 +44,7 @@ impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
             .runtimes
             .get(&ExampleSupportedGames::GuessTheNumber(Default::default()))
         {
-            return Arc::clone(runtime);
+            Arc::clone(runtime)
         } else {
             panic!("The runtime must be built for all games")
         }

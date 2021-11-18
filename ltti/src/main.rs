@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
             .map(|server| Url::parse(server).unwrap())
             .unwrap_or(Url::parse("localhost:8080").unwrap());
 
-        if let Some(_) = matches.subcommand_matches("whoami") {
+        if matches.subcommand_matches("whoami").is_some() {
             let jobs = [].into_iter();
             run_jobs::<PrettyJsonEncoder, _>(server, token, 1, jobs).await?;
         };

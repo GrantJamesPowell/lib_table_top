@@ -157,7 +157,7 @@ impl PlayerSet {
     /// );
     /// ```
     pub fn players(&self) -> impl Iterator<Item = Player> {
-        self.clone().into_iter()
+        (*self).into_iter()
     }
 
     /// Adds the player to the set, is a noop if player is already in set
@@ -369,13 +369,13 @@ impl Iterator for IntoIter {
     type Item = Player;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while let Some(player) = self.to_end.next() {
+        for player in self.to_end.by_ref() {
             if self.set.contains(player) {
                 return Some(player.into());
             }
         }
 
-        while let Some(player) = self.from_start.next() {
+        for player in self.from_start.by_ref() {
             if self.set.contains(player) {
                 return Some(player.into());
             }

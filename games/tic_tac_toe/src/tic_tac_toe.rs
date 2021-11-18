@@ -513,7 +513,7 @@ impl Play for TicTacToe {
     }
 
     fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
-        Cow::Owned(PublicInfo::from_ttt(self.clone()))
+        Cow::Owned(PublicInfo::from_ttt(*self))
     }
 
     fn initial_state_for_settings(

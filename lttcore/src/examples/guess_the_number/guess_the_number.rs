@@ -21,7 +21,6 @@ pub struct Guess(pub u64);
 
 impl From<u64> for Guess {
     fn from(n: u64) -> Self {
-        let n = n.into();
         Guess(n)
     }
 }
@@ -123,9 +122,9 @@ impl Play for GuessTheNumber {
             .iter()
             .filter_map(|(player, response)| {
                 if let Response(Guess(guess)) = response.as_ref() {
-                    (!settings.range().contains(&guess)).then(|| {
+                    (!settings.range().contains(guess)).then(|| {
                         let err = GuessOutOfRange {
-                            guess: guess.clone(),
+                            guess: *guess,
                             range: settings.range(),
                         };
                         (player, err)

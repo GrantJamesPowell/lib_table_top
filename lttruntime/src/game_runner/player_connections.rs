@@ -50,7 +50,7 @@ impl<E: Encoder> State<E> {
         self.conns
             .iter()
             .filter(|conn| conn.primary)
-            .map(|conn| conn.id.clone())
+            .map(|conn| conn.id)
             .next()
     }
 
