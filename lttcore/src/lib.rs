@@ -1,10 +1,10 @@
-// #![warn(
-//     missing_debug_implementations,
-//     missing_docs,
-//     rust_2018_idioms,
-//     unreachable_pub
-// )]
-
+#![warn(
+    // clippy::pedantic,
+    missing_debug_implementations,
+    //missing_docs,
+    rust_2018_idioms,
+    unreachable_pub
+)]
 #![allow(dead_code)]
 
 #[macro_use]
@@ -18,7 +18,6 @@ extern crate static_assertions;
 
 mod game_observer;
 mod game_player;
-mod game_progression;
 mod player;
 mod scenario;
 
@@ -27,6 +26,7 @@ pub mod common;
 #[cfg(feature = "encoder")]
 pub mod encoder;
 pub mod examples;
+pub mod game_progression;
 pub mod id;
 pub mod play;
 pub mod pov;

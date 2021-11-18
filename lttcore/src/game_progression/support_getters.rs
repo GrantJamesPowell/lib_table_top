@@ -3,6 +3,8 @@ use crate::{GameProgression, NumberOfPlayers, Play, Player, PlayerSet, TurnNum};
 use std::borrow::Cow;
 use std::sync::Arc;
 
+use super::HistoryEvent;
+
 impl<T: Play> GameProgression<T> {
     pub fn is_concluded(&self) -> bool {
         self.which_players_input_needed().is_empty()
@@ -22,6 +24,10 @@ impl<T: Play> GameProgression<T> {
 
     pub fn settings_arc(&self) -> Arc<T::Settings> {
         Arc::clone(&self.settings)
+    }
+
+    pub fn history_events(&self) -> impl Iterator<Item = &HistoryEvent<T>> + '_ {
+        self.history.iter()
     }
 
     pub fn public_info(&self) -> Cow<'_, T::PublicInfo> {

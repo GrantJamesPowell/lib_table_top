@@ -27,6 +27,7 @@ pub struct GameProgression<T: Play> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct HistoryEvent<T: Play> {
+    turn_num: TurnNum,
     actions: Actions<T>,
 }
 
@@ -45,7 +46,10 @@ impl<T: Play> GameProgression<T> {
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
-        self.history.push_back(HistoryEvent { actions });
+        self.history.push_back(HistoryEvent {
+            actions,
+            turn_num: self.turn_num,
+        });
         self.turn_num.increment();
 
         EnumeratedGameAdvance {

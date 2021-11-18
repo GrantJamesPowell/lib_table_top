@@ -1,6 +1,7 @@
 use crate::utilities::PlayerIndexedData;
 use crate::{Player, PlayerSet};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerItemCollector<Item> {
     data: PlayerIndexedData<Option<Item>>,
 }

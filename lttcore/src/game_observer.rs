@@ -22,7 +22,7 @@ impl<T: Play> GameObserver<T> {
         }
     }
 
-    pub fn update(&mut self, update: ObserverUpdate<T>) {
+    pub fn update(&mut self, update: ObserverUpdate<'_, T>) {
         self.turn_num = update.turn_num;
         self.action_requests = update.action_requests;
         self.public_info.update(update.public_info_update);
