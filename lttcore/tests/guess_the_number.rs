@@ -16,6 +16,7 @@ fn test_building_default_settings() {
 }
 
 #[test]
+#[allow(clippy::reversed_empty_ranges)]
 fn test_it_rejects_settings_where_range_is_empty() {
     let err = SettingsBuilder::default()
         .range(3..=2)

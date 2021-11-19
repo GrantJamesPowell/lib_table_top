@@ -147,7 +147,7 @@ impl PlayerSet {
     /// ```
     pub fn contains(&self, player: impl Into<Player>) -> bool {
         let player = player.into();
-        (self.0[section(player)] & (1usize << offset(player)) as u64) > 0
+        (self.0[section(player)] & (1_usize << offset(player)) as u64) > 0
     }
 
     /// If a `PlayerSet` is empty
@@ -161,7 +161,7 @@ impl PlayerSet {
     /// assert!(!set.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.0 == [0u64; 4]
+        self.0 == [0_u64; 4]
     }
 
     /// Iterator over players in the set
@@ -204,7 +204,7 @@ impl PlayerSet {
     /// ```
     pub fn insert(&mut self, player: impl Into<Player>) -> u8 {
         let player = player.into();
-        self.0[section(player)] |= (1usize << offset(player)) as u64;
+        self.0[section(player)] |= (1_usize << offset(player)) as u64;
         self.player_offset(player)
             .expect("we just inserted the player")
     }
@@ -222,7 +222,7 @@ impl PlayerSet {
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) {
         let player = player.into();
-        self.0[section(player)] &= !(1usize << offset(player)) as u64;
+        self.0[section(player)] &= !(1_usize << offset(player)) as u64;
     }
 
     /// The `PlayerSet` representing the union, i.e. the players that are in self, other, or both

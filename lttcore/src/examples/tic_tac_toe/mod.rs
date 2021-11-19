@@ -36,7 +36,7 @@ pub enum Status {
     },
 }
 
-use Status::*;
+use Status::{Draw, InProgress, Win, WinByResignation};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TicTacToe {
@@ -127,12 +127,12 @@ impl TicTacToe {
                 }
             })
             .unwrap_or_else(|| {
-                if !self.has_open_spaces() {
-                    Draw
-                } else {
+                if self.has_open_spaces() {
                     InProgress {
                         next_up: self.whose_turn(),
                     }
+                } else {
+                    Draw
                 }
             })
     }
@@ -412,7 +412,7 @@ impl TicTacToe {
 
         TWO_PLAYER
             .players()
-            .min_by_key(|player| counts.get(player).cloned().unwrap_or(0))
+            .min_by_key(|player| counts.get(player).copied().unwrap_or(0))
             .unwrap_or_else(NumberOfPlayers::starting_player)
     }
 
@@ -525,7 +525,7 @@ impl Play for TicTacToe {
         mut actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
-        use ActionResponse::*;
+        use ActionResponse::{Resign, Response, Timeout};
 
         let (player, response) = actions
             .next()

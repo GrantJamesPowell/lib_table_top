@@ -236,7 +236,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(deserialized, game_player);
 }
 
-fn test_simple_serialization<'a, T, U>((data, expected): (T, U))
+fn test_simple_serialization<T, U>((data, expected): (T, U))
 where
     T: Serialize + Debug + PartialEq + DeserializeOwned,
     U: Serialize,

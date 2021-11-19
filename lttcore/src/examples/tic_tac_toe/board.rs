@@ -85,7 +85,7 @@ impl BoardIndex {
         })
     }
 
-    /// Construct a new BoardIndex (see `Row::try_new` for a non panicking version)
+    /// Construct a new `BoardIndex` (see `BoardIndex::try_new` for a non panicking version)
     ///
     /// # Panics
     ///

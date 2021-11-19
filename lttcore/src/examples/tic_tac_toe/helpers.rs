@@ -5,7 +5,7 @@ use crate::Player;
 /// ## Notes
 ///
 /// Visually ttt! uses Cartesian coordinates for representing games ((0, 0) is in the bottom left
-/// corner). In memory the actual TicTacToe::Board struct represents the board with (0, 0) in the
+/// corner). In memory the actual `TicTacToe::Board` struct represents the board with (0, 0) in the
 /// top left corner.
 /// ```
 /// use lttcore::ttt;
@@ -41,7 +41,7 @@ macro_rules! ttt {
     };
 }
 
-/// Returns the opponent of a player in TicTacToe
+/// Returns the opponent of a player in `TicTacToe`
 ///
 /// ```
 /// use lttcore::Player;

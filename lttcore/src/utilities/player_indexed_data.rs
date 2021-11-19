@@ -6,7 +6,7 @@ use std::hash::Hash;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerIndexedData<T> {
     players: PlayerSet,
-    data: SmallVec<[T; 6]>,
+    data: SmallVec<[T; 4]>,
 }
 
 impl<T> Default for PlayerIndexedData<T> {
@@ -197,7 +197,7 @@ impl<T> IntoIterator for PlayerIndexedData<T> {
     // This would be much better served as type `IntoIter = impl Iterator<Item = Self::Item>;`
     // Currently the above would require unstable feature`#![feature(type_alias_impl_trait)]`
     type IntoIter =
-        core::iter::Zip<<PlayerSet as IntoIterator>::IntoIter, smallvec::IntoIter<[T; 6]>>;
+        core::iter::Zip<<PlayerSet as IntoIterator>::IntoIter, smallvec::IntoIter<[T; 4]>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.players.into_iter().zip(self.data.into_iter())
@@ -264,7 +264,8 @@ mod tests {
         assert_eq!(data[p1], "foo");
         assert_eq!(data[p2], "bar");
 
-        let _ = std::mem::replace(&mut data[p1], String::from("baz"));
+        let old = std::mem::replace(&mut data[p1], String::from("baz"));
+        assert_eq!(old, "foo");
         assert_eq!(data[p1], "baz");
     }
 
