@@ -3,7 +3,7 @@ use crate::messages::closed::Closed;
 use crate::server::server_sub_connection::run_server_sub_conn;
 use crate::SupportedGames;
 use async_trait::async_trait;
-use lttcore::encoder::Encoder;
+use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
 use lttcore::examples::GuessTheNumber;
 use lttruntime::Runtime;
 use serde::{Deserialize, Serialize};
@@ -17,15 +17,15 @@ use std::sync::Arc;
 /// the macro should work
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum ExampleSupportedGames<E: Encoder> {
+pub enum ExampleSupportedGames<E: Encoder = BincodeEncoder> {
     GuessTheNumber(std::marker::PhantomData<E>),
 }
 
-pub enum ExampleSupportedRuntimesEnum<E: Encoder> {
+pub enum ExampleSupportedRuntimesEnum<E: Encoder = BincodeEncoder> {
     GuessTheNumber(Arc<Runtime<GuessTheNumber, E>>),
 }
 
-pub struct ExampleSupportedGamesRuntimes<E: Encoder> {
+pub struct ExampleSupportedGamesRuntimes<E: Encoder = BincodeEncoder> {
     runtimes: HashMap<ExampleSupportedGames<E>, ExampleSupportedRuntimesEnum<E>>,
 }
 

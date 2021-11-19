@@ -3,11 +3,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use clap::{App, Arg, SubCommand};
-use lttcore::encoder::json::PrettyJsonEncoder;
-use lttcore::id::UserId;
+use lttcore::{encoder::bincode::BincodeEncoder, id::UserId};
 use lttnetworking::auth::Authenticate;
 use lttnetworking::example_supported_games::{
-    ExampleSupportedGames, ExampleSupportedGamesRuntimes as Runtimes,
+    ExampleSupportedGames as Games, ExampleSupportedGamesRuntimes as Runtimes,
 };
 use lttnetworking::messages::hello::ServerInfo;
 use lttnetworking::ws::client::run_jobs;
@@ -18,7 +17,6 @@ use tokio::net::TcpListener;
 use url::Url;
 
 struct Auth;
-type Games = ExampleSupportedGames<PrettyJsonEncoder>;
 
 #[async_trait]
 impl Authenticate for Auth {
@@ -88,7 +86,7 @@ async fn main() -> Result<()> {
 
         if matches.subcommand_matches("whoami").is_some() {
             let jobs = [].into_iter();
-            run_jobs::<PrettyJsonEncoder, _>(server, token, 1, jobs).await?;
+            run_jobs::<_, BincodeEncoder>(server, token, 1, jobs).await?;
         };
     };
 
@@ -101,7 +99,7 @@ async fn main() -> Result<()> {
 
         println!("Starting server on port {}", port);
 
-        let runtimes = Runtimes::<PrettyJsonEncoder>::init();
+        let runtimes = Runtimes::init();
         let listener = TcpListener::bind(("localhost", port)).await?;
 
         let server_info = Arc::new(ServerInfo {

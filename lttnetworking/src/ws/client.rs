@@ -6,7 +6,7 @@ use crate::Token;
 use lttcore::encoder::Encoder;
 use url::Url;
 
-pub async fn run_jobs<Enc, Jobs>(
+pub async fn run_jobs<Jobs, Enc>(
     addr: Url,
     credentials: Token,
     max_concurrency: u8,

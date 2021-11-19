@@ -6,12 +6,12 @@ use crate::messages::hello::{ClientHello, ServerHello, ServerInfo};
 use crate::{Token, User};
 
 use bytes::Bytes;
-use lttcore::encoder::Encoder;
+use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;
 
-struct State<E: Encoder> {
+struct State<E: Encoder = BincodeEncoder> {
     pending: HashMap<SubConnId, Box<dyn Job<E>>>,
     running: HashMap<SubConnId, mpsc::UnboundedSender<Bytes>>,
 }

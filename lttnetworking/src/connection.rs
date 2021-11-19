@@ -1,6 +1,7 @@
 use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
+use lttcore::encoder::bincode::BincodeEncoder;
 use lttcore::encoder::Encoder;
 use lttcore::uuid_id;
 use serde::{de::DeserializeOwned, Serialize};
@@ -9,20 +10,20 @@ use tokio::sync::mpsc;
 uuid_id!(SubConnId);
 
 #[async_trait]
-pub trait ConnectionIO<E: Encoder>: Send + Sync {
+pub trait ConnectionIO<E: Encoder = BincodeEncoder>: Send + Sync {
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;
     async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed>;
     async fn close(&mut self);
 }
 
 #[async_trait]
-pub trait RawConnection<E: Encoder>: Sync + Send {
+pub trait RawConnection<E: Encoder = BincodeEncoder>: Sync + Send {
     async fn next_bytes(&mut self) -> Result<Bytes, Closed>;
     async fn send_bytes(&mut self, bytes: Bytes) -> Result<(), Closed>;
     async fn close(&mut self);
 }
 
-pub struct SubConnection<E: Encoder> {
+pub struct SubConnection<E: Encoder = BincodeEncoder> {
     pub id: SubConnId,
     pub receiver: mpsc::UnboundedReceiver<Bytes>,
     pub sender: Option<mpsc::UnboundedSender<(SubConnId, Bytes)>>,
