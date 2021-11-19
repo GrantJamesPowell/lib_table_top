@@ -1,4 +1,5 @@
-use crate::{Play, Player, PlayerSet, TurnNum, View};
+use crate::play::View;
+use crate::{Play, Player, PlayerSet, TurnNum};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 

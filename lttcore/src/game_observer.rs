@@ -1,5 +1,6 @@
+use crate::play::View;
 use crate::pov::{ObserverPov, ObserverUpdate};
-use crate::{Play, PlayerSet, TurnNum, View};
+use crate::{Play, PlayerSet, TurnNum};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

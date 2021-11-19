@@ -1,5 +1,6 @@
 use super::{Position, TicTacToe};
-use crate::{Player, View};
+use crate::play::{Score, View};
+use crate::Player;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ops::Deref;
