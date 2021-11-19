@@ -1,4 +1,5 @@
 mod bot;
+pub use bot::{FishFightBot, FishFightBotWrapper, FishFightGuessPov};
 
 use crate::utilities::PlayerIndexedData as PID;
 use crate::{
@@ -34,12 +35,9 @@ type Position = (u8, u8);
 type FishPositions = SmallVec<[Position; 8]>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum FishFight {
-    Setup,
-    Playing {
-        player_positions: PID<PlayerSecretInfo>,
-        public_info: PublicInfo,
-    },
+pub struct FishFight {
+    player_positions: PID<PlayerSecretInfo>,
+    public_info: PublicInfo,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -55,7 +53,7 @@ impl View for PlayerSecretInfo {
 
     fn update(&mut self, update: Cow<'_, Self::Update>) {
         let PlayerSecretInfoUpdate(fish_positions) = update.into_owned();
-        self.fish_positions = Some(fish_positions);
+        self.fish_positions = fish_positions;
     }
 }
 
@@ -127,23 +125,20 @@ impl Play for FishFight {
         _settings: &Self::Settings,
         player: Player,
     ) -> Cow<'_, Self::PlayerSecretInfo> {
-        match self {
-            Self::Setup => Cow::Owned(PlayerSecretInfo::default()),
-            Self::Playing {
-                player_positions, ..
-            } => Cow::Borrowed(&player_positions[player]),
-        }
+        Cow::Borrowed(&self.player_positions[player])
     }
 
     fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
-        match self {
-            Self::Setup => Cow::Owned(PublicInfo::default()),
-            Self::Playing { public_info, .. } => Cow::Borrowed(public_info),
-        }
+        Cow::Borrowed(&self.public_info)
     }
 
-    fn initial_state_for_settings(_settings: &Self::Settings, _rng: &mut impl rand::Rng) -> Self {
-        Self::Setup
+    fn initial_state_for_settings(settings: &Self::Settings, _rng: &mut impl rand::Rng) -> Self {
+        Self {
+            player_positions: settings
+                .number_of_players()
+                .player_indexed_data(|_| Default::default()),
+            public_info: PublicInfo::Setup,
+        }
     }
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {

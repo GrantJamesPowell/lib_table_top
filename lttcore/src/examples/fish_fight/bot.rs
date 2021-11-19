@@ -9,6 +9,7 @@ pub trait FishFightBot {
     fn guess(pov: FishFightGuessPov<'_>, rng: &mut impl rand::Rng) -> Position;
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct FishFightGuessPov<'a> {
     pub turn_num: TurnNum,
     pub player: Player,
@@ -17,6 +18,7 @@ pub struct FishFightGuessPov<'a> {
     pub player_fish_positions: &'a FishPositions,
 }
 
+#[derive(Debug)]
 pub struct FishFightBotWrapper<T: FishFightBot>(T);
 
 impl<T: FishFightBot> Bot for FishFightBotWrapper<T> {
