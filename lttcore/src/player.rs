@@ -3,6 +3,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Player(u8);
 
+macro_rules! from_player_for_num {
+    ($num:ty) => {
+        impl From<Player> for $num {
+            fn from(player: Player) -> Self {
+                player.0 as $num
+            }
+        }
+    };
+}
+
+from_player_for_num!(usize);
+from_player_for_num!(u64);
+from_player_for_num!(u32);
+from_player_for_num!(u16);
+from_player_for_num!(u8);
+
 impl Player {
     pub const fn new(n: u8) -> Self {
         Self(n)
@@ -12,17 +28,6 @@ impl Player {
         (0..=u8::MAX).map(Self::new)
     }
 
-    pub fn as_u8(&self) -> u8 {
-        self.0
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0 as usize
-    }
-
-    pub fn as_u64(&self) -> u64 {
-        u64::from(self.0)
-    }
     /// Return the previous player, wrapping around from 0 => 255
     ///
     /// ```

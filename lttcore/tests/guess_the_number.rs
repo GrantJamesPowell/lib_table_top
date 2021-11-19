@@ -55,7 +55,7 @@ fn test_it_shows_the_player_the_correct_things() {
         assert_eq!(pov.secret_info, &NoSecretPlayerInfo);
 
         // Note: Player(0) produces guess outside of range 1..=10
-        let guess: Guess = player.player().as_u64().into();
+        let guess: Guess = u64::from(player.player()).into();
         actions.insert(player.player(), Response(guess));
     }
 

@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-
+use super::PlayerIndexedData;
 use crate::{Player, PlayerSet};
+use serde::{Deserialize, Serialize};
 use std::num::{NonZeroU8, TryFromIntError};
 use std::ops::Deref;
 
@@ -32,6 +32,21 @@ impl NumberOfPlayers {
     /// ```
     pub fn players(&self) -> impl Iterator<Item = Player> {
         (0..self.get()).map(|p| p.into())
+    }
+
+    /// Returns `PlayerIndexedData<T>` using `PlayerIndexedData::init_with`
+    ///
+    /// ```
+    /// use lttcore::utilities::number_of_players::THREE_PLAYER;
+    /// use lttcore::utilities::PlayerIndexedData as PID;
+    ///
+    /// let data: PID<u64> = THREE_PLAYER.player_indexed_data(|player| player.into());
+    /// assert_eq!(data[0], 0);
+    /// assert_eq!(data[1], 1);
+    /// assert_eq!(data[2], 2);
+    /// ```
+    pub fn player_indexed_data<T>(&self, func: impl FnMut(Player) -> T) -> PlayerIndexedData<T> {
+        PlayerIndexedData::init_with(self.player_set(), func)
     }
 
     /// Returns the `PlayerSet` containing all the players for that number of players
@@ -74,7 +89,7 @@ impl NumberOfPlayers {
     /// ```
     pub fn includes_player(&self, player: impl Into<Player>) -> bool {
         let player = player.into();
-        player.as_u8() <= (self.get() - 1)
+        u8::from(player) <= (self.get() - 1)
     }
 }
 

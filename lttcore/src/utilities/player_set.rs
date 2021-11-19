@@ -1,5 +1,5 @@
 use crate::common::direction::LeftOrRight::{self, Left, Right};
-use crate::Player;
+use crate::{NumberOfPlayers, Player};
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
@@ -50,11 +50,11 @@ macro_rules! zip_with {
 pub struct PlayerSet([u64; 4]);
 
 fn section(player: Player) -> usize {
-    player.as_usize().checked_div(64).unwrap()
+    usize::from(player).checked_div(64).unwrap()
 }
 
 fn offset(player: Player) -> usize {
-    player.as_usize() % 64
+    usize::from(player) % 64
 }
 
 impl PlayerSet {
@@ -363,8 +363,8 @@ impl PlayerSet {
     fn into_iter_from_starting_player(self, player: impl Into<Player>) -> IntoIter {
         let player = player.into();
 
-        let to_end = player.as_u8()..=u8::MAX;
-        let from_start = 0..player.as_u8();
+        let to_end = u8::from(player)..=u8::MAX;
+        let from_start = 0..u8::from(player);
 
         IntoIter {
             set: self,
@@ -436,6 +436,12 @@ impl From<Player> for PlayerSet {
     }
 }
 
+impl From<NumberOfPlayers> for PlayerSet {
+    fn from(number_of_players: NumberOfPlayers) -> Self {
+        number_of_players.player_set()
+    }
+}
+
 impl FromIterator<Player> for PlayerSet {
     fn from_iter<I: IntoIterator<Item = Player>>(iter: I) -> Self {
         let mut set = PlayerSet::new();
@@ -466,7 +472,7 @@ mod tests {
         assert_eq!(ps.count(), 256);
 
         for player in Player::all() {
-            assert_eq!(ps.player_offset(player), Some(player.as_u8()))
+            assert_eq!(ps.player_offset(player), Some(u8::from(player)))
         }
     }
 
@@ -527,7 +533,7 @@ mod tests {
 
         for player in Player::all() {
             assert!(set.contains(player));
-            assert_eq!(set.player_offset(player), Some(player.as_u8()));
+            assert_eq!(set.player_offset(player), Some(u8::from(player)));
         }
     }
 }

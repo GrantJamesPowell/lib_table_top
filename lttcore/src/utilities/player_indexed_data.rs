@@ -45,7 +45,7 @@ impl<T> PlayerIndexedData<T> {
     ///
     /// let ps = player_set![1, 2, 3];
     ///
-    /// let data = PlayerIndexedData::init_with(ps, |player| player.as_u8());
+    /// let data = PlayerIndexedData::init_with(ps, |player| u8::from(player));
     /// assert_eq!(data.len(), 3);
     ///
     /// assert_eq!(data.get(1), Some(&1));
@@ -69,7 +69,7 @@ impl<T> PlayerIndexedData<T> {
     ///
     /// let ps = player_set![1, 2, 3];
     ///
-    /// let data = PlayerIndexedData::init_with(ps, |player| player.as_u8());
+    /// let data = PlayerIndexedData::init_with(ps, |player| u8::from(player));
     /// assert_eq!(data.len(), 3);
     /// ```
     pub fn len(&self) -> usize {
@@ -224,10 +224,12 @@ impl<T> Extend<(Player, T)> for PlayerIndexedData<T> {
     }
 }
 
-impl<T> std::ops::Index<Player> for PlayerIndexedData<T> {
+impl<U: Into<Player>, T> std::ops::Index<U> for PlayerIndexedData<T> {
     type Output = T;
 
-    fn index(&self, player: Player) -> &Self::Output {
+    fn index(&self, player: U) -> &Self::Output {
+        let player = player.into();
+
         let idx = self
             .players
             .player_offset(player)

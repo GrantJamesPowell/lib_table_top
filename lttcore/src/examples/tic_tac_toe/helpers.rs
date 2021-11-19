@@ -69,7 +69,8 @@ macro_rules! ttt {
 /// opponent(p3);
 /// ```
 pub fn opponent(player: impl Into<Player>) -> Player {
-    match player.into().as_u8() {
+    let player = player.into();
+    match u8::from(player) {
         0 => 1.into(),
         1 => 0.into(),
         _ => panic!("Invalid Player for TicTacToe"),
