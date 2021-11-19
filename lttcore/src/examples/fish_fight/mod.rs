@@ -1,3 +1,5 @@
+mod bot;
+
 use crate::utilities::PlayerIndexedData as PID;
 use crate::{
     play::{ActionResponse, GameAdvance, LttSettings},
@@ -22,6 +24,12 @@ impl BitVec {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Board {
+    pub misses: BitVec,
+    pub hits: BitVec,
+}
+
 type Position = (u8, u8);
 type FishPositions = SmallVec<[Position; 8]>;
 
@@ -36,7 +44,7 @@ pub enum FishFight {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerSecretInfo {
-    fish_positions: Option<FishPositions>,
+    fish_positions: FishPositions,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -51,15 +59,15 @@ impl View for PlayerSecretInfo {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PublicInfo {
-    pub guessed_spaces: PID<BitVec>,
-    pub hits: PID<BitVec>,
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum PublicInfo {
+    Setup,
+    Playing { boards: PID<Board> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PublicInfoUpdate {
-    pub guesses: PID<PID<Position>>,
+    pub guesses: PID<Position>,
     pub hits: PID<BitVec>,
 }
 
@@ -100,8 +108,8 @@ impl LttSettings for Settings {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Action {
-    SetupBoard(FishPositions),
-    Attack(Position),
+    Setup(FishPositions),
+    Guess(Position),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
