@@ -1,41 +1,40 @@
+# LibTableTop (ltt)
 
+### What is LibTableTop?
 
-## Todo
+LibTableTop is a set of rust libraries and binaries providing fast/correct/hackable implementations of board games.
 
-### CLI
-- Install Clap
-  - Jump to game type from the cli
-  - helpful man pages?
+### Why build LibTableTop?
 
-### Storage engine
-- Make `serde` serializability part of the `Play` interface
-- Figure out how to do game history/event sourcing efficently
-- Have ltti write that ish down to a sqlite db
+LibTableTop's goal is to provide correct/extensible/hackable implementations of board games, along with the tooling to analyze and push our understanding of board game strategy.
 
-### Testability
-- Figure out a set of macros to automatically write tests for `Play` interface invariants that can't be tested in the type system
-  - Game Determinism (recreating game state from events)
-  - Spectator/Player View can be determined at any time or created from the base case and updates
+## I want to...
 
-### Tic Tac Toe Gui
-- Make tic tac toe gui prettier
-  - embolden winning squares
-  - put `X` and `O`s in the squares for the color blind
+### Write a bot to play a game
 
-### Games
+TODO
 
-#### Rock Paper Scissors
-- Try to make rps to prove out the `Play` interface for games with simultaneous turns
+### Write my own game
 
-#### Crazy Eights
-- Try to make ce to prove out the `Play` interface for games with secret info and variable number of players
+TODO
 
-#### Marooned
-- This one is basically big tic tac toe with slightly more involved settings, I already have a decent implemenation for this one
+### Contribute to LibTableTop
 
-### General
-- Figure out how players work, it seems like the player/user translation should happen at much higher level than `Play` or `GameRunner`
-- Port over the `common` library from the old ltti
-  - Cards
-  - Dice
-  - Chess pieces
+TODO
+
+## Project Structure
+
+### LibTableTop for Players/Bot Builders/Hobbyists
+
+| Component       | Uses                                                                        |
+| :--             | :--                                                                         |
+| `ltti`          | CLI toolkit for working with lttgames                                       |
+| `lttcore`       | Base traits and helper utilities for working with the rest of lib table top |
+| `games/ltt*`    | Games maintained by the ltt team                                            |
+
+### Internal LibTableTop components for more complex/unique/interesting things
+
+| Internal Component | Uses                               |
+| :--                | :--                                |
+| `lttnetworking`    | Networking protocol/state machines |
+| `lttruntime`       | Async runtime                      |
