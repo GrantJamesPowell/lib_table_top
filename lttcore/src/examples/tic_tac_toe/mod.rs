@@ -36,6 +36,15 @@ pub enum Status {
     },
 }
 
+impl Status {
+    pub fn winner(&self) -> Option<Player> {
+        match self {
+            Status::Win { winner, .. } | Status::WinByResignation { winner, .. } => Some(*winner),
+            _ => None,
+        }
+    }
+}
+
 use Status::{Draw, InProgress, Win, WinByResignation};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]

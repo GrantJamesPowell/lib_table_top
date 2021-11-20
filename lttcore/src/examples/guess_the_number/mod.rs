@@ -1,12 +1,15 @@
+mod public_info;
 mod settings;
+pub use public_info::{PublicInfo, PublicInfoUpdate};
+pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
+
 use crate::{
     play::view::NoSecretPlayerInfo,
     play::{ActionResponse, DebugMsgs, GameAdvance},
-    utilities::PlayerIndexedData,
-    Play, Player, PlayerSet, View,
+    utilities::PlayerIndexedData as PID,
+    Play, Player, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
-pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 use std::borrow::Cow;
 use std::hash::Hash;
 use std::ops::RangeInclusive;
@@ -15,7 +18,7 @@ use thiserror::Error;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct GuessTheNumber {
     secret_number: u64,
-    guesses: Option<Guesses>,
+    guesses: Option<PID<Guess>>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
@@ -27,8 +30,6 @@ impl From<u64> for Guess {
     }
 }
 
-pub type Guesses = PlayerIndexedData<Guess>;
-
 #[derive(Error, Debug, Clone, Hash, PartialEq, Eq, Deserialize, Serialize)]
 pub enum ActionError {
     #[error("Guess of {:?} is out of range {:?}", guess, range)]
@@ -39,44 +40,6 @@ pub enum ActionError {
 }
 
 use ActionError::GuessOutOfRange;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub enum PublicInfo {
-    InProgress,
-    Completed {
-        secret_number: u64,
-        guesses: Guesses,
-    },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
-pub struct PublicInfoUpdate {
-    pub secret_number: u64,
-    pub guesses: Guesses,
-}
-
-impl From<PublicInfoUpdate> for PublicInfo {
-    fn from(
-        PublicInfoUpdate {
-            secret_number,
-            guesses,
-        }: PublicInfoUpdate,
-    ) -> Self {
-        PublicInfo::Completed {
-            secret_number,
-            guesses,
-        }
-    }
-}
-
-impl View for PublicInfo {
-    type Update = PublicInfoUpdate;
-
-    fn update(&mut self, update: Cow<'_, Self::Update>) {
-        let new: PublicInfo = update.into_owned().into();
-        let _old = std::mem::replace(self, new);
-    }
-}
 
 impl Play for GuessTheNumber {
     type Action = Guess;
@@ -120,7 +83,7 @@ impl Play for GuessTheNumber {
         _rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self> {
         use ActionResponse::Response;
-        let actions: PlayerIndexedData<Cow<'a, ActionResponse<Self>>> = actions.collect();
+        let actions: PID<Cow<'a, ActionResponse<Self>>> = actions.collect();
 
         let debug_msgs: DebugMsgs<Self> = actions
             .iter()
@@ -139,7 +102,7 @@ impl Play for GuessTheNumber {
             })
             .collect();
 
-        let guesses: Guesses = actions
+        let guesses: PID<Guess> = actions
             .into_iter()
             .filter_map(|(player, response)| {
                 if let Response(guess) = response.as_ref() {

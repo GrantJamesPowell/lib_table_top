@@ -1,5 +1,6 @@
 mod game_advance;
 mod mode;
+mod score;
 mod settings;
 mod turn_num;
 
@@ -7,6 +8,7 @@ pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
 pub use mode::Mode;
+pub use score::Score;
 pub use settings::LttSettings;
 pub use turn_num::TurnNum;
 pub use view::View;
@@ -55,7 +57,7 @@ pub trait Play:
         + 'static;
 
     type Settings: LttSettings;
-    type PublicInfo: View;
+    type PublicInfo: View + Score;
     type PlayerSecretInfo: View;
 
     fn player_secret_info(

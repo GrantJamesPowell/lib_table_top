@@ -1,7 +1,8 @@
-use super::{Position, TicTacToe};
+use super::{helpers::opponent, Position, TicTacToe};
 use crate::play::{Score, View};
 use crate::Player;
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::ops::Deref;
 
@@ -19,6 +20,21 @@ impl Deref for PublicInfo {
 impl PublicInfo {
     pub fn from_ttt(ttt: TicTacToe) -> Self {
         Self(ttt)
+    }
+}
+
+impl Score for PublicInfo {
+    fn rank(&self) -> Cow<'_, Option<SmallVec<[SmallVec<[Player; 2]>; 4]>>> {
+        let ranks = self.status().winner().map(|winner| {
+            [
+                [winner].into_iter().collect(),
+                [opponent(winner)].into_iter().collect(),
+            ]
+            .into_iter()
+            .collect()
+        });
+
+        Cow::Owned(ranks)
     }
 }
 
