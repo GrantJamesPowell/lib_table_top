@@ -24,17 +24,15 @@ impl PublicInfo {
 }
 
 impl Score for PublicInfo {
-    fn rank(&self) -> Cow<'_, Option<SmallVec<[SmallVec<[Player; 2]>; 4]>>> {
-        let ranks = self.status().winner().map(|winner| {
+    fn rank(&self) -> Option<SmallVec<[SmallVec<[Player; 2]>; 4]>> {
+        self.status().winner().map(|winner| {
             [
                 [winner].into_iter().collect(),
                 [opponent(winner)].into_iter().collect(),
             ]
             .into_iter()
             .collect()
-        });
-
-        Cow::Owned(ranks)
+        })
     }
 }
 
