@@ -1,14 +1,16 @@
 mod board;
 mod bot;
+mod public_info;
 mod settings;
 
-pub use board::{Board, Dimensions, Fish, Position, PositionedFish};
+pub use board::{Area, Board, Dimensions, Fish, Position, PositionedFish};
 pub use bot::{FishFightBot, FishFightBotWrapper, FishFightGuessPov};
+pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
-use crate::play::{ActionResponse, GameAdvance, LttSettings};
+use crate::play::{ActionResponse, GameAdvance, LttSettings, View};
 use crate::utilities::PlayerIndexedData as PID;
-use crate::{Play, Player, PlayerSet, View};
+use crate::{Play, Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -36,24 +38,6 @@ impl View for PlayerSecretInfo {
         let PlayerSecretInfoUpdate(fish_positions) = update.into_owned();
         self.fish_positions = fish_positions;
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum PublicInfo {
-    Setup,
-    Playing { boards: PID<Board> },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PublicInfoUpdate {
-    pub guesses: PID<Position>,
-    pub hits: PID<BitVec>,
-}
-
-impl View for PublicInfo {
-    type Update = PublicInfoUpdate;
-
-    fn update(&mut self, _update: Cow<'_, Self::Update>) {}
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -93,8 +77,8 @@ impl Play for FishFight {
         }
     }
 
-    fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
-        TWO_PLAYER.player_set()
+    fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet {
+        settings.number_of_players().player_set()
     }
 
     fn advance<'a>(

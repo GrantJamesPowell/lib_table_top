@@ -24,7 +24,7 @@ impl BitVec {
         todo!()
     }
 
-    pub fn intersection(&self, other: Self) -> Self {
+    pub fn intersection(&self, _other: Self) -> Self {
         todo!()
     }
 }
@@ -69,7 +69,7 @@ pub struct PositionedFish(pub Position, pub Fish);
 impl PositionedFish {
     fn area(&self) -> Area {
         Area {
-            position: self.0.position,
+            position: self.0,
             dimensions: self.1 .0,
         }
     }
