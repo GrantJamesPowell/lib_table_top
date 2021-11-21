@@ -1,9 +1,9 @@
 mod game_advance;
 mod mode;
-mod score;
 mod settings;
 mod turn_num;
 
+pub mod score;
 pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};

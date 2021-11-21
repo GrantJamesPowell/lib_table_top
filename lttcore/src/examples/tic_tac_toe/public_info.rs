@@ -1,6 +1,9 @@
 use super::{helpers::opponent, Position, TicTacToe};
-use crate::play::{Score, View};
 use crate::Player;
+use crate::{
+    play::{Score, View},
+    utilities::PlayerIndexedData as PID,
+};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -24,15 +27,14 @@ impl PublicInfo {
 }
 
 impl Score for PublicInfo {
-    fn rank(&self) -> Option<SmallVec<[SmallVec<[Player; 2]>; 4]>> {
-        self.status().winner().map(|winner| {
-            [
-                [winner].into_iter().collect(),
-                [opponent(winner)].into_iter().collect(),
-            ]
-            .into_iter()
-            .collect()
-        })
+    fn is_score_human_interpertable() -> bool {
+        false
+    }
+
+    fn score(&self) -> Option<PID<u64>> {
+        self.status()
+            .winner()
+            .map(|winner| [(winner, 1), (opponent(winner), 0)].into_iter().collect())
     }
 }
 

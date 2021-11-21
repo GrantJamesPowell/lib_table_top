@@ -1,5 +1,5 @@
 use super::Guess;
-use crate::play::{Score, View};
+use crate::play::{score::ScoreInterpertation, Score, View};
 use crate::utilities::PlayerIndexedData as PID;
 use crate::Player;
 use itertools::Itertools;
@@ -46,6 +46,10 @@ impl View for PublicInfo {
 }
 
 impl Score for PublicInfo {
+    fn score_interpertation() -> ScoreInterpertation {
+        ScoreInterpertation::LowerIsBetter
+    }
+
     fn score(&self) -> Option<PID<u64>> {
         match self {
             PublicInfo::InProgress => None,
@@ -67,22 +71,5 @@ impl Score for PublicInfo {
                     .collect(),
             ),
         }
-    }
-
-    fn rank(&self) -> Option<SmallVec<[SmallVec<[Player; 2]>; 4]>> {
-        self.score().map(|scores| {
-            let mut scores: SmallVec<[(Player, u64); 4]> = scores.into_iter().collect();
-            scores.sort_by_key(|(_player, score)| *score);
-            scores
-                .iter()
-                .group_by(|(_player, score)| score)
-                .into_iter()
-                .map(|(_score, group)| {
-                    group
-                        .map(|(player, _score)| *player)
-                        .collect::<SmallVec<[Player; 2]>>()
-                })
-                .collect()
-        })
     }
 }
