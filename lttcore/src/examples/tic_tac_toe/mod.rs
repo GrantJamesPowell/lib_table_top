@@ -1,5 +1,6 @@
 mod action;
 pub mod board;
+mod bot;
 pub mod helpers;
 mod marker;
 mod public_info;
@@ -7,6 +8,7 @@ mod settings;
 
 pub use action::{Action, ActionError};
 pub use board::{Board, BoardIndex, Col, Position, Row, Status, POSSIBLE_WINS};
+pub use bot::{TicTacToeBot, TicTacToeBotWrapper};
 pub use marker::Marker;
 pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
