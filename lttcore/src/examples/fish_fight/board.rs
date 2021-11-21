@@ -8,11 +8,7 @@ impl BitVec {
         todo!()
     }
 
-    pub fn num_true(&self) -> u16 {
-        todo!()
-    }
-
-    pub fn num_false(&self) -> u16 {
+    pub fn count_ones(&self) -> u64 {
         todo!()
     }
 

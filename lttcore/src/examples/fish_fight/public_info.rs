@@ -11,7 +11,21 @@ pub enum PublicInfo {
     Playing { boards: PID<Board> },
 }
 
-impl Score for PublicInfo {}
+impl Score for PublicInfo {
+    fn score(&self) -> Option<PID<u64>> {
+        match self {
+            PublicInfo::Setup => None,
+            PublicInfo::Playing { boards } => {
+                let scores = boards
+                    .iter()
+                    .map(|(player, board)| (player, board.hits.count_ones()))
+                    .collect();
+
+                Some(scores)
+            }
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PublicInfoUpdate {
