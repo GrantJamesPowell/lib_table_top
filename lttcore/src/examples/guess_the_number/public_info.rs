@@ -1,10 +1,7 @@
 use super::Guess;
 use crate::play::{score::ScoreInterpertation, Score, View};
 use crate::utilities::PlayerIndexedData as PID;
-use crate::Player;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
