@@ -1,6 +1,5 @@
 use crate::pov::PlayerPov;
 use crate::{GameProgression, Play};
-use std::error::Error;
 
 pub trait Bot {
     type Game: Play;
@@ -8,7 +7,7 @@ pub trait Bot {
     fn run(
         player_pov: &PlayerPov<'_, Self::Game>,
         rng: &mut impl rand::Rng,
-    ) -> Result<<Self::Game as Play>::Action, Box<dyn Error>>;
+    ) -> <Self::Game as Play>::Action;
 }
 
 pub trait OmniscientBot {
@@ -17,5 +16,5 @@ pub trait OmniscientBot {
     fn run(
         game_progression: &GameProgression<Self::Game>,
         rng: &mut impl rand::Rng,
-    ) -> Result<<Self::Game as Play>::Action, Box<dyn Error>>;
+    ) -> <Self::Game as Play>::Action;
 }
