@@ -1,11 +1,10 @@
-use super::{helpers::opponent, Position, TicTacToe};
+use super::{Marker, Position, TicTacToe};
 use crate::Player;
 use crate::{
     play::{Score, View},
     utilities::PlayerIndexedData as PID,
 };
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::ops::Deref;
 
@@ -20,8 +19,8 @@ impl Deref for PublicInfo {
     }
 }
 
-impl PublicInfo {
-    pub fn from_ttt(ttt: TicTacToe) -> Self {
+impl From<TicTacToe> for PublicInfo {
+    fn from(ttt: TicTacToe) -> Self {
         Self(ttt)
     }
 }
@@ -32,16 +31,21 @@ impl Score for PublicInfo {
     }
 
     fn score(&self) -> Option<PID<u64>> {
-        self.status()
-            .winner()
-            .map(|winner| [(winner, 1), (opponent(winner), 0)].into_iter().collect())
+        self.status().winner().map(|winner| {
+            [
+                (Player::from(winner), 1),
+                (Player::from(winner.opponent()), 0),
+            ]
+            .into_iter()
+            .collect()
+        })
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PublicInfoUpdate {
-    Resign(Player),
-    Claim(Player, Position),
+    Resign(Marker),
+    Claim(Marker, Position),
 }
 
 impl View for PublicInfo {
@@ -49,12 +53,12 @@ impl View for PublicInfo {
 
     fn update(&mut self, update: Cow<'_, Self::Update>) {
         match update.as_ref() {
-            PublicInfoUpdate::Resign(player) => {
-                self.0.resign(*player);
+            PublicInfoUpdate::Resign(marker) => {
+                self.0.resign(*marker);
             }
-            PublicInfoUpdate::Claim(player, position) => {
+            PublicInfoUpdate::Claim(marker, position) => {
                 self.0
-                    .claim_space(*player, *position)
+                    .claim_space(*marker, *position)
                     .expect("ttt recieves a valid PublicInfoUpdate");
             }
         }

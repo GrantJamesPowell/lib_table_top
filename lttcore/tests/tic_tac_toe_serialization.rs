@@ -30,22 +30,15 @@ fn test_serde_action_and_error() {
 
 #[test]
 fn test_serde_ttt() {
-    let game = ttt!([
+    let board = ttt!([
       - - -
       O X O
       X X X
     ]);
 
     test_simple_serialization(
-        &game,
-        json!({
-            "resigned": [0, 0, 0, 0],
-            "board": [
-                [0, 0, 0],
-                [1, 0, 1],
-                [Null, Null, Null]
-            ]
-        }),
+        &board,
+        json!([["X", "X", "X"], ["O", "X", "O"], [Null, Null, Null]]),
     );
 }
 
