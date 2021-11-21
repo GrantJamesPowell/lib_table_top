@@ -11,7 +11,11 @@ pub enum PublicInfo {
     Playing { boards: PID<Board> },
 }
 
-impl Score for PublicInfo {}
+impl Score for PublicInfo {
+    fn score(&self) -> Option<PID<u64>> {
+        todo!()
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PublicInfoUpdate {
