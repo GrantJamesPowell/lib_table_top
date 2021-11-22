@@ -1,7 +1,9 @@
 pub mod bounded;
 mod point;
+mod point_set;
 
 pub use point::{Point, X, Y};
+pub use point_set::PointSet;
 
 use num_traits::{CheckedMul, Zero};
 use serde::{Deserialize, Serialize};
