@@ -1,25 +1,8 @@
 mod bounded;
+mod point;
 pub use bounded::{BoundedCol, BoundedPosition, BoundedRow};
+pub use point::{Point, ORIGIN, X, Y};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
-const ORIGIN: Point = Point { x: 0, y: 0 };
-
-impl From<Point> for (usize, usize) {
-    fn from(Point { x, y }: Point) -> Self {
-        (x, y)
-    }
-}
-
-impl From<(usize, usize)> for Point {
-    fn from((x, y): (usize, usize)) -> Self {
-        Point { x, y }
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Dimensions {
@@ -50,8 +33,9 @@ impl Area {
     }
 
     pub fn positions(&self) -> impl Iterator<Item = Point> + '_ {
-        (0..self.dimensions.width)
-            .flat_map(|x| (0..self.dimensions.height).map(move |y| Point { x, y }))
+        (0..self.dimensions.width).flat_map(move |x| {
+            (0..self.dimensions.height).map(move |y| self.origin + Point { x: X(x), y: Y(y) })
+        })
     }
 
     pub fn number_of_squares(&self) -> usize {
@@ -88,22 +72,20 @@ impl Area {
         }
     }
 
-    pub fn top_y(&self) -> usize {
-        self.bottom_y() + self.dimensions.height
+    pub fn top_y(&self) -> Y {
+        self.origin.y + self.dimensions.height
     }
 
-    pub fn bottom_y(&self) -> usize {
-        let Point { x: _, y } = self.origin;
-        y
+    pub fn bottom_y(&self) -> Y {
+        self.origin.y
     }
 
-    pub fn left_x(&self) -> usize {
-        let Point { x, y: _ } = self.origin;
-        x
+    pub fn left_x(&self) -> X {
+        self.origin.x
     }
 
-    pub fn right_x(&self) -> usize {
-        self.left_x() + self.dimensions.width
+    pub fn right_x(&self) -> X {
+        self.origin.x + self.dimensions.width
     }
 
     pub fn has_overlap_with(&self, other: Self) -> bool {
@@ -127,8 +109,8 @@ impl Area {
                     y: bottom_y,
                 },
                 dimensions: Dimensions {
-                    width: right_x - left_x,
-                    height: top_y - bottom_y,
+                    width: usize::from(right_x - left_x),
+                    height: usize::from(top_y - bottom_y),
                 },
             })
         } else {
