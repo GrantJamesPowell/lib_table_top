@@ -1,13 +1,12 @@
-mod bounded;
+pub mod bounded;
+mod point;
+
+pub use point::{Point, X, Y};
+
+use num_traits::{CheckedMul, Zero};
+use serde::{Deserialize, Serialize};
 use std::cmp::Ord;
 use std::ops::{Add, Sub};
-
-pub use bounded_point::{BoundedPoint, BoundedX, BoundedY};
-mod point;
-pub use bounded::{BoundedCol, BoundedPosition, BoundedRow};
-use num_traits::{CheckedMul, Zero};
-pub use point::{Point, X, Y};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Dimensions<T = u32> {

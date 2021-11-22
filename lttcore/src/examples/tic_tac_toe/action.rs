@@ -19,6 +19,6 @@ pub enum ActionError {
     #[error("all spaces taken")]
     AllSpacesTaken,
     /// Returned when trying to claim an already claimed space
-    #[error("space ({:?}, {:?}) is taken", attempted.0, attempted.1)]
+    #[error("space {} is taken", attempted)]
     SpaceIsTaken { attempted: Position },
 }

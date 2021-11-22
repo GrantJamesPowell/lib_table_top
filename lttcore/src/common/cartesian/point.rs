@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use num_traits::Zero;
+use serde::{Deserialize, Serialize};
 use std::ops::{Add, Sub};
 
 macro_rules! coord_component {
@@ -15,7 +15,10 @@ macro_rules! coord_component {
             }
         }
 
-        impl<T> Add<$id<T>> for $id<T> where T: Add<T, Output = T> + Copy {
+        impl<T> Add<$id<T>> for $id<T>
+        where
+            T: Add<Output = T> + Copy,
+        {
             type Output = $id<T>;
 
             fn add(self, rhs: $id<T>) -> Self::Output {
@@ -23,7 +26,10 @@ macro_rules! coord_component {
             }
         }
 
-        impl<T> Add<T> for $id<T> where T: Add<T, Output = T> + Copy {
+        impl<T> Add<T> for $id<T>
+        where
+            T: Add<Output = T> + Copy,
+        {
             type Output = $id<T>;
 
             fn add(self, n: T) -> Self::Output {
@@ -31,7 +37,10 @@ macro_rules! coord_component {
             }
         }
 
-        impl<T> Sub<$id<T>> for $id<T> where T: Sub<T, Output = T> + Copy {
+        impl<T> Sub<$id<T>> for $id<T>
+        where
+            T: Sub<Output = T> + Copy,
+        {
             type Output = $id<T>;
 
             fn sub(self, rhs: $id<T>) -> Self::Output {
@@ -39,7 +48,10 @@ macro_rules! coord_component {
             }
         }
 
-        impl<T> Sub<T> for $id<T> where T: Sub<T, Output = T> + Copy {
+        impl<T> Sub<T> for $id<T>
+        where
+            T: Sub<Output = T> + Copy,
+        {
             type Output = $id<T>;
 
             fn sub(self, n: T) -> Self::Output {
@@ -47,7 +59,10 @@ macro_rules! coord_component {
             }
         }
 
-        impl<T> $id<T> where T: Copy {
+        impl<T> $id<T>
+        where
+            T: Copy,
+        {
             pub fn inner(&self) -> T {
                 self.0
             }
@@ -64,13 +79,34 @@ pub struct Point<T = u32> {
     pub y: Y<T>,
 }
 
-impl<T> Point<T> where T: Zero {
-    pub fn origin() -> Self {
-        Self { x: X(T::zero()), y: Y(T::zero()) }
+impl<T> From<(T, T)> for Point<T> {
+    fn from((x, y): (T, T)) -> Self {
+        Self { x: X(x), y: Y(y) }
     }
 }
 
-impl<T> Add<X<T>> for Point<T> where T: Add<T, Output = T> + Copy {
+impl<T> From<(X<T>, Y<T>)> for Point<T> {
+    fn from((x, y): (X<T>, Y<T>)) -> Self {
+        Self { x, y }
+    }
+}
+
+impl<T> Point<T>
+where
+    T: Zero,
+{
+    pub fn origin() -> Self {
+        Self {
+            x: X(T::zero()),
+            y: Y(T::zero()),
+        }
+    }
+}
+
+impl<T> Add<X<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn add(self, rhs: X<T>) -> Self::Output {
@@ -81,7 +117,10 @@ impl<T> Add<X<T>> for Point<T> where T: Add<T, Output = T> + Copy {
     }
 }
 
-impl<T> Add<Y<T>> for Point<T> where T: Add<T, Output = T> + Copy {
+impl<T> Add<Y<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn add(self, rhs: Y<T>) -> Self::Output {
@@ -92,7 +131,10 @@ impl<T> Add<Y<T>> for Point<T> where T: Add<T, Output = T> + Copy {
     }
 }
 
-impl<T> Add<Point<T>> for Point<T> where T: Add<T, Output = T> + Copy {
+impl<T> Add<Point<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn add(self, rhs: Point<T>) -> Self::Output {
@@ -103,7 +145,10 @@ impl<T> Add<Point<T>> for Point<T> where T: Add<T, Output = T> + Copy {
     }
 }
 
-impl<T> Sub<X<T>> for Point<T> where T: Sub<T, Output = T> + Copy {
+impl<T> Sub<X<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn sub(self, rhs: X<T>) -> Self::Output {
@@ -114,7 +159,10 @@ impl<T> Sub<X<T>> for Point<T> where T: Sub<T, Output = T> + Copy {
     }
 }
 
-impl<T> Sub<Y<T>> for Point<T> where T: Sub<T, Output = T> + Copy {
+impl<T> Sub<Y<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn sub(self, rhs: Y<T>) -> Self::Output {
@@ -125,7 +173,10 @@ impl<T> Sub<Y<T>> for Point<T> where T: Sub<T, Output = T> + Copy {
     }
 }
 
-impl<T> Sub<Point<T>> for Point<T> where T:  Sub<T, Output = T> + Copy {
+impl<T> Sub<Point<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
     type Output = Point<T>;
 
     fn sub(self, rhs: Point<T>) -> Self::Output {
