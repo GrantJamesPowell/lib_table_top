@@ -90,31 +90,7 @@ macro_rules! bounded {
                 write!(formatter, "an integer between 0 and {}", BOUND)
             }
 
-            fn visit_i8<E: de::Error>(self, value: i8) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
-            fn visit_i16<E: de::Error>(self, value: i16) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
-            fn visit_i32<E: de::Error>(self, value: i32) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
             fn visit_i64<E: de::Error>(self, value: i64) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
-            fn visit_u8<E: de::Error>(self, value: u8) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
-            fn visit_u16<E: de::Error>(self, value: u16) -> Result<Self::Value, E> {
-                Self::Value::try_visitor_build(value)
-            }
-
-            fn visit_u32<E: de::Error>(self, value: u32) -> Result<Self::Value, E> {
                 Self::Value::try_visitor_build(value)
             }
 
