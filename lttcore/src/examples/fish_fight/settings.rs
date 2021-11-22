@@ -21,10 +21,7 @@ impl Settings {
     }
 
     pub fn board_area(&self) -> Area {
-        Area {
-            position: (0, 0),
-            dimensions: self.dimensions,
-        }
+        Area::from_origin(self.dimensions)
     }
 }
 

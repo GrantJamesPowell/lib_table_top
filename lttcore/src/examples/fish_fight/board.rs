@@ -1,46 +1,17 @@
+use crate::common::cartesian::{Area, Dimensions, Point};
 use bit_vec::BitVec;
 use serde::{Deserialize, Serialize};
-
-pub type Position = (u8, u8);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Dimensions {
-    pub width: u8,
-    pub height: u8,
-}
-
-impl Dimensions {
-    pub fn number_of_squares(&self) -> u16 {
-        (self.width as u16) * (self.height as u16)
-    }
-
-    pub fn contains(&self, (x, y): Position) -> bool {
-        x <= self.width && y <= self.height
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Area {
-    pub position: Position,
-    pub dimensions: Dimensions,
-}
-
-impl Area {
-    pub fn covered_positions(&self) -> impl Iterator<Item = Position> + '_ {
-        (0..self.dimensions.width).flat_map(|x| (0..self.dimensions.height).map(move |y| (x, y)))
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Fish(Dimensions);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PositionedFish(pub Position, pub Fish);
+pub struct PositionedFish(pub Point, pub Fish);
 
 impl PositionedFish {
     fn area(&self) -> Area {
         Area {
-            position: self.0,
+            origin: self.0,
             dimensions: self.1 .0,
         }
     }
@@ -71,7 +42,7 @@ impl From<Dimensions> for BoardMarkers {
     fn from(dimensions: Dimensions) -> Self {
         Self {
             dimensions,
-            markers: BitVec::from_elem(dimensions.number_of_squares() as usize, false),
+            markers: BitVec::from_elem(dimensions.number_of_squares(), false),
         }
     }
 }
@@ -91,29 +62,29 @@ impl BoardMarkers {
         self.dimensions
     }
 
-    pub fn contains(&self, position: Position) -> bool {
-        let offset = self.position_offset(position);
+    pub fn contains(&self, point: Point) -> bool {
+        let offset = self.point_offset(point);
         self.markers.get(offset).unwrap_or(false)
     }
 
-    pub fn insert(&mut self, position: Position) {
-        self.set(position, true);
+    pub fn insert(&mut self, point: Point) {
+        self.set(point, true);
     }
 
-    pub fn remove(&mut self, position: Position) {
-        self.set(position, false);
+    pub fn remove(&mut self, point: Point) {
+        self.set(point, false);
     }
 
     pub fn any_in_area(&self, area: Area) -> bool {
-        area.covered_positions().any(|pos| self.contains(pos))
+        area.positions().any(|pos| self.contains(pos))
     }
 
-    fn set(&mut self, position: Position, x: bool) {
-        let offset = self.position_offset(position);
+    fn set(&mut self, point: Point, x: bool) {
+        let offset = self.point_offset(point);
         self.markers.set(offset, x);
     }
 
-    fn position_offset(&self, (x, y): Position) -> usize {
+    fn point_offset(&self, Point { x, y }: Point) -> usize {
         (x as usize) + ((self.dimensions.width as usize) * (y as usize))
     }
 }

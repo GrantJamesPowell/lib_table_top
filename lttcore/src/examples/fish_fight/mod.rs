@@ -1,13 +1,16 @@
+mod action;
 mod board;
 mod bot;
 mod public_info;
 mod settings;
 
-pub use board::{Area, BoardMarkers, Dimensions, Fish, PlayerBoards, Position, PositionedFish};
+pub use action::{Action, ActionError};
+pub use board::{BoardMarkers, Fish, PlayerBoards, PositionedFish};
 pub use bot::{FishFightBot, FishFightBotWrapper, FishFightGuessPov};
 pub use public_info::{Phase, PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
+use crate::common::cartesian::{Area, Dimensions};
 use crate::play::{ActionResponse, GameAdvance, LttSettings, View};
 use crate::utilities::PlayerIndexedData as PID;
 use crate::{Play, Player, PlayerSet};
@@ -39,15 +42,6 @@ impl View for PlayerSecretInfo {
         self.fish_positions = fish_positions;
     }
 }
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Action {
-    Setup(FishPositions),
-    Guess(Position),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum ActionError {}
 
 impl Play for FishFight {
     type Action = Action;

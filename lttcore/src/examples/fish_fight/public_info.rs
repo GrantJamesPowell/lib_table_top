@@ -1,4 +1,5 @@
-use super::{PlayerBoards, Position, Settings};
+use super::{PlayerBoards, Settings};
+use crate::common::cartesian::Point;
 use crate::play::View;
 use crate::play::{LttSettings, Score};
 use crate::utilities::PlayerIndexedData as PID;
@@ -57,8 +58,8 @@ impl Score for PublicInfo {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum GuessResult {
-    Hit(Position),
-    Miss(Position),
+    Hit(Point),
+    Miss(Point),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

@@ -1,12 +1,13 @@
-use super::{Action, FishFight, FishPositions, Phase, PlayerBoards, Position, Settings};
+use super::{Action, FishFight, FishPositions, Phase, PlayerBoards, Settings};
 use crate::bots::Bot;
+use crate::common::cartesian::Point;
 use crate::pov::PlayerPov;
 use crate::utilities::PlayerIndexedData as PID;
 use crate::{Play, Player, TurnNum};
 
 pub trait FishFightBot {
     fn setup_board(settings: &Settings, rng: &mut impl rand::Rng) -> FishPositions;
-    fn guess(pov: FishFightGuessPov<'_>, rng: &mut impl rand::Rng) -> Position;
+    fn guess(pov: FishFightGuessPov<'_>, rng: &mut impl rand::Rng) -> Point;
 }
 
 #[derive(Debug, PartialEq, Eq)]
