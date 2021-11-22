@@ -1,29 +1,5 @@
+use bit_vec::BitVec;
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct BitVec;
-
-impl BitVec {
-    pub fn is_empty(&self) -> bool {
-        todo!()
-    }
-
-    pub fn count_ones(&self) -> u64 {
-        todo!()
-    }
-
-    pub fn set(&mut self, _val: bool) {
-        todo!()
-    }
-
-    pub fn get(&self, _i: usize) -> bool {
-        todo!()
-    }
-
-    pub fn intersection(&self, _other: Self) -> Self {
-        todo!()
-    }
-}
 
 pub type Position = (u8, u8);
 
@@ -34,8 +10,12 @@ pub struct Dimensions {
 }
 
 impl Dimensions {
-    fn number_of_squares(&self) -> u16 {
+    pub fn number_of_squares(&self) -> u16 {
         (self.width as u16) * (self.height as u16)
+    }
+
+    pub fn contains(&self, (x, y): Position) -> bool {
+        x <= self.width && y <= self.height
     }
 }
 
@@ -46,13 +26,8 @@ pub struct Area {
 }
 
 impl Area {
-    pub fn intersects_with(&self, other: impl Into<BitVec>) -> bool {
-        let other = other.into();
-        !self.bit_vec().intersection(other).is_empty()
-    }
-
-    pub fn bit_vec(&self) -> BitVec {
-        todo!()
+    pub fn covered_positions(&self) -> impl Iterator<Item = Position> + '_ {
+        (0..self.dimensions.width).flat_map(|x| (0..self.dimensions.height).map(move |y| (x, y)))
     }
 }
 
@@ -96,14 +71,20 @@ impl From<Dimensions> for BoardMarkers {
     fn from(dimensions: Dimensions) -> Self {
         Self {
             dimensions,
-            markers: Default::default(),
+            markers: BitVec::from_elem(dimensions.number_of_squares() as usize, false),
         }
     }
 }
 
 impl BoardMarkers {
+    /// Number of spaces marked as `True`
     pub fn count(&self) -> usize {
-        todo!()
+        self.markers
+            .blocks()
+            .map(|block| block.count_ones())
+            .sum::<u32>()
+            .try_into()
+            .unwrap()
     }
 
     pub fn dimensions(&self) -> Dimensions {
@@ -111,18 +92,28 @@ impl BoardMarkers {
     }
 
     pub fn contains(&self, position: Position) -> bool {
-        todo!()
+        let offset = self.position_offset(position);
+        self.markers.get(offset).unwrap_or(false)
     }
 
-    pub fn insert(&mut self, position: Position) {
-        todo!()
+    pub fn insert(&mut self, position: Position)  {
+        self.set(position, true);
     }
 
     pub fn remove(&mut self, position: Position) {
-        todo!()
+        self.set(position, false);
     }
 
-    pub fn intersects(&self, other: &Self) -> bool {
-        todo!()
+    pub fn any_in_area(&self, area: Area) -> bool {
+        area.covered_positions().any(|pos| self.contains(pos))
+    }
+
+    fn set(&mut self, position: Position, x: bool) {
+        let offset = self.position_offset(position);
+        self.markers.set(offset, x);
+    }
+
+    fn position_offset(&self, (x, y): Position) -> usize {
+        (x as usize) + ((self.dimensions.width as usize) * (y as usize))
     }
 }
