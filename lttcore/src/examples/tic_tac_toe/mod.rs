@@ -7,7 +7,7 @@ mod public_info;
 mod settings;
 
 pub use action::{Action, ActionError};
-pub use board::{Board, BoardIndex, Col, Position, Row, Status, POSSIBLE_WINS};
+pub use board::{Board, Col, Position, Row, Status};
 pub use bot::{TicTacToeBot, TicTacToeBotWrapper};
 pub use marker::Marker;
 pub use public_info::{PublicInfo, PublicInfoUpdate};

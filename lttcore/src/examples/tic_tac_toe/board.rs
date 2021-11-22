@@ -1,9 +1,26 @@
 use super::Marker;
+use crate::common::cartesian::{BoundedCol, BoundedPosition, BoundedRow};
 use crate::Player;
 use itertools::iproduct;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::ops::{Index, IndexMut};
+
+pub type Position = BoundedPosition<2, 2>;
+pub type Row = BoundedRow<2>;
+pub type Col = BoundedCol<2>;
+
+const ROW_0: Row = unsafe { Row::new_unchecked(0) };
+const ROW_1: Row = unsafe { Row::new_unchecked(1) };
+const ROW_2: Row = unsafe { Row::new_unchecked(2) };
+
+const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
+
+const COL_0: Col = unsafe { Col::new_unchecked(0) };
+const COL_1: Col = unsafe { Col::new_unchecked(1) };
+const COL_2: Col = unsafe { Col::new_unchecked(2) };
+
+const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -39,23 +56,27 @@ impl From<[[Option<Marker>; 3]; 3]> for Board {
 }
 
 impl Board {
-    pub fn rows(&self) -> impl Iterator<Item = [Option<Marker>; 3]> + '_ {
+    pub fn rows(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         ROWS.into_iter()
-            .map(|row| COLS.map(|col| (self[(col, row)].clone())))
+            .map(|row| COLS.map(|col| ((col, row), self[(col, row)].clone())))
     }
 
-    pub fn cols(&self) -> impl Iterator<Item = [Option<Marker>; 3]> + '_ {
+    pub fn cols(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         COLS.into_iter()
-            .map(|col| ROWS.map(|row| (self[(col, row)].clone())))
+            .map(|col| ROWS.map(|row| ((col, row), self[(col, row)].clone())))
     }
 
-    pub fn diagonals(&self) -> impl Iterator<Item = [Option<Marker>; 3]> + '_ {
+    pub fn diagonals(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         [
             [(COL_0, ROW_0), (COL_1, ROW_1), (COL_2, ROW_2)],
             [(COL_0, ROW_2), (COL_1, ROW_1), (COL_2, ROW_0)],
         ]
         .into_iter()
-        .map(|group| group.map(|pos| self[pos].clone()))
+        .map(|group| group.map(|pos| (pos, self[pos].clone())))
+    }
+
+    pub fn triples(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
+        self.rows().chain(self.cols()).chain(self.diagonals())
     }
 
     /// Iterate over the spaces on the board and the marker in the space (if there is one)
@@ -292,13 +313,15 @@ impl Board {
     /// );
     /// ```
     pub fn status(&self) -> Status {
-        POSSIBLE_WINS
-            .iter()
-            .find_map(|&positions| {
-                let [a, b, c] = positions.map(|pos| self[pos]);
+        self.triples()
+            .find_map(|triple| {
+                let [(pos1, a), (pos2, b), (pos3, c)] = triple;
 
                 if a == b && b == c {
-                    a.map(|winner| Status::Win { winner, positions })
+                    a.map(|winner| Status::Win {
+                        winner,
+                        positions: [pos1, pos2, pos3],
+                    })
                 } else {
                     None
                 }
@@ -342,177 +365,3 @@ impl IndexMut<Row> for Board {
         &mut self.0[usize::from(row)]
     }
 }
-
-macro_rules! board_index {
-    ($id:ident) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-        pub struct $id(BoardIndex);
-
-        impl From<$id> for u8 {
-            fn from(n: $id) -> Self {
-                n.0 .0
-            }
-        }
-
-        impl From<$id> for usize {
-            fn from(n: $id) -> Self {
-                n.0 .0 as usize
-            }
-        }
-
-        impl $id {
-            /// See `BoardIndex::next`
-            pub fn next(&self) -> Self {
-                Self(self.0.next())
-            }
-
-            /// See `BoardIndex::previous`
-            pub fn previous(&self) -> Self {
-                Self(self.0.previous())
-            }
-
-            /// See `BoardIndex::new`
-            pub fn new(n: usize) -> Self {
-                Self(BoardIndex::new(n))
-            }
-
-            /// See `BoardIndex::try_new`
-            pub fn try_new(n: usize) -> Option<Self> {
-                BoardIndex::try_new(n).map(Self)
-            }
-        }
-    };
-}
-
-board_index!(Row);
-board_index!(Col);
-
-/// Limiter for the indexes (rows, cols) to [0, 1, 2]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct BoardIndex(u8);
-
-impl BoardIndex {
-    /// Returns the next `BoardIndex`, wrapping back to 0 after 2
-    ///
-    /// ```
-    /// use lttcore::examples::tic_tac_toe::BoardIndex;
-    ///
-    /// assert_eq!(BoardIndex::new(0).next(), BoardIndex::new(1));
-    /// assert_eq!(BoardIndex::new(1).next(), BoardIndex::new(2));
-    /// assert_eq!(BoardIndex::new(2).next(), BoardIndex::new(0));
-    /// ```
-    pub fn next(&self) -> Self {
-        Self(match self.0 {
-            0 => 1,
-            1 => 2,
-            2 => 0,
-            _ => panic!("invalid index"),
-        })
-    }
-
-    /// Returns the previous `BoardIndex`, wrapping back to 2 after 0
-    ///
-    /// ```
-    /// use lttcore::examples::tic_tac_toe::BoardIndex;
-    ///
-    /// assert_eq!(BoardIndex::new(2).previous(), BoardIndex::new(1));
-    /// assert_eq!(BoardIndex::new(1).previous(), BoardIndex::new(0));
-    /// assert_eq!(BoardIndex::new(0).previous(), BoardIndex::new(2));
-    /// ```
-    pub fn previous(&self) -> Self {
-        Self(match self.0 {
-            2 => 1,
-            1 => 0,
-            0 => 2,
-            _ => panic!("invalid index"),
-        })
-    }
-
-    /// Construct a new `BoardIndex` (see `BoardIndex::try_new` for a non panicking version)
-    ///
-    /// # Panics
-    ///
-    /// panics if n is outside of 0..=2
-    ///
-    /// ```should_panic
-    /// use lttcore::examples::tic_tac_toe::BoardIndex;
-    /// BoardIndex::new(1000);
-    /// ```
-    pub fn new(n: usize) -> Self {
-        Self::try_new(n).expect("Invalid index, n must be within 0..=2")
-    }
-
-    /// Try to construct a `BoardIndex`, returning None if n is out of bounds
-    ///
-    /// ```
-    /// use lttcore::examples::tic_tac_toe::BoardIndex;
-    /// assert!(BoardIndex::try_new(1).is_some());
-    /// assert!(BoardIndex::try_new(1000).is_none());
-    /// ```
-    pub fn try_new(n: usize) -> Option<Self> {
-        match n {
-            0 | 1 | 2 => Some(Self(n.try_into().unwrap())),
-            _ => None,
-        }
-    }
-}
-
-pub type Position = (Col, Row);
-use BoardIndex as BI;
-
-pub const ROW_0: Row = Row(BI(0));
-pub const ROW_1: Row = Row(BI(1));
-pub const ROW_2: Row = Row(BI(2));
-
-pub const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
-pub const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
-
-pub const COL_0: Col = Col(BI(0));
-pub const COL_1: Col = Col(BI(1));
-pub const COL_2: Col = Col(BI(2));
-
-pub const POSSIBLE_WINS: [[(Col, Row); 3]; 8] = [
-    // Fill up a row
-    [
-        (Col(BI(0)), Row(BI(0))),
-        (Col(BI(0)), Row(BI(1))),
-        (Col(BI(0)), Row(BI(2))),
-    ],
-    [
-        (Col(BI(1)), Row(BI(0))),
-        (Col(BI(1)), Row(BI(1))),
-        (Col(BI(1)), Row(BI(2))),
-    ],
-    [
-        (Col(BI(2)), Row(BI(0))),
-        (Col(BI(2)), Row(BI(1))),
-        (Col(BI(2)), Row(BI(2))),
-    ],
-    // Fill up a col
-    [
-        (Col(BI(0)), Row(BI(0))),
-        (Col(BI(1)), Row(BI(0))),
-        (Col(BI(2)), Row(BI(0))),
-    ],
-    [
-        (Col(BI(0)), Row(BI(1))),
-        (Col(BI(1)), Row(BI(1))),
-        (Col(BI(2)), Row(BI(1))),
-    ],
-    [
-        (Col(BI(0)), Row(BI(2))),
-        (Col(BI(1)), Row(BI(2))),
-        (Col(BI(2)), Row(BI(2))),
-    ],
-    // Diagonal
-    [
-        (Col(BI(0)), Row(BI(0))),
-        (Col(BI(1)), Row(BI(1))),
-        (Col(BI(2)), Row(BI(2))),
-    ],
-    [
-        (Col(BI(2)), Row(BI(0))),
-        (Col(BI(1)), Row(BI(1))),
-        (Col(BI(0)), Row(BI(2))),
-    ],
-];
