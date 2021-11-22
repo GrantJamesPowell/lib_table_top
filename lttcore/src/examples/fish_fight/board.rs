@@ -85,6 +85,6 @@ impl BoardMarkers {
     }
 
     fn point_offset(&self, Point { x, y }: Point) -> usize {
-        (x as usize) + ((self.dimensions.width as usize) * (y as usize))
+        (usize::from(x)) + (usize::from(self.dimensions.width) * usize::from(y))
     }
 }
