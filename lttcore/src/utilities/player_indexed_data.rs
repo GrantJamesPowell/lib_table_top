@@ -204,6 +204,12 @@ impl<T> IntoIterator for PlayerIndexedData<T> {
     }
 }
 
+impl<T> From<(Player, T)> for PlayerIndexedData<T> {
+    fn from(value: (Player, T)) -> Self {
+        Some(value).into_iter().collect()
+    }
+}
+
 impl<T> FromIterator<(Player, T)> for PlayerIndexedData<T> {
     fn from_iter<I: IntoIterator<Item = (Player, T)>>(iter: I) -> Self {
         let mut data = PlayerIndexedData::new();
