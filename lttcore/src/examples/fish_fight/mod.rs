@@ -3,9 +3,9 @@ mod bot;
 mod public_info;
 mod settings;
 
-pub use board::{Area, Board, Dimensions, Fish, Position, PositionedFish};
+pub use board::{Area, BoardMarkers, Dimensions, Fish, PlayerBoards, Position, PositionedFish};
 pub use bot::{FishFightBot, FishFightBotWrapper, FishFightGuessPov};
-pub use public_info::{PublicInfo, PublicInfoUpdate};
+pub use public_info::{Phase, PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
 use crate::play::{ActionResponse, GameAdvance, LttSettings, View};
@@ -73,7 +73,7 @@ impl Play for FishFight {
             player_positions: settings
                 .number_of_players()
                 .player_indexed_data(|_| Default::default()),
-            public_info: PublicInfo::Setup,
+            public_info: PublicInfo::init_from_settings(settings),
         }
     }
 

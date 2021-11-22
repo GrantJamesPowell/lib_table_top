@@ -72,7 +72,57 @@ impl PositionedFish {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Board {
-    pub misses: BitVec,
-    pub hits: BitVec,
+pub struct PlayerBoards {
+    pub hits: BoardMarkers,
+    pub misses: BoardMarkers,
+}
+
+impl From<Dimensions> for PlayerBoards {
+    fn from(dimensions: Dimensions) -> Self {
+        Self {
+            hits: dimensions.into(),
+            misses: dimensions.into(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct BoardMarkers {
+    dimensions: Dimensions,
+    markers: BitVec,
+}
+
+impl From<Dimensions> for BoardMarkers {
+    fn from(dimensions: Dimensions) -> Self {
+        Self {
+            dimensions,
+            markers: Default::default(),
+        }
+    }
+}
+
+impl BoardMarkers {
+    pub fn count(&self) -> usize {
+        todo!()
+    }
+
+    pub fn dimensions(&self) -> Dimensions {
+        self.dimensions
+    }
+
+    pub fn contains(&self, position: Position) -> bool {
+        todo!()
+    }
+
+    pub fn insert(&mut self, position: Position) {
+        todo!()
+    }
+
+    pub fn remove(&mut self, position: Position) {
+        todo!()
+    }
+
+    pub fn intersects(&self, other: &Self) -> bool {
+        todo!()
+    }
 }

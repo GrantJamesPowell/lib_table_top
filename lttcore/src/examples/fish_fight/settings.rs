@@ -5,22 +5,32 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::collections::HashMap;
 
-use super::{Dimensions, Fish};
+use super::{BoardMarkers, Dimensions, Fish};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Settings {
-    board_dimensions: Dimensions,
+    dimensions: Dimensions,
+    out_of_player_squares: BoardMarkers,
     fish: SmallVec<[Fish; 8]>,
+}
+
+impl Settings {
+    pub fn dimensions(&self) -> Dimensions {
+        self.dimensions
+    }
 }
 
 impl Default for Settings {
     fn default() -> Self {
+        let dimensions = Dimensions {
+            width: 16,
+            height: 16,
+        };
+
         Self {
-            board_dimensions: Dimensions {
-                width: 16,
-                height: 16,
-            },
+            dimensions,
             fish: Default::default(),
+            out_of_player_squares: dimensions.into(),
         }
     }
 }

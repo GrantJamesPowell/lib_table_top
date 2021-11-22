@@ -1,4 +1,4 @@
-use super::{Action, Board, FishFight, FishPositions, Position, PublicInfo, Settings};
+use super::{Action, FishFight, FishPositions, Phase, PlayerBoards, Position, Settings};
 use crate::bots::Bot;
 use crate::pov::PlayerPov;
 use crate::utilities::PlayerIndexedData as PID;
@@ -14,7 +14,7 @@ pub struct FishFightGuessPov<'a> {
     pub turn_num: TurnNum,
     pub player: Player,
     pub settings: &'a Settings,
-    pub boards: &'a PID<Board>,
+    pub boards: &'a PID<PlayerBoards>,
     pub player_fish_positions: &'a FishPositions,
 }
 
@@ -28,18 +28,18 @@ impl<T: FishFightBot> Bot for FishFightBotWrapper<T> {
         player_pov: &PlayerPov<'_, Self::Game>,
         rng: &mut impl rand::Rng,
     ) -> <Self::Game as Play>::Action {
-        match player_pov.public_info {
-            PublicInfo::Setup => {
+        match player_pov.public_info.phase() {
+            Phase::Setup => {
                 let position = T::setup_board(player_pov.settings, rng);
                 Action::Setup(position)
             }
-            PublicInfo::Playing { boards } => {
+            Phase::Playing => {
                 let pov = FishFightGuessPov {
                     turn_num: player_pov.turn_num,
                     player: player_pov.player,
                     settings: player_pov.settings,
                     player_fish_positions: &player_pov.secret_info.fish_positions,
-                    boards,
+                    boards: player_pov.public_info.player_boards(),
                 };
                 let position = T::guess(pov, rng);
                 Action::Guess(position)
