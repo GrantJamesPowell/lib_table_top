@@ -1,13 +1,15 @@
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{self, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
+use std::fmt;
 
 pub type BoundedPosition<const WIDTH: usize, const HEIGHT: usize> =
     (BoundedCol<WIDTH>, BoundedRow<HEIGHT>);
 
 macro_rules! bounded {
-    ($id:ident) => {
-        #[derive(
-            Debug, Copy, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Deserialize, Serialize,
-        )]
+    ($id:ident, $visitor:ident) => {
+        #[derive(Debug, Copy, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize)]
         pub struct $id<const BOUND: usize>(usize);
 
         impl<const BOUND: usize> From<$id<BOUND>> for usize {
@@ -78,11 +80,78 @@ macro_rules! bounded {
                 (0..=BOUND).map(Self)
             }
         }
+
+        struct $visitor<const BOUND: usize>;
+
+        impl<'de, const BOUND: usize> Visitor<'de> for $visitor<BOUND> {
+            type Value = $id<BOUND>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(formatter, "an integer between 0 and {}", BOUND)
+            }
+
+            fn visit_i8<E: de::Error>(self, value: i8) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_i16<E: de::Error>(self, value: i16) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_i32<E: de::Error>(self, value: i32) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_i64<E: de::Error>(self, value: i64) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_u8<E: de::Error>(self, value: u8) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_u16<E: de::Error>(self, value: u16) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_u32<E: de::Error>(self, value: u32) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+
+            fn visit_u64<E: de::Error>(self, value: u64) -> Result<Self::Value, E> {
+                Self::Value::try_visitor_build(value)
+            }
+        }
+
+        impl<'de, const BOUND: usize> Deserialize<'de> for $id<BOUND> {
+            fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                deserializer.deserialize_u32($visitor)
+            }
+        }
+
+        impl<const BOUND: usize> $id<BOUND> {
+            fn try_visitor_build<E: de::Error, TY: TryInto<usize> + Copy + fmt::Display>(
+                n: TY,
+            ) -> Result<Self, E> {
+                let err = move || {
+                    E::custom(format!(
+                        "{}_{} out of range 0..={} required by {}",
+                        n,
+                        std::any::type_name::<TY>(),
+                        BOUND,
+                        stringify!($id)
+                    ))
+                };
+                let num = n.try_into().map_err(|_| err())?;
+                let bounded = Self::try_new(num).ok_or_else(err)?;
+                Ok(bounded)
+            }
+        }
     };
 }
 
-bounded!(BoundedCol);
-bounded!(BoundedRow);
+bounded!(BoundedCol, BoundedColVistor);
+bounded!(BoundedRow, BoundedRowVistor);
 
 #[cfg(test)]
 mod tests {
@@ -118,5 +187,25 @@ mod tests {
         assert!(BoundedRow::<4>::all()
             .map(usize::from)
             .eq([0, 1, 2, 3, 4].into_iter()))
+    }
+
+    #[test]
+    fn test_bounded_serde() {
+        let row: BoundedRow<3> = BoundedRow::new(3);
+        let serialized = serde_json::to_string(&row).unwrap();
+        assert_eq!(serialized, "3");
+        let deserialized: BoundedRow<3> = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(row, deserialized);
+
+        let invalid: Result<BoundedRow<3>, _> = serde_json::from_str("42");
+        assert_eq!(
+            &invalid.unwrap_err().to_string(),
+            "42_u64 out of range 0..=3 required by BoundedRow at line 1 column 2"
+        );
+        let invalid: Result<BoundedRow<3>, _> = serde_json::from_str("-12");
+        assert_eq!(
+            &invalid.unwrap_err().to_string(),
+            "-12_i64 out of range 0..=3 required by BoundedRow at line 1 column 3"
+        );
     }
 }
