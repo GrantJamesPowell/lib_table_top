@@ -5,4 +5,5 @@ members = [
     "lttruntime",
     "lttnetworking",
     "ltti",
+    "games/search_and_destroy",
 ]
