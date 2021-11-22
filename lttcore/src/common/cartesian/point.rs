@@ -1,72 +1,115 @@
+use num_traits::Zero;
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Sub};
 
-macro_rules! coord {
+macro_rules! coord_component {
     ($id:ident) => {
         #[derive(
             Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize,
         )]
-        pub struct $id(pub usize);
+        pub struct $id<T = u32>(pub T);
 
-        impl From<usize> for $id {
-            fn from(n: usize) -> Self {
+        impl<T> From<T> for $id<T> {
+            fn from(n: T) -> Self {
                 Self(n)
             }
         }
 
-        impl From<$id> for usize {
-            fn from(coord: $id) -> Self {
-                coord.0
-            }
-        }
+        impl<T> Add<$id<T>> for $id<T>
+        where
+            T: Add<Output = T> + Copy,
+        {
+            type Output = $id<T>;
 
-        impl Add<$id> for $id {
-            type Output = $id;
-            fn add(self, rhs: $id) -> Self::Output {
+            fn add(self, rhs: $id<T>) -> Self::Output {
                 Self(self.0 + rhs.0)
             }
         }
 
-        impl Add<usize> for $id {
-            type Output = $id;
-            fn add(self, n: usize) -> Self::Output {
+        impl<T> Add<T> for $id<T>
+        where
+            T: Add<Output = T> + Copy,
+        {
+            type Output = $id<T>;
+
+            fn add(self, n: T) -> Self::Output {
                 Self(self.0 + n)
             }
         }
 
-        impl Sub<$id> for $id {
-            type Output = $id;
+        impl<T> Sub<$id<T>> for $id<T>
+        where
+            T: Sub<Output = T> + Copy,
+        {
+            type Output = $id<T>;
 
-            fn sub(self, rhs: $id) -> Self::Output {
+            fn sub(self, rhs: $id<T>) -> Self::Output {
                 Self(self.0 - rhs.0)
             }
         }
 
-        impl Sub<usize> for $id {
-            type Output = $id;
+        impl<T> Sub<T> for $id<T>
+        where
+            T: Sub<Output = T> + Copy,
+        {
+            type Output = $id<T>;
 
-            fn sub(self, n: usize) -> Self::Output {
+            fn sub(self, n: T) -> Self::Output {
                 Self(self.0 - n)
+            }
+        }
+
+        impl<T> $id<T>
+        where
+            T: Copy,
+        {
+            pub fn inner(&self) -> T {
+                self.0
             }
         }
     };
 }
 
-coord!(X);
-coord!(Y);
+coord_component!(X);
+coord_component!(Y);
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Point {
-    pub x: X,
-    pub y: Y,
+pub struct Point<T = u32> {
+    pub x: X<T>,
+    pub y: Y<T>,
 }
 
-pub const ORIGIN: Point = Point { x: X(0), y: Y(0) };
+impl<T> From<(T, T)> for Point<T> {
+    fn from((x, y): (T, T)) -> Self {
+        Self { x: X(x), y: Y(y) }
+    }
+}
 
-impl Add<X> for Point {
-    type Output = Point;
+impl<T> From<(X<T>, Y<T>)> for Point<T> {
+    fn from((x, y): (X<T>, Y<T>)) -> Self {
+        Self { x, y }
+    }
+}
 
-    fn add(self, rhs: X) -> Self::Output {
+impl<T> Point<T>
+where
+    T: Zero,
+{
+    pub fn origin() -> Self {
+        Self {
+            x: X(T::zero()),
+            y: Y(T::zero()),
+        }
+    }
+}
+
+impl<T> Add<X<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = Point<T>;
+
+    fn add(self, rhs: X<T>) -> Self::Output {
         Point {
             x: self.x + rhs,
             y: self.y,
@@ -74,10 +117,13 @@ impl Add<X> for Point {
     }
 }
 
-impl Add<Y> for Point {
-    type Output = Point;
+impl<T> Add<Y<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = Point<T>;
 
-    fn add(self, rhs: Y) -> Self::Output {
+    fn add(self, rhs: Y<T>) -> Self::Output {
         Point {
             x: self.x,
             y: self.y + rhs,
@@ -85,10 +131,13 @@ impl Add<Y> for Point {
     }
 }
 
-impl Add<Point> for Point {
-    type Output = Point;
+impl<T> Add<Point<T>> for Point<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = Point<T>;
 
-    fn add(self, rhs: Point) -> Self::Output {
+    fn add(self, rhs: Point<T>) -> Self::Output {
         Point {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -96,10 +145,13 @@ impl Add<Point> for Point {
     }
 }
 
-impl Sub<X> for Point {
-    type Output = Point;
+impl<T> Sub<X<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
+    type Output = Point<T>;
 
-    fn sub(self, rhs: X) -> Self::Output {
+    fn sub(self, rhs: X<T>) -> Self::Output {
         Point {
             x: self.x - rhs,
             y: self.y,
@@ -107,10 +159,13 @@ impl Sub<X> for Point {
     }
 }
 
-impl Sub<Y> for Point {
-    type Output = Point;
+impl<T> Sub<Y<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
+    type Output = Point<T>;
 
-    fn sub(self, rhs: Y) -> Self::Output {
+    fn sub(self, rhs: Y<T>) -> Self::Output {
         Point {
             x: self.x,
             y: self.y - rhs,
@@ -118,10 +173,13 @@ impl Sub<Y> for Point {
     }
 }
 
-impl Sub<Point> for Point {
-    type Output = Point;
+impl<T> Sub<Point<T>> for Point<T>
+where
+    T: Sub<Output = T> + Copy,
+{
+    type Output = Point<T>;
 
-    fn sub(self, rhs: Point) -> Self::Output {
+    fn sub(self, rhs: Point<T>) -> Self::Output {
         Point {
             x: self.x - rhs.x,
             y: self.y - rhs.y,

@@ -1,14 +1,14 @@
 use super::Marker;
-use crate::common::cartesian::{BoundedCol, BoundedPosition, BoundedRow};
+use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY};
 use crate::Player;
 use itertools::iproduct;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::ops::{Index, IndexMut};
 
-pub type Position = BoundedPosition<2, 2>;
-pub type Row = BoundedRow<2>;
-pub type Col = BoundedCol<2>;
+pub type Position = BoundedPoint<2, 2>;
+pub type Row = BoundedY<2>;
+pub type Col = BoundedX<2>;
 
 const ROW_0: Row = unsafe { Row::new_unchecked(0) };
 const ROW_1: Row = unsafe { Row::new_unchecked(1) };
@@ -58,12 +58,12 @@ impl From<[[Option<Marker>; 3]; 3]> for Board {
 impl Board {
     pub fn rows(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         ROWS.into_iter()
-            .map(|row| COLS.map(|col| ((col, row), self[(col, row)].clone())))
+            .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)].clone())))
     }
 
     pub fn cols(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         COLS.into_iter()
-            .map(|col| ROWS.map(|row| ((col, row), self[(col, row)].clone())))
+            .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)].clone())))
     }
 
     pub fn diagonals(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -72,7 +72,7 @@ impl Board {
             [(COL_0, ROW_2), (COL_1, ROW_1), (COL_2, ROW_0)],
         ]
         .into_iter()
-        .map(|group| group.map(|pos| (pos, self[pos].clone())))
+        .map(|group| group.map(|pos| (pos.into(), self[pos].clone())))
     }
 
     pub fn triples(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -106,7 +106,7 @@ impl Board {
     /// );
     /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Marker>)> + '_ {
-        iproduct!(COLS, ROWS).map(|position: Position| (position, self[position].clone()))
+        iproduct!(COLS, ROWS).map(|pos| (pos.into(), self[pos].clone()))
     }
 
     /// Iterate over the spaces on the board that are taken
@@ -338,17 +338,19 @@ impl Board {
     }
 }
 
-impl Index<Position> for Board {
+impl<T: Into<Position>> Index<T> for Board {
     type Output = Option<Marker>;
 
-    fn index(&self, (col, row): Position) -> &Self::Output {
-        &self[row][usize::from(col)]
+    fn index(&self, pos: T) -> &Self::Output {
+        let pos = pos.into();
+        let idx = usize::from(pos.y());
+        &self[pos.y()][idx]
     }
 }
 
 impl IndexMut<Position> for Board {
-    fn index_mut(&mut self, (col, row): Position) -> &mut Self::Output {
-        &mut self[row][usize::from(col)]
+    fn index_mut(&mut self, pos: Position) -> &mut Self::Output {
+        &mut self[pos.y()][usize::from(pos.x())]
     }
 }
 
@@ -356,12 +358,14 @@ impl Index<Row> for Board {
     type Output = [Option<Marker>; 3];
 
     fn index(&self, row: Row) -> &Self::Output {
-        &self.0[usize::from(row)]
+        let idx = usize::from(row);
+        &self.0[idx]
     }
 }
 
 impl IndexMut<Row> for Board {
     fn index_mut(&mut self, row: Row) -> &mut Self::Output {
-        &mut self.0[usize::from(row)]
+        let idx = usize::from(row);
+        &mut self.0[idx]
     }
 }
