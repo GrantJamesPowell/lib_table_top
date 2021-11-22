@@ -1,3 +1,4 @@
+use super::Area;
 use crate::play::LttSettings;
 use crate::utilities::number_of_players::TWO_PLAYER;
 use crate::NumberOfPlayers;
@@ -17,6 +18,13 @@ pub struct Settings {
 impl Settings {
     pub fn dimensions(&self) -> Dimensions {
         self.dimensions
+    }
+
+    pub fn board_area(&self) -> Area {
+        Area {
+            position: (0, 0),
+            dimensions: self.dimensions,
+        }
     }
 }
 

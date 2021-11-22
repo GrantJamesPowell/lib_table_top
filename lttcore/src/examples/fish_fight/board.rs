@@ -96,7 +96,7 @@ impl BoardMarkers {
         self.markers.get(offset).unwrap_or(false)
     }
 
-    pub fn insert(&mut self, position: Position)  {
+    pub fn insert(&mut self, position: Position) {
         self.set(position, true);
     }
 
