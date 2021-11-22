@@ -1,48 +1,54 @@
 mod bounded;
+use std::cmp::Ord;
+use std::ops::{Add, Sub};
+
+pub use bounded_point::{BoundedPoint, BoundedX, BoundedY};
 mod point;
 pub use bounded::{BoundedCol, BoundedPosition, BoundedRow};
-pub use point::{Point, ORIGIN, X, Y};
+use num_traits::{CheckedMul, Zero};
+pub use point::{Point, X, Y};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Dimensions {
-    pub width: usize,
-    pub height: usize,
+pub struct Dimensions<T = u32> {
+    pub width: T,
+    pub height: T,
 }
 
-impl Dimensions {
-    pub fn number_of_squares(&self) -> usize {
+impl<T> Dimensions<T>
+where
+    T: CheckedMul,
+{
+    pub fn number_of_squares(&self) -> T {
         self.width
-            .checked_mul(self.height)
-            .expect("width and height overflowed number_of_squares")
+            .checked_mul(&self.height)
+            .expect("width and height multiplication overflowed")
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Area {
-    pub origin: Point,
-    pub dimensions: Dimensions,
+pub struct Area<T = u32> {
+    pub origin: Point<T>,
+    pub dimensions: Dimensions<T>,
 }
 
-impl Area {
-    pub fn from_origin(dimensions: Dimensions) -> Self {
+impl<T: Zero> Area<T> {
+    pub fn from_origin(dimensions: Dimensions<T>) -> Self {
         Self {
             dimensions,
-            origin: ORIGIN,
+            origin: Point::origin(),
         }
     }
+}
 
-    pub fn positions(&self) -> impl Iterator<Item = Point> + '_ {
-        (0..self.dimensions.width).flat_map(move |x| {
-            (0..self.dimensions.height).map(move |y| self.origin + Point { x: X(x), y: Y(y) })
-        })
-    }
-
-    pub fn number_of_squares(&self) -> usize {
+impl<T: Copy + CheckedMul> Area<T> {
+    pub fn number_of_squares(&self) -> T {
         self.dimensions.number_of_squares()
     }
+}
 
-    pub fn top_right_point(&self) -> Point {
+impl<T: Add<T, Output = T> + Copy> Area<T> {
+    pub fn top_right_point(&self) -> Point<T> {
         let Point { x, y } = self.origin;
         Point {
             x: x + self.dimensions.width,
@@ -50,7 +56,7 @@ impl Area {
         }
     }
 
-    pub fn top_left_point(&self) -> Point {
+    pub fn top_left_point(&self) -> Point<T> {
         let Point { x, y } = self.origin;
 
         Point {
@@ -59,11 +65,11 @@ impl Area {
         }
     }
 
-    pub fn bottom_left_point(&self) -> Point {
+    pub fn bottom_left_point(&self) -> Point<T> {
         self.origin
     }
 
-    pub fn bottom_right_point(&self) -> Point {
+    pub fn bottom_right_point(&self) -> Point<T> {
         let Point { x, y } = self.origin;
 
         Point {
@@ -72,27 +78,25 @@ impl Area {
         }
     }
 
-    pub fn top_y(&self) -> Y {
+    pub fn top_y(&self) -> Y<T> {
         self.origin.y + self.dimensions.height
     }
 
-    pub fn bottom_y(&self) -> Y {
+    pub fn bottom_y(&self) -> Y<T> {
         self.origin.y
     }
 
-    pub fn left_x(&self) -> X {
+    pub fn left_x(&self) -> X<T> {
         self.origin.x
     }
 
-    pub fn right_x(&self) -> X {
+    pub fn right_x(&self) -> X<T> {
         self.origin.x + self.dimensions.width
     }
+}
 
-    pub fn has_overlap_with(&self, other: Self) -> bool {
-        self.overlaping_area(other).is_some()
-    }
-
-    pub fn contains_point(&self, Point { x, y }: Point) -> bool {
+impl<T: Add<T, Output = T> + Sub<T, Output = T> + Ord + Copy> Area<T> {
+    pub fn contains_point(&self, Point { x, y }: Point<T>) -> bool {
         self.left_x() <= x && x <= self.right_x() && self.bottom_y() <= y && y <= self.top_y()
     }
 
@@ -109,13 +113,17 @@ impl Area {
                     y: bottom_y,
                 },
                 dimensions: Dimensions {
-                    width: usize::from(right_x - left_x),
-                    height: usize::from(top_y - bottom_y),
+                    width: (right_x - left_x).inner(),
+                    height: (top_y - bottom_y).inner(),
                 },
             })
         } else {
             None
         }
+    }
+
+    pub fn has_overlap_with(&self, other: Self) -> bool {
+        self.overlaping_area(other).is_some()
     }
 
     pub fn encloses_area(&self, other: Self) -> bool {
