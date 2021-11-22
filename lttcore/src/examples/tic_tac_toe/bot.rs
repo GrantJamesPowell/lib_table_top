@@ -4,7 +4,7 @@ use crate::pov::PlayerPov;
 use crate::Play;
 
 pub trait TicTacToeBot {
-    fn claim_space(marker: Marker, board: &Board, rng: &mut impl rand::Rng) -> Position;
+    fn claim_space(&self, marker: Marker, board: &Board, rng: &mut impl rand::Rng) -> Position;
 }
 
 #[derive(Debug)]
@@ -14,11 +14,13 @@ impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
     type Game = TicTacToe;
 
     fn run(
+        &self,
         player_pov: &PlayerPov<'_, Self::Game>,
         rng: &mut impl rand::Rng,
     ) -> <Self::Game as Play>::Action {
         let marker = Marker::try_from(player_pov.player).expect("is a valid player for TicTacToe");
-        let position = T::claim_space(marker, player_pov.public_info.board(), rng);
+        let board = player_pov.public_info.board();
+        let position = self.0.claim_space(marker, board, rng);
 
         Action { position }
     }

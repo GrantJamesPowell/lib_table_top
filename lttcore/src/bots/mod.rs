@@ -1,2 +1,2 @@
 mod bot;
-pub use bot::{Bot, OmniscientBot};
+pub use bot::Bot;
