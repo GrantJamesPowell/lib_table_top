@@ -6,7 +6,7 @@ use crate::messages::hello::{ClientHello, ServerHello, ServerInfo};
 use crate::{Token, User};
 
 use bytes::Bytes;
-use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
+use lttcore::encoder::{BincodeEncoder, Encoder};
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;

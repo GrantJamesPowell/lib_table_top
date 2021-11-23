@@ -1,7 +1,7 @@
 use crate::connection::SubConnection;
 use crate::messages::conn_ctrl::SubConnMode;
 use async_trait::async_trait;
-use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
+use lttcore::encoder::{BincodeEncoder, Encoder};
 
 #[async_trait]
 pub trait Job<E: Encoder = BincodeEncoder> {

@@ -1,8 +1,7 @@
 use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
-use lttcore::encoder::bincode::BincodeEncoder;
-use lttcore::encoder::Encoder;
+use lttcore::encoder::{BincodeEncoder, Encoder};
 use lttcore::uuid_id;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::mpsc;

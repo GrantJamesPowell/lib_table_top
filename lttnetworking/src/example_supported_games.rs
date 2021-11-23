@@ -3,7 +3,7 @@ use crate::messages::closed::Closed;
 use crate::server::server_sub_connection::run_server_sub_conn;
 use crate::SupportedGames;
 use async_trait::async_trait;
-use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
+use lttcore::encoder::{BincodeEncoder, Encoder};
 use lttcore::examples::GuessTheNumber;
 use lttruntime::Runtime;
 use serde::{Deserialize, Serialize};

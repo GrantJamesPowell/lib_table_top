@@ -3,7 +3,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use clap::{App, Arg, SubCommand};
-use lttcore::{encoder::bincode::BincodeEncoder, id::UserId};
+use lttcore::{encoder::BincodeEncoder, id::UserId};
 use lttnetworking::auth::Authenticate;
 use lttnetworking::example_supported_games::{
     ExampleSupportedGames as Games, ExampleSupportedGamesRuntimes as Runtimes,

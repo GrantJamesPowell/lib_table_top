@@ -229,7 +229,7 @@ mod tests {
     };
     use super::super::id::ConnectionIdSource;
     use super::*;
-    use lttcore::encoder::json::JsonEncoder;
+    use lttcore::encoder::JsonEncoder;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
         GuessTheNumber,

@@ -1,7 +1,7 @@
 use crate::connection::ConnectionIO;
 use crate::messages::closed::Closed;
 use async_trait::async_trait;
-use lttcore::encoder::{bincode::BincodeEncoder, Encoder};
+use lttcore::encoder::{BincodeEncoder, Encoder};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
 use std::hash::Hash;
