@@ -6,6 +6,7 @@ use std::hash::Hash;
 pub trait Encoder: Debug + Clone + Copy + PartialEq + Eq + Hash + Send + Sync + 'static {
     type Error: Debug + Send + Sync + std::error::Error;
 
+    fn encoding() -> Encoding;
     fn serialize<T: Serialize>(value: &T) -> Result<Bytes, Self::Error>;
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error>;
 }
@@ -58,6 +59,10 @@ impl Encoder for BincodeEncoder {
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
         bincode::deserialize(&bytes)
     }
+
+    fn encoding() -> Encoding {
+        Encoding::Bincode
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -73,6 +78,10 @@ impl Encoder for JsonEncoder {
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
         serde_json::from_slice(&bytes)
     }
+
+    fn encoding() -> Encoding {
+        Encoding::Json
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -87,5 +96,9 @@ impl Encoder for PrettyJsonEncoder {
 
     fn deserialize<T: DeserializeOwned>(bytes: Bytes) -> Result<T, Self::Error> {
         serde_json::from_slice(&bytes)
+    }
+
+    fn encoding() -> Encoding {
+        Encoding::PrettyJson
     }
 }
