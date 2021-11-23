@@ -3,7 +3,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use clap::{App, Arg, SubCommand};
-use lttcore::{encoder::BincodeEncoder, id::UserId};
+use lttcore::{id::UserId};
 use lttnetworking::auth::Authenticate;
 use lttnetworking::example_supported_games::{
     ExampleSupportedGames as Games, ExampleSupportedGamesRuntimes as Runtimes,
@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
 
         if matches.subcommand_matches("whoami").is_some() {
             let jobs = [].into_iter();
-            run_jobs::<_, BincodeEncoder>(server, token, 1, jobs).await?;
+            run_jobs::<_>(server, token, 1, jobs).await?;
         };
     };
 

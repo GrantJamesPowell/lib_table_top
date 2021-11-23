@@ -4,27 +4,25 @@ use crate::messages::closed::Closed;
 use crate::messages::conn_ctrl::{ClientConnControlMsg as CCCMsg, ServerConnControlMsg as SCCMsg};
 use crate::messages::hello::{ClientHello, ServerHello, ServerInfo};
 use crate::{Token, User};
-
 use bytes::Bytes;
-use lttcore::encoder::{BincodeEncoder, Encoder};
 use std::collections::HashMap;
 use tokio::select;
 use tokio::sync::mpsc;
 
-struct State<E: Encoder = BincodeEncoder> {
-    pending: HashMap<SubConnId, Box<dyn Job<E>>>,
+struct State {
+    pending: HashMap<SubConnId, Box<dyn Job>>,
     running: HashMap<SubConnId, mpsc::UnboundedSender<Bytes>>,
 }
 
-pub async fn run_client_connection<E: Encoder>(
+pub async fn run_client_connection(
     credentials: Token,
     max_concurrency: u8,
-    mut jobs: impl Iterator<Item = Box<dyn Job<E>>>,
-    mut conn: impl RawConnection<E>,
+    mut jobs: impl Iterator<Item = Box<dyn Job>>,
+    mut conn: impl RawConnection,
 ) -> Result<Closed, Closed> {
     let (_user, server_info) = authenticate_conn(credentials, &mut conn).await?;
     let concurrency: usize = server_info.max_sub_connections.min(max_concurrency).into();
-    let mut state: State<E> = State {
+    let mut state = State {
         pending: HashMap::new(),
         running: HashMap::new(),
     };
@@ -56,11 +54,11 @@ pub async fn run_client_connection<E: Encoder>(
 
                         let (sender, receiver) = mpsc::unbounded_channel();
 
-                        let mut sub_conn: SubConnection<E> = SubConnection {
+                        let mut sub_conn = SubConnection {
                             id,
                             receiver,
                             sender: Some(from_sub_connections_sender.clone()),
-                            _encoder: Default::default()
+                            encoding: conn.encoding(),
                         };
 
                         sub_conn.send(job.sub_conn_mode()).await?;
@@ -100,9 +98,9 @@ pub async fn run_client_connection<E: Encoder>(
     }
 }
 
-pub async fn authenticate_conn<E: Encoder>(
+pub async fn authenticate_conn(
     credentials: Token,
-    conn: &mut impl ConnectionIO<E>,
+    conn: &mut impl ConnectionIO,
 ) -> Result<(User, ServerInfo), Closed> {
     conn.send(ClientHello { credentials }).await?;
     let ServerHello { user, server_info } = conn.next::<Result<ServerHello, Closed>>().await??;

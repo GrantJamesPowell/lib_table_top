@@ -5,7 +5,7 @@ use lttcore::{encoder::Encoder, Play};
 use lttruntime::Runtime;
 use std::sync::Arc;
 
-pub async fn run_server_sub_conn<T: Play, E: Encoder, C: ConnectionIO<E>>(
+pub async fn run_server_sub_conn<T: Play, E: Encoder, C: ConnectionIO>(
     mut conn: C,
     runtime: Arc<Runtime<T, E>>,
 ) -> Result<(), Closed> {

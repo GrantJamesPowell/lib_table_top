@@ -55,7 +55,7 @@ impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
 impl<E: Encoder> SupportedGames<E> for ExampleSupportedGames<E> {
     type Runtimes = ExampleSupportedGamesRuntimes<E>;
 
-    async fn run_server_sub_conn<C: ConnectionIO<E>>(
+    async fn run_server_sub_conn<C: ConnectionIO>(
         self,
         conn: C,
         runtimes: Arc<Self::Runtimes>,

@@ -23,7 +23,7 @@ pub async fn run_server_connection<Games, Enc, Conn, Auth>(
 where
     Games: SupportedGames<Enc>,
     Enc: Encoder,
-    Conn: RawConnection<Enc>,
+    Conn: RawConnection,
     Auth: Authenticate,
 {
     let _user = authenticate_conn(&authenticate, server_info, &mut conn).await?;
@@ -49,11 +49,11 @@ where
                             Some(game_type) => {
                                 let (sender, receiver) = mpsc::unbounded_channel();
 
-                                let sub_conn: SubConnection<Enc> = SubConnection {
+                                let sub_conn = SubConnection {
                                     id,
                                     receiver,
                                     sender: Some(from_sub_connections_sender.clone()),
-                                    _encoder: Default::default(),
+                                    encoding: Enc::encoding(),
                                 };
 
                                 sub_connections.insert(id, sender);
@@ -91,10 +91,10 @@ where
     }
 }
 
-pub async fn authenticate_conn<Enc: Encoder>(
+pub async fn authenticate_conn(
     auth: &dyn Authenticate,
     server_info: &ServerInfo,
-    conn: &mut impl ConnectionIO<Enc>,
+    conn: &mut impl ConnectionIO,
 ) -> Result<User, Closed> {
     let ClientHello { credentials } = conn.next().await?;
 

@@ -1,7 +1,7 @@
 use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
-use lttcore::encoder::{BincodeEncoder, Encoder};
+use lttcore::encoder::Encoding;
 use lttcore::uuid_id;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::mpsc;
@@ -9,28 +9,33 @@ use tokio::sync::mpsc;
 uuid_id!(SubConnId);
 
 #[async_trait]
-pub trait ConnectionIO<E: Encoder = BincodeEncoder>: Send + Sync {
+pub trait ConnectionIO: Send + Sync {
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;
     async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed>;
     async fn close(&mut self);
 }
 
 #[async_trait]
-pub trait RawConnection<E: Encoder = BincodeEncoder>: Sync + Send {
+pub trait RawConnection: Sync + Send {
+    fn encoding(&self) -> Encoding;
     async fn next_bytes(&mut self) -> Result<Bytes, Closed>;
     async fn send_bytes(&mut self, bytes: Bytes) -> Result<(), Closed>;
     async fn close(&mut self);
 }
 
-pub struct SubConnection<E: Encoder = BincodeEncoder> {
+pub struct SubConnection {
     pub id: SubConnId,
+    pub encoding: Encoding,
     pub receiver: mpsc::UnboundedReceiver<Bytes>,
     pub sender: Option<mpsc::UnboundedSender<(SubConnId, Bytes)>>,
-    pub _encoder: std::marker::PhantomData<E>,
 }
 
 #[async_trait]
-impl<E: Encoder> RawConnection<E> for SubConnection<E> {
+impl RawConnection for SubConnection {
+    fn encoding(&self) -> Encoding {
+        self.encoding
+    }
+
     async fn next_bytes(&mut self) -> Result<Bytes, Closed> {
         self.receiver.recv().await.ok_or(Closed::Hangup)
     }
@@ -47,7 +52,7 @@ impl<E: Encoder> RawConnection<E> for SubConnection<E> {
 }
 
 #[async_trait]
-impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
+impl<Raw: RawConnection> ConnectionIO for Raw {
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed> {
         let bytes = match self.next_bytes().await {
             Ok(bytes) => bytes,
@@ -57,7 +62,7 @@ impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
             }
         };
 
-        match E::deserialize::<T>(bytes) {
+        match self.encoding().deserialize::<T>(bytes) {
             Ok(msg) => Ok(msg),
             Err(_) => {
                 self.close().await;
@@ -67,7 +72,10 @@ impl<E: Encoder, R: RawConnection<E>> ConnectionIO<E> for R {
     }
 
     async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed> {
-        let serialized = E::serialize(&msg).map_err(|_| Closed::ServerError)?;
+        let serialized = self
+            .encoding()
+            .serialize(&msg)
+            .map_err(|_| Closed::ServerError)?;
         self.send_bytes(serialized).await
     }
 

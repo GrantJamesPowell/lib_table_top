@@ -23,6 +23,6 @@ where
         .await
         .map_err(|_| Closed::Hangup)?;
 
-    let ws: WSConnection<_, Enc> = ws.into();
+    let ws: WSConnection<_> = ws.into();
     run_server_connection::<Games, Enc, _, _>(authenticate, &server_info, runtimes, ws).await
 }

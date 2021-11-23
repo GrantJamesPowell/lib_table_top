@@ -3,39 +3,40 @@ use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
-use lttcore::encoder::{BincodeEncoder, Encoder};
+use lttcore::encoder::Encoding;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 
-pub struct WSConnection<S, E = BincodeEncoder>
+pub struct WSConnection<S>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
-    E: Encoder,
 {
     ws: WebSocketStream<S>,
-    _encoder: std::marker::PhantomData<E>,
+    encoding: Encoding,
 }
 
-impl<S, E> From<WebSocketStream<S>> for WSConnection<S, E>
+impl<S> From<WebSocketStream<S>> for WSConnection<S>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
-    E: Encoder,
 {
     fn from(ws: WebSocketStream<S>) -> Self {
         Self {
             ws,
-            _encoder: Default::default(),
+            encoding: Encoding::Bincode,
         }
     }
 }
 
 #[async_trait]
-impl<S, E> RawConnection<E> for WSConnection<S, E>
+impl<S> RawConnection for WSConnection<S>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
-    E: Encoder,
 {
+    fn encoding(&self) -> Encoding {
+        self.encoding
+    }
+
     async fn close(&mut self) {
         let _ = self.ws.close(None).await;
     }
