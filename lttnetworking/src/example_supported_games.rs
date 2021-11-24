@@ -3,7 +3,6 @@ use crate::messages::closed::Closed;
 use crate::server::server_sub_connection::run_server_sub_conn;
 use crate::SupportedGames;
 use async_trait::async_trait;
-use lttcore::encoder::{BincodeEncoder, Encoder};
 use lttcore::examples::GuessTheNumber;
 use lttruntime::Runtime;
 use serde::{Deserialize, Serialize};
@@ -17,32 +16,31 @@ use std::sync::Arc;
 /// the macro should work
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum ExampleSupportedGames<E: Encoder = BincodeEncoder> {
-    GuessTheNumber(std::marker::PhantomData<E>),
+pub enum ExampleSupportedGames {
+    GuessTheNumber,
 }
 
-pub enum ExampleSupportedRuntimesEnum<E: Encoder = BincodeEncoder> {
-    GuessTheNumber(Arc<Runtime<GuessTheNumber, E>>),
+pub enum ExampleSupportedRuntimesEnum {
+    GuessTheNumber(Arc<Runtime<GuessTheNumber>>),
 }
 
-pub struct ExampleSupportedGamesRuntimes<E: Encoder = BincodeEncoder> {
-    runtimes: HashMap<ExampleSupportedGames<E>, ExampleSupportedRuntimesEnum<E>>,
+pub struct ExampleSupportedGamesRuntimes {
+    runtimes: HashMap<ExampleSupportedGames, ExampleSupportedRuntimesEnum>,
 }
 
-impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
+impl ExampleSupportedGamesRuntimes {
     pub fn init() -> Arc<Self> {
         Arc::new(Self {
             runtimes: HashMap::from([(
-                ExampleSupportedGames::GuessTheNumber(Default::default()),
+                ExampleSupportedGames::GuessTheNumber,
                 ExampleSupportedRuntimesEnum::GuessTheNumber(Arc::new(Runtime::start())),
             )]),
         })
     }
 
-    pub fn get_guess_the_number_run_time(&self) -> Arc<Runtime<GuessTheNumber, E>> {
-        if let Some(ExampleSupportedRuntimesEnum::GuessTheNumber(runtime)) = self
-            .runtimes
-            .get(&ExampleSupportedGames::GuessTheNumber(Default::default()))
+    pub fn get_guess_the_number_run_time(&self) -> Arc<Runtime<GuessTheNumber>> {
+        if let Some(ExampleSupportedRuntimesEnum::GuessTheNumber(runtime)) =
+            self.runtimes.get(&ExampleSupportedGames::GuessTheNumber)
         {
             Arc::clone(runtime)
         } else {
@@ -52,8 +50,8 @@ impl<E: Encoder> ExampleSupportedGamesRuntimes<E> {
 }
 
 #[async_trait]
-impl<E: Encoder> SupportedGames<E> for ExampleSupportedGames<E> {
-    type Runtimes = ExampleSupportedGamesRuntimes<E>;
+impl SupportedGames for ExampleSupportedGames {
+    type Runtimes = ExampleSupportedGamesRuntimes;
 
     async fn run_server_sub_conn<C: ConnectionIO>(
         self,
@@ -61,16 +59,16 @@ impl<E: Encoder> SupportedGames<E> for ExampleSupportedGames<E> {
         runtimes: Arc<Self::Runtimes>,
     ) -> Result<(), Closed> {
         match self {
-            ExampleSupportedGames::GuessTheNumber(_) => {
+            ExampleSupportedGames::GuessTheNumber => {
                 let runtime = runtimes.get_guess_the_number_run_time();
-                run_server_sub_conn::<GuessTheNumber, E, C>(conn, runtime).await
+                run_server_sub_conn::<GuessTheNumber, C>(conn, runtime).await
             }
         }
     }
 
     fn try_from_str(s: &str) -> Option<Self> {
         match s {
-            "GuessTheNumber" => Some(ExampleSupportedGames::GuessTheNumber(Default::default())),
+            "GuessTheNumber" => Some(ExampleSupportedGames::GuessTheNumber),
             _ => None,
         }
     }

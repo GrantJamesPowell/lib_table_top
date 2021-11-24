@@ -3,7 +3,7 @@ use super::channels::{
 };
 use super::id::ConnectionId;
 use crate::messages::{ToGameHostMsg::*, ToObserverMsg::*};
-use lttcore::{encoder::Encoder, Play};
+use lttcore::{Play};
 use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;
@@ -25,21 +25,18 @@ struct Conn {
 }
 
 #[derive(Debug, Default)]
-struct State<E: Encoder> {
+struct State {
     conns: SmallVec<[Conn; 2]>,
-    _phantom: std::marker::PhantomData<E>,
 }
 
-impl<E: Encoder> State<E> {
+impl State {
     fn send_to<T: Serialize>(&mut self, msg: &T, f: impl Fn(&mut Conn) -> bool) {
-        let bytes = E::serialize(msg).expect("All game messages are serializable");
-        self.conns.retain(|conn| {
-            if f(conn) {
-                conn.sender.send(bytes.clone()).is_ok()
-            } else {
-                !conn.sender.is_closed()
-            }
-        });
+        BytesSender::send_to(
+            self.conns
+                .iter_mut()
+                .filter_map(|conn| if f(conn) { Some(&conn.sender) } else { None }),
+            msg,
+        )
     }
 
     fn are_all_in_sync(&self) -> bool {
@@ -47,13 +44,12 @@ impl<E: Encoder> State<E> {
     }
 }
 
-pub async fn observer_connections<T: Play, E: Encoder>(
+pub async fn observer_connections<T: Play>(
     mut inbox: Inbox<T>,
     outbox: Outbox<T>,
 ) -> anyhow::Result<()> {
-    let mut state: State<E> = State {
+    let mut state = State {
         conns: Default::default(),
-        _phantom: std::marker::PhantomData,
     };
 
     loop {
@@ -101,7 +97,7 @@ mod tests {
     use super::super::id::ConnectionIdSource;
     use super::*;
     use crate::messages::ToObserverMsg;
-    use lttcore::encoder::JsonEncoder;
+    use lttcore::encoder::Encoding;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
         GuessTheNumber,
@@ -109,7 +105,9 @@ mod tests {
     use lttcore::{play::ActionResponse, pov::ObserverUpdate};
     use lttcore::{GameObserver, GameProgression};
 
-    use super::super::channels::{AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender};
+    use super::super::channels::{
+        bytes_channels, AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender,
+    };
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::sync::mpsc::unbounded_channel;
     use tokio::time::{sleep, Duration};
@@ -122,14 +120,12 @@ mod tests {
 
         let (connections, mut connection_streams): (Vec<_>, Vec<_>) = (0..=2)
             .map(|_| {
-                let (sink, stream) = unbounded_channel();
-                ((connection_id_source.next(), sink), stream)
+                let (sender, receiver) = bytes_channels(Encoding::PrettyJson);
+                ((connection_id_source.next(), sender), receiver)
             })
             .unzip();
 
-        let _handle = tokio::spawn(observer_connections::<GuessTheNumber, JsonEncoder>(
-            inbox, outbox,
-        ));
+        let _handle = tokio::spawn(observer_connections::<GuessTheNumber>(inbox, outbox));
 
         // On the first connections added, it sends a request for the game state
         mailbox_handles
@@ -160,7 +156,7 @@ mod tests {
 
         sleep(Duration::from_millis(50)).await;
         for stream in connection_streams.iter_mut().take(2) {
-            assert!(stream.try_recv().is_err());
+            assert!(stream.try_next_bytes().is_err());
         }
 
         // If the state arrives it gets sent to awaiting connections
@@ -169,8 +165,9 @@ mod tests {
             .send(game_observer.clone().into())
             .unwrap();
         for stream in connection_streams.iter_mut().take(2) {
-            let msg = stream.recv().await.unwrap();
-            let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            let msg = stream.next_bytes().await.unwrap();
+            let decoded: ToObserverMsg<GuessTheNumber> =
+                Encoding::PrettyJson.deserialize(msg).unwrap();
             assert_eq!(decoded, SyncState(game_observer.clone()));
         }
 
@@ -187,11 +184,12 @@ mod tests {
             .unwrap();
 
         sleep(Duration::from_millis(50)).await;
-        assert!(connection_streams[2].try_recv().is_err());
+        assert!(connection_streams[2].try_next_bytes().is_err());
 
         for stream in connection_streams.iter_mut().take(2) {
-            let msg = stream.recv().await.unwrap();
-            let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            let msg = stream.next_bytes().await.unwrap();
+            let decoded: ToObserverMsg<GuessTheNumber> =
+                Encoding::PrettyJson.deserialize(msg).unwrap();
             assert_eq!(decoded, Update(observer_update.clone()))
         }
 
@@ -203,11 +201,11 @@ mod tests {
 
         sleep(Duration::from_millis(50)).await;
         for stream in connection_streams.iter_mut().take(2) {
-            assert!(stream.try_recv().is_err());
+            assert!(stream.try_next_bytes().is_err());
         }
 
-        let msg = connection_streams[2].recv().await.unwrap();
-        let decoded: ToObserverMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+        let msg = connection_streams[2].next_bytes().await.unwrap();
+        let decoded: ToObserverMsg<GuessTheNumber> = Encoding::PrettyJson.deserialize(msg).unwrap();
         assert_eq!(decoded, SyncState(game_observer.clone()));
     }
 

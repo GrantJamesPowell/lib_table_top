@@ -9,7 +9,7 @@ use crate::messages::{
     ToGameHostMsg::*,
     ToPlayerMsg::{self, *},
 };
-use lttcore::{encoder::Encoder, play::ActionResponse, Play, Player, TurnNum};
+use lttcore::{play::ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;
@@ -25,25 +25,22 @@ struct Conn {
 }
 
 #[derive(Debug)]
-struct State<E: Encoder> {
+struct State {
     conns: SmallVec<[Conn; 1]>,
     awaiting_turn: Option<TurnNum>,
     player: Player,
     timeout: Duration,
     timeout_tx: UnboundedSender<TurnNum>,
-    _phantom: std::marker::PhantomData<E>,
 }
 
-impl<E: Encoder> State<E> {
+impl State {
     fn send_to<T: Serialize>(&mut self, msg: &T, f: impl Fn(&mut Conn) -> bool) {
-        let bytes = E::serialize(msg).expect("All game messages are serializable");
-        self.conns.retain(|conn| {
-            if f(conn) {
-                conn.sender.send(bytes.clone()).is_ok()
-            } else {
-                !conn.sender.is_closed()
-            }
-        });
+        BytesSender::send_to(
+            self.conns
+                .iter_mut()
+                .filter_map(|conn| if f(conn) { Some(&conn.sender) } else { None }),
+            msg,
+        )
     }
 
     fn primary(&self) -> Option<ConnectionId> {
@@ -69,7 +66,7 @@ pub struct Outbox<T: Play> {
     pub to_game_host_msg_sender: ToGameHostMsgSender<T>,
 }
 
-pub async fn player_connections<T: Play, E: Encoder>(
+pub async fn player_connections<T: Play>(
     player: Player,
     timeout: Duration,
     mut inbox: Inbox<T>,
@@ -83,7 +80,6 @@ pub async fn player_connections<T: Play, E: Encoder>(
         timeout_tx,
         awaiting_turn: None,
         conns: Default::default(),
-        _phantom: std::marker::PhantomData,
     };
 
     loop {
@@ -101,7 +97,7 @@ pub async fn player_connections<T: Play, E: Encoder>(
 
             // Messages hot off the wire from clients
             Some(msg) = inbox.from_player_msg_receiver.recv() => {
-                process_from_connection::<T, E>(msg, &mut state, &outbox)?;
+                process_from_connection::<T>(msg, &mut state, &outbox)?;
             }
 
             // Messages from the game host
@@ -135,9 +131,9 @@ pub async fn player_connections<T: Play, E: Encoder>(
     Ok(())
 }
 
-fn process_from_connection<T: Play, E: Encoder>(
+fn process_from_connection<T: Play>(
     (from, msg): (ConnectionId, FromPlayerMsg<T>),
-    state: &mut State<E>,
+    state: &mut State,
     outbox: &Outbox<T>,
 ) -> anyhow::Result<()> {
     match msg {
@@ -179,10 +175,7 @@ fn process_from_connection<T: Play, E: Encoder>(
     Ok(())
 }
 
-fn process_from_game_host<T: Play, E: Encoder>(
-    msg: ToPlayerMsg<T>,
-    state: &mut State<E>,
-) -> anyhow::Result<bool> {
+fn process_from_game_host<T: Play>(msg: ToPlayerMsg<T>, state: &mut State) -> anyhow::Result<bool> {
     match msg {
         SyncState(_) => {
             state.send_to(&msg, |conn| {
@@ -223,13 +216,15 @@ fn process_from_game_host<T: Play, E: Encoder>(
 
 #[cfg(test)]
 mod tests {
+    use crate::game_runner::channels::bytes_channels;
+
     use super::super::channels::{
         AddConnectionSender, FromPlayerMsgWithConnectionIdSender, ToGameHostMsgReceiver,
         ToPlayerMsgSender,
     };
     use super::super::id::ConnectionIdSource;
     use super::*;
-    use lttcore::encoder::JsonEncoder;
+    use lttcore::encoder::{Encoding};
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
         GuessTheNumber,
@@ -253,12 +248,12 @@ mod tests {
         let connection_id_source = ConnectionIdSource::new();
         let (connections, mut connection_streams): (Vec<_>, Vec<_>) = (0..=2)
             .map(|_| {
-                let (sender, receiver) = unbounded_channel();
+                let (sender, receiver) = bytes_channels(Encoding::PrettyJson);
                 ((connection_id_source.next(), sender), receiver)
             })
             .unzip();
 
-        let _handle = tokio::spawn(player_connections::<GuessTheNumber, JsonEncoder>(
+        let _handle = tokio::spawn(player_connections::<GuessTheNumber>(
             player,
             Duration::from_millis(50),
             inbox,
@@ -294,7 +289,7 @@ mod tests {
 
         sleep(Duration::from_millis(50)).await;
         for stream in connection_streams.iter_mut().take(2) {
-            assert!(stream.try_recv().is_err());
+            assert!(stream.try_next_bytes().is_err());
         }
 
         // If the state arrives it gets sent to awaiting connections
@@ -303,8 +298,8 @@ mod tests {
             .send(game_player.clone().into())
             .unwrap();
         for stream in connection_streams.iter_mut().take(2) {
-            let msg = stream.recv().await.unwrap();
-            let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            let msg = stream.next_bytes().await.unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
             assert_eq!(decoded, SyncState(game_player.clone()));
         }
 
@@ -321,11 +316,11 @@ mod tests {
             .unwrap();
 
         sleep(Duration::from_millis(50)).await;
-        assert!(connection_streams[2].try_recv().is_err());
+        assert!(connection_streams[2].try_next_bytes().is_err());
 
         for stream in connection_streams.iter_mut().take(2) {
-            let msg = stream.recv().await.unwrap();
-            let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+            let msg = stream.next_bytes().await.unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
             assert_eq!(decoded, Update(player_update.clone()))
         }
 
@@ -337,11 +332,11 @@ mod tests {
 
         sleep(Duration::from_millis(50)).await;
         for stream in connection_streams.iter_mut().take(2) {
-            assert!(stream.try_recv().is_err());
+            assert!(stream.try_next_bytes().is_err());
         }
 
-        let msg = connection_streams[2].recv().await.unwrap();
-        let decoded: ToPlayerMsg<GuessTheNumber> = JsonEncoder::deserialize(msg).unwrap();
+        let msg = connection_streams[2].next_bytes().await.unwrap();
+        let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
         assert_eq!(decoded, SyncState(game_player.clone()));
     }
 

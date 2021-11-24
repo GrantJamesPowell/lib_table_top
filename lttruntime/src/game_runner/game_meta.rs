@@ -1,11 +1,12 @@
-use super::channels::{AddConnectionSender, BytesReceiver, FromPlayerMsgWithConnectionIdSender};
+use super::channels::{
+    bytes_channels, AddConnectionSender, BytesReceiver, FromPlayerMsgWithConnectionIdSender,
+};
 use super::id::{ConnectionId, ConnectionIdSource};
 use crate::error::GameNotFound;
 use crate::messages::FromPlayerMsg;
 use bytes::Bytes;
-use lttcore::utilities::PlayerIndexedData as PID;
+use lttcore::{encoder::Encoding, utilities::PlayerIndexedData as PID};
 use lttcore::{Play, Player};
-use tokio::sync::mpsc::unbounded_channel;
 
 #[derive(Debug)]
 pub struct PlayerConnection<T: Play> {
@@ -21,8 +22,8 @@ impl<T: Play> PlayerConnection<T> {
             .map_err(|_| GameNotFound)
     }
 
-    pub async fn next_msg(&mut self) -> Option<Bytes> {
-        self.receiver.recv().await
+    pub async fn next_bytes(&mut self) -> Option<Bytes> {
+        self.receiver.next_bytes().await
     }
 }
 
@@ -34,7 +35,7 @@ pub struct ObserverConnection {
 
 impl ObserverConnection {
     pub async fn next_msg(&mut self) -> Option<Bytes> {
-        self.receiver.recv().await
+        self.receiver.next_bytes().await
     }
 }
 
@@ -60,23 +61,23 @@ impl<T: Play> GameMeta<T> {
         }
     }
 
-    pub fn add_observer(&self) -> ObserverConnection {
-        let (sender, receiver) = unbounded_channel();
+    pub fn add_observer(&self, encoding: Encoding) -> ObserverConnection {
         let connection_id = self.connection_id_source.next();
+        let (bytes_sender, bytes_receiver) = bytes_channels(encoding);
         self.add_observer_connection_sender
-            .send((connection_id, sender))
+            .send((connection_id, bytes_sender))
             .expect("observer connections is alive as long as game meta is");
 
         ObserverConnection {
-            receiver,
+            receiver: bytes_receiver,
             connection_id,
         }
     }
 
-    pub fn add_player(&self, player: Player) -> Option<PlayerConnection<T>> {
+    pub fn add_player(&self, player: Player, encoding: Encoding) -> Option<PlayerConnection<T>> {
         let sender = self.player_inputs.get(player)?.clone();
         let connection_id = self.connection_id_source.next();
-        let (bytes_sender, bytes_receiver) = unbounded_channel::<Bytes>();
+        let (bytes_sender, bytes_receiver) = bytes_channels(encoding);
 
         self.add_player_connections_senders
             .get(player)?

@@ -176,16 +176,17 @@ macro_rules! bounded_serde {
             type Value = $id<BOUND>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(formatter, "an integer between 0 and {}", BOUND)
+                write!(formatter, "an integer between 0..{}, required by {}<{}>", BOUND, stringify!($id), BOUND)
             }
 
             fn visit_u64<E: de::Error>(self, value: u64) -> Result<Self::Value, E> {
                 let err = move || {
                     let msg = format!(
-                        "{} out of range 0..={}, required by {}",
+                        "{} out of range 0..{}, required by {}<{}>",
                         value,
                         BOUND,
-                        stringify!($id)
+                        stringify!($id),
+                        BOUND
                     );
                     E::custom(msg)
                 };
@@ -248,12 +249,12 @@ mod tests {
         let invalid: Result<BoundedX<3>, _> = serde_json::from_str("42");
         assert_eq!(
             &invalid.unwrap_err().to_string(),
-            "42_u64 out of range 0..=3 required by BoundedX at line 1 column 2"
+            "42 out of range 0..3, required by BoundedX<3> at line 1 column 2"
         );
         let invalid: Result<BoundedX<3>, _> = serde_json::from_str("-12");
         assert_eq!(
             &invalid.unwrap_err().to_string(),
-            "-12_i64 out of range 0..=3 required by BoundedX at line 1 column 3"
+            "invalid type: integer `-12`, expected an integer between 0..3, required by BoundedX<3> at line 1 column 3"
         );
     }
 }

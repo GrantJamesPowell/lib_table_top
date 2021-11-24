@@ -10,6 +10,7 @@ uuid_id!(SubConnId);
 
 #[async_trait]
 pub trait ConnectionIO: Send + Sync {
+    fn encoding(&self) -> Encoding;
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed>;
     async fn send<T: Send + Serialize>(&mut self, msg: T) -> Result<(), Closed>;
     async fn close(&mut self);
@@ -53,6 +54,10 @@ impl RawConnection for SubConnection {
 
 #[async_trait]
 impl<Raw: RawConnection> ConnectionIO for Raw {
+    fn encoding(&self) -> Encoding {
+        self.encoding()
+    }
+
     async fn next<T: Send + DeserializeOwned>(&mut self) -> Result<T, Closed> {
         let bytes = match self.next_bytes().await {
             Ok(bytes) => bytes,

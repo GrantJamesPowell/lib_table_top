@@ -8,22 +8,20 @@ mod player_connections;
 use dashmap::DashMap;
 use game_meta::GameMeta;
 pub use game_meta::{ObserverConnection, PlayerConnection};
-use lttcore::encoder::Encoder;
+use lttcore::encoder::Encoding;
 use lttcore::id::GameId;
 use lttcore::{GameProgression, Play, Player};
 use std::time::Duration;
 
 #[derive(Debug)]
-pub struct GameRunner<T: Play, E: Encoder> {
+pub struct GameRunner<T: Play> {
     games: DashMap<GameId, GameMeta<T>>,
-    _phantom: std::marker::PhantomData<E>,
 }
 
-impl<T: Play, E: Encoder> GameRunner<T, E> {
+impl<T: Play> GameRunner<T> {
     pub fn new() -> Self {
         Self {
             games: Default::default(),
-            _phantom: std::marker::PhantomData,
         }
     }
 
@@ -34,7 +32,7 @@ impl<T: Play, E: Encoder> GameRunner<T, E> {
         let (add_observer_connection_sender, add_observer_connection_receiver) =
             channels::add_connection();
 
-        tokio::spawn(observer_connections::observer_connections::<T, E>(
+        tokio::spawn(observer_connections::observer_connections::<T>(
             observer_connections::Inbox {
                 to_observer_msg_receiver,
                 add_observer_connection_receiver,
@@ -54,7 +52,7 @@ impl<T: Play, E: Encoder> GameRunner<T, E> {
             channels::from_player_msgs(game_progression.players());
 
         for player in game_progression.players() {
-            tokio::spawn(player_connections::player_connections::<T, E>(
+            tokio::spawn(player_connections::player_connections::<T>(
                 player,
                 Duration::from_millis(1000),
                 player_connections::Inbox {
@@ -89,13 +87,20 @@ impl<T: Play, E: Encoder> GameRunner<T, E> {
         game_id
     }
 
-    pub fn observe_game(&self, game_id: GameId) -> Option<ObserverConnection> {
-        self.games.get(&game_id).map(|meta| meta.add_observer())
-    }
-
-    pub fn play_game(&self, game_id: GameId, player: Player) -> Option<PlayerConnection<T>> {
+    pub fn observe_game(&self, game_id: GameId, encoding: Encoding) -> Option<ObserverConnection> {
         self.games
             .get(&game_id)
-            .and_then(|meta| meta.add_player(player))
+            .map(|meta| meta.add_observer(encoding))
+    }
+
+    pub fn play_game(
+        &self,
+        game_id: GameId,
+        player: Player,
+        encoding: Encoding,
+    ) -> Option<PlayerConnection<T>> {
+        self.games
+            .get(&game_id)
+            .and_then(|meta| meta.add_player(player, encoding))
     }
 }

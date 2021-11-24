@@ -17,14 +17,14 @@ fn test_serde_row_col() {
 fn test_serde_action_and_error() {
     let position = (Col::new(1), Row::new(2)).into();
     let action = Action { position };
-    test_simple_serialization(&action, json!({"position": [1, 2] }));
+    test_simple_serialization(&action, json!({"position": {"x": 1, "y": 2} }));
 
     let action_error = ActionError::SpaceIsTaken {
         attempted: position,
     };
     test_simple_serialization(
         &action_error,
-        json!({"SpaceIsTaken": {"attempted": [1, 2] }}),
+        json!({"SpaceIsTaken": {"attempted": {"x": 1, "y": 2} }}),
     );
 }
 
