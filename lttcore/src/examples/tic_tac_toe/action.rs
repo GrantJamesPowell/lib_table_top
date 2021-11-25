@@ -7,9 +7,11 @@ pub struct Action {
     pub position: Position,
 }
 
-impl From<Position> for Action {
-    fn from(position: Position) -> Self {
-        Self { position }
+impl<T: Into<Position>> From<T> for Action {
+    fn from(position: T) -> Self {
+        Self {
+            position: position.into(),
+        }
     }
 }
 

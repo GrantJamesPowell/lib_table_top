@@ -15,6 +15,12 @@ macro_rules! coord_component {
             }
         }
 
+        impl<T: PartialEq<T>> PartialEq<T> for $id<T> {
+            fn eq(&self, rhs: &T) -> bool {
+                self.0.eq(rhs)
+            }
+        }
+
         impl<T> Add<$id<T>> for $id<T>
         where
             T: Add<Output = T> + Copy,
@@ -77,6 +83,18 @@ coord_component!(Y);
 pub struct Point<T = u32> {
     pub x: X<T>,
     pub y: Y<T>,
+}
+
+impl<T: PartialEq<T>> PartialEq<(T, T)> for Point<T> {
+    fn eq(&self, (x, y): &(T, T)) -> bool {
+        self.x.eq(x) && self.y.eq(y)
+    }
+}
+
+impl<T: PartialEq<T>> PartialEq<(X<T>, Y<T>)> for Point<T> {
+    fn eq(&self, (x, y): &(X<T>, Y<T>)) -> bool {
+        self.x.eq(x) && self.y.eq(y)
+    }
 }
 
 impl<T> From<(T, T)> for Point<T> {

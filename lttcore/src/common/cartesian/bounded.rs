@@ -16,6 +16,22 @@ pub struct BoundedPoint<const WIDTH: usize, const HEIGHT: usize> {
     y: BoundedY<HEIGHT>,
 }
 
+impl<const WIDTH: usize, const HEIGHT: usize> PartialEq<(usize, usize)>
+    for BoundedPoint<WIDTH, HEIGHT>
+{
+    fn eq(&self, (x, y): &(usize, usize)) -> bool {
+        self.x.eq(x) && self.y.eq(y)
+    }
+}
+
+impl<const WIDTH: usize, const HEIGHT: usize> PartialEq<(BoundedX<WIDTH>, BoundedY<HEIGHT>)>
+    for BoundedPoint<WIDTH, HEIGHT>
+{
+    fn eq(&self, (x, y): &(BoundedX<WIDTH>, BoundedY<HEIGHT>)) -> bool {
+        self.x.eq(x) && self.y.eq(y)
+    }
+}
+
 impl<const WIDTH: usize, const HEIGHT: usize> TryFrom<Point<usize>>
     for BoundedPoint<WIDTH, HEIGHT>
 {
@@ -56,6 +72,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> BoundedPoint<WIDTH, HEIGHT> {
     pub fn y(&self) -> BoundedY<HEIGHT> {
         self.y
     }
+
+    pub fn new(x: usize, y: usize) -> Self {
+        (x, y).try_into().unwrap()
+    }
 }
 
 impl<const WIDTH: usize, const HEIGHT: usize> fmt::Display for BoundedPoint<WIDTH, HEIGHT> {
@@ -68,6 +88,12 @@ macro_rules! bounded_coord_component {
     ($id:ident, $counterpart:ident) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
         pub struct $id<const BOUND: usize>(usize);
+
+        impl<const BOUND: usize> PartialEq<usize> for $id<BOUND> {
+            fn eq(&self, rhs: &usize) -> bool {
+                self.0.eq(rhs)
+            }
+        }
 
         impl<const BOUND: usize> fmt::Display for $id<BOUND> {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
@@ -176,7 +202,13 @@ macro_rules! bounded_serde {
             type Value = $id<BOUND>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(formatter, "an integer between 0..{}, required by {}<{}>", BOUND, stringify!($id), BOUND)
+                write!(
+                    formatter,
+                    "an integer between 0..{}, required by {}<{}>",
+                    BOUND,
+                    stringify!($id),
+                    BOUND
+                )
             }
 
             fn visit_u64<E: de::Error>(self, value: u64) -> Result<Self::Value, E> {
