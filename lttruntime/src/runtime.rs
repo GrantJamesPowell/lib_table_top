@@ -9,7 +9,7 @@ use tokio::sync::{mpsc, oneshot};
 
 pub struct Runtime<T: Play> {
     game_runner: Arc<GameRunner<T>>,
-    match_maker_request_sender: MatchMakerRequestSender<T>,
+    match_maker_request_sender: MatchMakerRequestSender,
 }
 
 impl<T: Play> Runtime<T> {
@@ -28,7 +28,7 @@ impl<T: Play> Runtime<T> {
         }
     }
 
-    pub fn match_make(&self, request: MatchMakerRequest<T>) -> GameRequestTicket {
+    pub fn match_make(&self, request: MatchMakerRequest) -> GameRequestTicket {
         let (resolver, ticket) = oneshot::channel();
 
         self.match_maker_request_sender

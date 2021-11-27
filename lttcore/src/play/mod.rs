@@ -1,15 +1,13 @@
 mod game_advance;
-mod mode;
-mod settings;
 mod turn_num;
 
 pub mod score;
+pub mod settings;
 pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
-pub use mode::Mode;
 pub use score::Score;
-pub use settings::LttSettings;
+pub use settings::{BuiltinGameModes, LttSettings};
 pub use turn_num::TurnNum;
 pub use view::View;
 
@@ -56,7 +54,7 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type Settings: LttSettings;
+    type Settings: LttSettings + BuiltinGameModes;
     type PublicInfo: View + Score;
     type PlayerSecretInfo: View;
 
