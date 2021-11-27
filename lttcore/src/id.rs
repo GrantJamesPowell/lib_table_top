@@ -14,15 +14,15 @@ macro_rules! uuid_id {
             ::serde::Serialize,
             ::serde::Deserialize,
         )]
-        pub struct $id(uuid::Uuid);
+        pub struct $id(::uuid::Uuid);
 
         impl $id {
             pub fn new() -> Self {
-                Self(uuid::Uuid::new_v4())
+                Self(::uuid::Uuid::new_v4())
             }
         }
-        impl From<uuid::Uuid> for $id {
-            fn from(uuid: uuid::Uuid) -> Self {
+        impl From<::uuid::Uuid> for $id {
+            fn from(uuid: ::uuid::Uuid) -> Self {
                 Self(uuid)
             }
         }
@@ -43,3 +43,4 @@ macro_rules! uuid_id {
 
 uuid_id!(UserId);
 uuid_id!(GameId);
+uuid_id!(SettingsId);

@@ -5,7 +5,7 @@ use lttcore::Play;
 use std::sync::Arc;
 
 pub async fn run_match_maker<T: Play>(
-    _mailbox: MatchMakerRequestReceiver<T>,
+    _mailbox: MatchMakerRequestReceiver,
     _game_runner: Arc<GameRunner<T>>,
 ) {
     todo!()

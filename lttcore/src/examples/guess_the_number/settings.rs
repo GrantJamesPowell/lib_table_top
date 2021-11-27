@@ -1,30 +1,17 @@
-use crate::utilities::number_of_players::ONE_PLAYER;
-use crate::{play::LttSettings, NumberOfPlayers};
+use crate::{
+    play::settings::{Builtin, BuiltinGameModes, NumPlayers},
+    utilities::number_of_players::ONE_PLAYER,
+    NumberOfPlayers,
+};
+use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::borrow::Cow;
 use std::ops::RangeInclusive;
-use std::sync::Arc;
 
 lazy_static! {
-    static ref GAME_MODES: HashMap<&'static str, Arc<Settings>> = {
-        let mut modes = HashMap::new();
-        for number_of_players in 1..=4 {
-            for (range_name, range) in [("1-10", 1..=10), ("u64", 0..=u64::MAX)] {
-                let name: &'static str = Box::leak(
-                    format!("players-{}-range-{}", number_of_players, range_name).into_boxed_str(),
-                );
-
-                let settings = SettingsBuilder::default()
-                    .number_of_players(number_of_players.try_into().unwrap())
-                    .range(range)
-                    .build()
-                    .unwrap();
-
-                modes.insert(name, Arc::new(settings));
-            }
-        }
-
-        modes
+    static ref BUILTIN_GAME_MODES: &'static [Builtin<Settings>] = {
+        let builtins: Vec<_> = builtin_game_modes().collect();
+        &*Box::leak(builtins.into_boxed_slice())
     };
 }
 
@@ -73,12 +60,42 @@ impl Default for Settings {
     }
 }
 
-impl LttSettings for Settings {
+impl NumPlayers for Settings {
     fn number_of_players(&self) -> NumberOfPlayers {
         self.number_of_players
     }
+}
 
-    fn game_modes() -> &'static HashMap<&'static str, Arc<Self>> {
-        &GAME_MODES
+impl BuiltinGameModes for Settings {
+    fn builtins() -> &'static [Builtin<Self>] {
+        &BUILTIN_GAME_MODES
     }
+}
+
+fn builtin_game_modes() -> impl Iterator<Item = Builtin<Settings>> {
+    (1..=4)
+        .flat_map(|number_of_players| {
+            [("1-10", 1..=10), ("u64", 0..=u64::MAX)]
+                .into_iter()
+                .map(move |range_config| (number_of_players, range_config))
+        })
+        .map(|(number_of_players, (range_name, range))| {
+            let settings = SettingsBuilder::default()
+                .number_of_players(number_of_players.try_into().unwrap())
+                .range(range)
+                .build()
+                .unwrap();
+
+            let name = format!("players-{}-range-{}", number_of_players, range_name);
+            Builtin {
+                settings,
+                name: Cow::Owned(name),
+                since_version: Version::new(0, 0, 0),
+            }
+        })
+        .chain(std::iter::once(Builtin {
+            name: Cow::Borrowed("default"),
+            settings: Settings::default(),
+            since_version: Version::new(0, 0, 0),
+        }))
 }

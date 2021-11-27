@@ -6,7 +6,7 @@ use tokio::sync::{mpsc, oneshot};
 pub type GameRequestTicket = oneshot::Receiver<(GameId, Player)>;
 pub type GameRequestTicketResolver = oneshot::Sender<(GameId, Player)>;
 
-pub type MatchMakerRequestReceiver<T> =
-    mpsc::UnboundedReceiver<(MatchMakerRequest<T>, GameRequestTicketResolver)>;
-pub type MatchMakerRequestSender<T> =
-    mpsc::UnboundedSender<(MatchMakerRequest<T>, GameRequestTicketResolver)>;
+pub type MatchMakerRequestReceiver =
+    mpsc::UnboundedReceiver<(MatchMakerRequest, GameRequestTicketResolver)>;
+pub type MatchMakerRequestSender =
+    mpsc::UnboundedSender<(MatchMakerRequest, GameRequestTicketResolver)>;

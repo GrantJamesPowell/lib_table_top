@@ -1,7 +1,6 @@
-use crate::play::LttSettings;
+use crate::play::settings::NumPlayers;
 use crate::{GameProgression, NumberOfPlayers, Play, Player, PlayerSet, TurnNum};
 use std::borrow::Cow;
-use std::sync::Arc;
 
 use super::HistoryEvent;
 
@@ -19,11 +18,7 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn settings(&self) -> &T::Settings {
-        &self.settings
-    }
-
-    pub fn settings_arc(&self) -> Arc<T::Settings> {
-        Arc::clone(&self.settings)
+        &self.settings.settings()
     }
 
     pub fn history_events(&self) -> impl Iterator<Item = &HistoryEvent<T>> + '_ {
@@ -31,15 +26,15 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn public_info(&self) -> Cow<'_, T::PublicInfo> {
-        self.state.public_info(&self.settings)
+        self.state.public_info(self.settings())
     }
 
     pub fn player_secret_info(&self, player: Player) -> Cow<'_, T::PlayerSecretInfo> {
-        self.state.player_secret_info(&self.settings, player)
+        self.state.player_secret_info(self.settings(), player)
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
-        self.settings.number_of_players()
+        self.settings().number_of_players()
     }
 
     pub fn players(&self) -> PlayerSet {
@@ -47,6 +42,6 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn which_players_input_needed(&self) -> PlayerSet {
-        self.state.which_players_input_needed(&self.settings)
+        self.state.which_players_input_needed(self.settings())
     }
 }

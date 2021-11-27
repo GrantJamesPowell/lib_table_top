@@ -1,23 +1,29 @@
-use crate::utilities::number_of_players::TWO_PLAYER;
-use crate::{play::LttSettings, NumberOfPlayers};
+use crate::NumberOfPlayers;
+use crate::{
+    play::settings::{Builtin, BuiltinGameModes, NumPlayers},
+    utilities::number_of_players::TWO_PLAYER,
+};
+use semver::Version;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::borrow::Cow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Settings;
 
-lazy_static! {
-    static ref GAME_MODES: HashMap<&'static str, Arc<Settings>> =
-        [("standard", Arc::new(Settings))].into_iter().collect();
-}
+static BUILTINS: [Builtin<Settings>; 1] = [Builtin {
+    name: Cow::Borrowed("default"),
+    settings: Settings,
+    since_version: Version::new(0, 0, 0),
+}];
 
-impl LttSettings for Settings {
-    fn game_modes() -> &'static HashMap<&'static str, Arc<Self>> {
-        &GAME_MODES
-    }
-
+impl NumPlayers for Settings {
     fn number_of_players(&self) -> NumberOfPlayers {
         TWO_PLAYER
+    }
+}
+
+impl BuiltinGameModes for Settings {
+    fn builtins() -> &'static [Builtin<Self>] {
+        &BUILTINS
     }
 }

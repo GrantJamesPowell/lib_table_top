@@ -9,6 +9,7 @@ rand_chacha = "0.3.1"
 derive_builder = "0.10.2"
 thiserror = "1.0.23"
 smallvec = { version = "1.7.0", features = ["serde"] }
+semver = { version = "1.0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_repr = "0.1"
 hex = { version = "0.4.3", features = ["serde"] }
