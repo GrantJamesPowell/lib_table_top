@@ -1,25 +1,31 @@
-use crate::NumberOfPlayers;
+use crate::{id::SettingsId, NumberOfPlayers};
 use semver::Version;
-use serde::{
-    de::{DeserializeOwned, Visitor},
-    Deserialize, Deserializer, Serialize, Serializer,
-};
+use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
 
-pub trait LttSettings:
-    Clone + Debug + Default + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned + 'static
-{
-    fn number_of_players(&self) -> NumberOfPlayers;
+/// Custom settings
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct Custom<T: BuiltinGameModes> {
+    pub name: Option<Cow<'static, str>>,
+    pub settings: Arc<T>,
+    pub id: Option<SettingsId>,
 }
 
+/// Builtin settings
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct Builtin<T> {
     pub name: Cow<'static, str>,
     pub settings: T,
     pub since_version: Version,
+}
+
+/// Trait describing to the runtime how many players are needed for this configuration of the
+/// settings. Must always return the same value for the same input
+pub trait NumPlayers {
+    fn number_of_players(&self) -> NumberOfPlayers;
 }
 
 /// Trait describing to the runtime what the "builtin" game modes (settings) for your game are. The
@@ -41,7 +47,7 @@ pub trait BuiltinGameModes: Sized + 'static {
 pub struct VerifiedBuiltin<T: BuiltinGameModes + 'static>(&'static Builtin<T>);
 
 impl<T: BuiltinGameModes> VerifiedBuiltin<T> {
-    fn settings(&self) -> &T {
+    pub fn settings(&self) -> &T {
         &self.0.settings
     }
 }
@@ -99,10 +105,7 @@ impl<T: BuiltinGameModes> FromStr for VerifiedBuiltin<T> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SettingsPtr<T: BuiltinGameModes + 'static> {
     Builtin(VerifiedBuiltin<T>),
-    Custom {
-        name: Option<Cow<'static, str>>,
-        settings: Arc<T>,
-    },
+    Custom(Custom<T>),
 }
 
 impl<T: BuiltinGameModes + Default> Default for SettingsPtr<T> {
@@ -131,14 +134,14 @@ impl<T: BuiltinGameModes> SettingsPtr<T> {
     pub fn name(&self) -> Option<&str> {
         match self {
             SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => Some(&builtin.name),
-            SettingsPtr::Custom { name, .. } => name.as_ref().map(|cow| cow.as_ref()),
+            SettingsPtr::Custom(Custom { name, .. }) => name.as_ref().map(|cow| cow.as_ref()),
         }
     }
 
     pub fn settings(&self) -> &T {
         match self {
             SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => &builtin.settings,
-            SettingsPtr::Custom { settings, .. } => &settings,
+            SettingsPtr::Custom(Custom { settings, .. }) => &settings,
         }
     }
 }
@@ -163,10 +166,11 @@ impl<T: BuiltinGameModes> From<T> for SettingsPtr<T> {
 
 impl<T: BuiltinGameModes> From<Arc<T>> for SettingsPtr<T> {
     fn from(settings: Arc<T>) -> Self {
-        Self::Custom {
+        Self::Custom(Custom {
             settings,
             name: None,
-        }
+            id: None,
+        })
     }
 }
 
@@ -221,6 +225,7 @@ mod test {
             serialized,
             serde_json::json!({"Custom": {
                 "name": serde_json::Value::Null,
+                "id": serde_json::Value::Null,
                 "settings": {
                     "number_of_players": 1,
                     "range": {"start": 0, "end": u64::MAX }

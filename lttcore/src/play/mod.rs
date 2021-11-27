@@ -7,7 +7,7 @@ pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
 pub use score::Score;
-pub use settings::{Builtin, BuiltinGameModes, LttSettings, SettingsPtr};
+pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
 pub use view::View;
 
@@ -54,7 +54,19 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type Settings: LttSettings + BuiltinGameModes;
+    type Settings: Clone
+        + Debug
+        + Default
+        + PartialEq
+        + Eq
+        + Sync
+        + Send
+        + Serialize
+        + DeserializeOwned
+        + 'static
+        + settings::NumPlayers
+        + settings::BuiltinGameModes;
+
     type PublicInfo: View + Score;
     type PlayerSecretInfo: View;
 

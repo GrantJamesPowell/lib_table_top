@@ -1,6 +1,6 @@
-use crate::{play::LttSettings, NumberOfPlayers};
+use crate::NumberOfPlayers;
 use crate::{
-    play::{Builtin, BuiltinGameModes},
+    play::settings::{Builtin, BuiltinGameModes, NumPlayers},
     utilities::number_of_players::TWO_PLAYER,
 };
 use semver::Version;
@@ -16,7 +16,7 @@ static BUILTINS: [Builtin<Settings>; 1] = [Builtin {
     since_version: Version::new(0, 0, 0),
 }];
 
-impl LttSettings for Settings {
+impl NumPlayers for Settings {
     fn number_of_players(&self) -> NumberOfPlayers {
         TWO_PLAYER
     }

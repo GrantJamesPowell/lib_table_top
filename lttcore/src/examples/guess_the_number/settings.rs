@@ -1,5 +1,5 @@
 use crate::{
-    play::{Builtin, BuiltinGameModes, LttSettings},
+    play::settings::{Builtin, BuiltinGameModes, NumPlayers},
     utilities::number_of_players::ONE_PLAYER,
     NumberOfPlayers,
 };
@@ -60,7 +60,7 @@ impl Default for Settings {
     }
 }
 
-impl LttSettings for Settings {
+impl NumPlayers for Settings {
     fn number_of_players(&self) -> NumberOfPlayers {
         self.number_of_players
     }
