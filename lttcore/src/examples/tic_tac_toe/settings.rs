@@ -1,9 +1,20 @@
-use crate::{play::BuiltinGameModes, utilities::number_of_players::TWO_PLAYER};
 use crate::{play::LttSettings, NumberOfPlayers};
+use crate::{
+    play::{Builtin, BuiltinGameModes},
+    utilities::number_of_players::TWO_PLAYER,
+};
+use semver::Version;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Settings;
+
+static BUILTINS: [Builtin<Settings>; 1] = [Builtin {
+    name: Cow::Borrowed("default"),
+    settings: Settings,
+    since_version: Version::new(0, 0, 0),
+}];
 
 impl LttSettings for Settings {
     fn number_of_players(&self) -> NumberOfPlayers {
@@ -12,15 +23,7 @@ impl LttSettings for Settings {
 }
 
 impl BuiltinGameModes for Settings {
-    fn builtin_game_mode_names() -> &'static [&'static str] {
-        &["default"]
-    }
-
-    fn settings_for_builtin(name: &str) -> Option<&'static Self> {
-        if name == "default" {
-            Some(&Settings)
-        } else {
-            None
-        }
+    fn builtins() -> &'static [Builtin<Self>] {
+        &BUILTINS
     }
 }

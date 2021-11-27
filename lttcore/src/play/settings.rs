@@ -1,8 +1,10 @@
 use crate::NumberOfPlayers;
+use semver::Version;
 use serde::{
     de::{DeserializeOwned, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use std::borrow::Cow;
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -13,129 +15,157 @@ pub trait LttSettings:
     fn number_of_players(&self) -> NumberOfPlayers;
 }
 
-pub trait BuiltinGameModes {
-    /// List of names of builtin game modes.
-    fn builtin_game_mode_names() -> &'static [&'static str] {
-        &[]
-    }
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct Builtin<T> {
+    pub name: Cow<'static, str>,
+    pub settings: T,
+    pub since_version: Version,
+}
 
-    /// Turn a builtin game mode into a `'static` settings reference. This function should return
-    /// `Some` for all names listed in `BuiltinGameModes::builtin_game_mode_names`
-    /// `BuiltinGameModes::builtin_game_mode_names()`
-    fn settings_for_builtin<'a>(name: &'a str) -> Option<&'static Self>;
+/// Trait describing to the runtime what the "builtin" game modes (settings) for your game are. The
+/// runtime optimizes the builtin modes to be represented by only their name on disk and on the
+/// wire. For backwards compatibility reasons it's important to never remove or edit game modes
+/// once they have been released. There exists a special game mode called "default" that
+/// `SettingsPtr::default` will attempt to use if it exists. It is recommend you include "default"
+/// in your game modes and have its settings be exactly equal to `YourSettings::Default`
+pub trait BuiltinGameModes: Sized + 'static {
+    /// Return the list of builtins game modes (settings) for your game. Entries should never be
+    /// removed from this list or modified once released. For examples on how to efficently build
+    /// `'static [Builtin<Self>]` slices dynamically at start up, see
+    /// `examples/guess_the_number/settings.rs` or if you have few custom modes (or none) see
+    /// `examples/tic_tac_toe/settings.rs` as an example
+    fn builtins() -> &'static [Builtin<Self>];
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct BuiltinGameMode<T: BuiltinGameModes>(&'static str, std::marker::PhantomData<fn() -> T>);
+pub struct VerifiedBuiltin<T: BuiltinGameModes + 'static>(&'static Builtin<T>);
 
-impl<T: BuiltinGameModes> BuiltinGameMode<T> {
-    pub fn name(&self) -> &str {
-        self.0
-    }
-
-    pub fn settings<'a>(&'a self) -> &'static T {
-        T::settings_for_builtin(self.name()).expect("already validated that this builtin exists")
+impl<T: BuiltinGameModes> VerifiedBuiltin<T> {
+    fn settings(&self) -> &T {
+        &self.0.settings
     }
 }
 
-impl<T: BuiltinGameModes> Serialize for BuiltinGameMode<T> {
+impl<T: BuiltinGameModes> Serialize for VerifiedBuiltin<T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_str(self.0)
+        serializer.serialize_str(&self.0.name)
     }
 }
 
 #[derive(Debug)]
-struct BuiltinGameModeVistor<T>(std::marker::PhantomData<fn() -> T>);
+struct VerifiedBuiltinVistor<T>(std::marker::PhantomData<fn() -> T>);
 
-impl<'de, T: BuiltinGameModes> Visitor<'de> for BuiltinGameModeVistor<T> {
-    type Value = BuiltinGameMode<T>;
+impl<'de, T: BuiltinGameModes + 'static> Visitor<'de> for VerifiedBuiltinVistor<T> {
+    type Value = VerifiedBuiltin<T>;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(formatter, "expecting a built in game mode")
     }
 
     fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-        BuiltinGameMode::from_str(v)
+        VerifiedBuiltin::from_str(v)
             .map_err(|_| E::custom(format!("'{}' is not a builtin game mode", v)))
     }
 }
 
-impl<'de, T: BuiltinGameModes> Deserialize<'de> for BuiltinGameMode<T> {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<BuiltinGameMode<T>, D::Error> {
-        let visitor: BuiltinGameModeVistor<T> = BuiltinGameModeVistor(Default::default());
+impl<'de, T: BuiltinGameModes> Deserialize<'de> for VerifiedBuiltin<T> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<VerifiedBuiltin<T>, D::Error> {
+        let visitor: VerifiedBuiltinVistor<T> = VerifiedBuiltinVistor(Default::default());
         deserializer.deserialize_str(visitor)
     }
 }
 
-pub fn builtin_game_modes<T: BuiltinGameModes>() -> impl Iterator<Item = BuiltinGameMode<T>> {
-    T::builtin_game_mode_names()
-        .iter()
-        .map(|name| BuiltinGameMode(name, std::marker::PhantomData))
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct InvalidBuiltin;
+
+impl<T: BuiltinGameModes> From<&'static Builtin<T>> for VerifiedBuiltin<T> {
+    fn from(builtin: &'static Builtin<T>) -> Self {
+        Self(builtin)
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct InvalidBuiltinGameMode;
-
-impl<T: BuiltinGameModes> FromStr for BuiltinGameMode<T> {
-    type Err = InvalidBuiltinGameMode;
+impl<T: BuiltinGameModes> FromStr for VerifiedBuiltin<T> {
+    type Err = InvalidBuiltin;
 
     fn from_str(name: &str) -> Result<Self, Self::Err> {
-        println!("herer!");
-        T::builtin_game_mode_names()
+        T::builtins()
             .iter()
-            .find(|&x| x.eq(&name))
-            .map(|&name| BuiltinGameMode(name, std::marker::PhantomData))
-            .ok_or(InvalidBuiltinGameMode)
+            .find(|builtin| builtin.name.eq(&name))
+            .map(VerifiedBuiltin)
+            .ok_or(InvalidBuiltin)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum SettingsPtr<T: BuiltinGameModes> {
-    Builtin(BuiltinGameMode<T>),
-    Custom(Arc<T>),
+pub enum SettingsPtr<T: BuiltinGameModes + 'static> {
+    Builtin(VerifiedBuiltin<T>),
+    Custom {
+        name: Option<Cow<'static, str>>,
+        settings: Arc<T>,
+    },
+}
+
+impl<T: BuiltinGameModes + Default> Default for SettingsPtr<T> {
+    fn default() -> Self {
+        VerifiedBuiltin::<T>::from_str("default")
+            .map(|builtin| SettingsPtr::from(builtin))
+            .unwrap_or_else(|_| SettingsPtr::from(T::default()))
+    }
 }
 
 impl<T: BuiltinGameModes> SettingsPtr<T> {
-    pub fn is_builtin(ptr: SettingsPtr<T>) -> bool {
-        match ptr {
+    pub fn is_builtin(&self) -> bool {
+        match self {
             SettingsPtr::Builtin(_) => true,
             _ => false,
         }
     }
 
-    pub fn is_custom(ptr: SettingsPtr<T>) -> bool {
-        match ptr {
-            SettingsPtr::Custom(_) => true,
+    pub fn is_custom(&self) -> bool {
+        match self {
+            SettingsPtr::Custom { .. } => true,
             _ => false,
+        }
+    }
+
+    pub fn name(&self) -> Option<&str> {
+        match self {
+            SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => Some(&builtin.name),
+            SettingsPtr::Custom { name, .. } => name.as_ref().map(|cow| cow.as_ref()),
+        }
+    }
+
+    pub fn settings(&self) -> &T {
+        match self {
+            SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => &builtin.settings,
+            SettingsPtr::Custom { settings, .. } => &settings,
         }
     }
 }
 
-impl<T: BuiltinGameModes> From<BuiltinGameMode<T>> for SettingsPtr<T> {
-    fn from(builtin: BuiltinGameMode<T>) -> Self {
-        Self::Builtin(builtin)
+impl<T: BuiltinGameModes> From<VerifiedBuiltin<T>> for SettingsPtr<T> {
+    fn from(verified: VerifiedBuiltin<T>) -> Self {
+        Self::Builtin(verified)
+    }
+}
+
+impl<T: BuiltinGameModes> From<&'static Builtin<T>> for SettingsPtr<T> {
+    fn from(builtin: &'static Builtin<T>) -> Self {
+        Self::Builtin(VerifiedBuiltin(builtin))
     }
 }
 
 impl<T: BuiltinGameModes> From<T> for SettingsPtr<T> {
     fn from(settings: T) -> Self {
-        Self::Custom(Arc::new(settings))
+        Self::from(Arc::new(settings))
     }
 }
 
 impl<T: BuiltinGameModes> From<Arc<T>> for SettingsPtr<T> {
     fn from(settings: Arc<T>) -> Self {
-        Self::Custom(settings)
-    }
-}
-
-impl<T: BuiltinGameModes + 'static> std::ops::Deref for SettingsPtr<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            SettingsPtr::Builtin(builtin) => builtin.settings(),
-            SettingsPtr::Custom(settings) => &settings,
+        Self::Custom {
+            settings,
+            name: None,
         }
     }
 }
@@ -147,7 +177,8 @@ mod test {
 
     #[test]
     fn serde_builtin_game_mode() {
-        let game_modes: Vec<BuiltinGameMode<Settings>> = builtin_game_modes::<Settings>().collect();
+        let game_modes: Vec<VerifiedBuiltin<Settings>> =
+            Settings::builtins().iter().map(VerifiedBuiltin).collect();
         assert_eq!(
             serde_json::to_value(&game_modes).unwrap(),
             serde_json::json!([
@@ -163,14 +194,18 @@ mod test {
             ])
         );
 
-        let valid: BuiltinGameMode<Settings> =
+        let valid: VerifiedBuiltin<Settings> =
             serde_json::from_str("\"players-1-range-1-10\"").unwrap();
         assert_eq!(
             Some(valid.settings()),
-            Settings::settings_for_builtin("players-1-range-1-10")
+            Some(
+                VerifiedBuiltin::from_str("players-1-range-1-10")
+                    .unwrap()
+                    .settings()
+            )
         );
 
-        let invalid: Result<BuiltinGameMode<Settings>, _> =
+        let invalid: Result<VerifiedBuiltin<Settings>, _> =
             serde_json::from_value(serde_json::json!("foo bar baz"));
         assert_eq!(
             invalid.unwrap_err().to_string(),
@@ -185,8 +220,11 @@ mod test {
         assert_eq!(
             serialized,
             serde_json::json!({"Custom": {
-                "number_of_players": 1,
-                "range": {"start": 0, "end": u64::MAX }
+                "name": serde_json::Value::Null,
+                "settings": {
+                    "number_of_players": 1,
+                    "range": {"start": 0, "end": u64::MAX }
+                }
             }})
         );
 
@@ -195,14 +233,20 @@ mod test {
 
         let deserialized: SettingsPtr<Settings> =
             serde_json::from_value(serde_json::json!({"Builtin": "default"})).unwrap();
-        assert_eq!(std::ops::Deref::deref(&deserialized), &Settings::default());
+        assert_eq!(deserialized.settings(), &Settings::default());
 
-        let settings_ptr: SettingsPtr<Settings> = BuiltinGameMode::from_str("players-1-range-1-10")
+        let settings_ptr: SettingsPtr<Settings> = VerifiedBuiltin::from_str("players-1-range-1-10")
             .unwrap()
             .into();
         assert_eq!(
             serde_json::to_value(&settings_ptr).unwrap(),
             serde_json::json!({"Builtin": "players-1-range-1-10"})
         );
+    }
+
+    #[test]
+    fn settings_ptr_default() {
+        let settings: SettingsPtr<Settings> = SettingsPtr::default();
+        assert!(SettingsPtr::is_builtin(&settings))
     }
 }

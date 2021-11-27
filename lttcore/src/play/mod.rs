@@ -7,7 +7,7 @@ pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
 pub use score::Score;
-pub use settings::{BuiltinGameModes, LttSettings};
+pub use settings::{Builtin, BuiltinGameModes, LttSettings};
 pub use turn_num::TurnNum;
 pub use view::View;
 

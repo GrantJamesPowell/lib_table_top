@@ -1,18 +1,17 @@
-use crate::utilities::number_of_players::ONE_PLAYER;
 use crate::{
-    play::{BuiltinGameModes, LttSettings},
+    play::{Builtin, BuiltinGameModes, LttSettings},
+    utilities::number_of_players::ONE_PLAYER,
     NumberOfPlayers,
 };
+use semver::Version;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::ops::RangeInclusive;
 
 lazy_static! {
-    static ref BUILTIN_GAME_MODES: (Vec<&'static str>, Vec<Settings>) = {
-        let (names, settings): (Vec<&'static str>, Vec<Settings>) = builtin_game_modes()
-            .map(|(name, settings)| (&*Box::leak(name.into_boxed_str()), settings))
-            .unzip();
-
-        (names, settings)
+    static ref BUILTIN_GAME_MODES: &'static [Builtin<Settings>] = {
+        let builtins: Vec<_> = builtin_game_modes().collect();
+        &*Box::leak(builtins.into_boxed_slice())
     };
 }
 
@@ -68,20 +67,12 @@ impl LttSettings for Settings {
 }
 
 impl BuiltinGameModes for Settings {
-    fn builtin_game_mode_names() -> &'static [&'static str] {
-        &BUILTIN_GAME_MODES.0
-    }
-
-    fn settings_for_builtin(name: &str) -> Option<&'static Self> {
-        BUILTIN_GAME_MODES
-            .0
-            .iter()
-            .position(|x| x.eq(&name))
-            .and_then(|idx| BUILTIN_GAME_MODES.1.get(idx))
+    fn builtins() -> &'static [Builtin<Self>] {
+        &BUILTIN_GAME_MODES
     }
 }
 
-fn builtin_game_modes() -> impl Iterator<Item = (String, Settings)> {
+fn builtin_game_modes() -> impl Iterator<Item = Builtin<Settings>> {
     (1..=4)
         .flat_map(|number_of_players| {
             [("1-10", 1..=10), ("u64", 0..=u64::MAX)]
@@ -89,17 +80,22 @@ fn builtin_game_modes() -> impl Iterator<Item = (String, Settings)> {
                 .map(move |range_config| (number_of_players, range_config))
         })
         .map(|(number_of_players, (range_name, range))| {
-            let name = format!("players-{}-range-{}", number_of_players, range_name);
             let settings = SettingsBuilder::default()
                 .number_of_players(number_of_players.try_into().unwrap())
                 .range(range)
                 .build()
                 .unwrap();
 
-            (name, settings)
+            let name = format!("players-{}-range-{}", number_of_players, range_name);
+            Builtin {
+                settings,
+                name: Cow::Owned(name),
+                since_version: Version::new(0, 0, 0),
+            }
         })
-        .chain(std::iter::once((
-            String::from("default"),
-            Settings::default(),
-        )))
+        .chain(std::iter::once(Builtin {
+            name: Cow::Borrowed("default"),
+            settings: Settings::default(),
+            since_version: Version::new(0, 0, 0),
+        }))
 }
