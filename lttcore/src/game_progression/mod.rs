@@ -3,6 +3,7 @@ mod support_getters;
 mod support_povs;
 mod support_scenarios;
 
+use crate::play::SettingsPtr;
 use crate::play::{ActionResponse, Actions, EnumeratedGameAdvance};
 use crate::{Play, Player, Seed, TurnNum};
 use im::Vector;
@@ -15,7 +16,7 @@ use std::sync::Arc;
 #[serde(bound = "")]
 pub struct GameProgression<T: Play> {
     pub(super) seed: Arc<Seed>,
-    pub(super) settings: Arc<T::Settings>,
+    pub(super) settings: SettingsPtr<T::Settings>,
     pub(super) initial_state: Option<Arc<T>>,
     pub(super) turn_num: TurnNum,
     #[builder(setter(skip))]
@@ -37,9 +38,8 @@ impl<T: Play> GameProgression<T> {
         actions: impl IntoIterator<Item = (Player, ActionResponse<T>)>,
     ) -> EnumeratedGameAdvance<T> {
         let actions: Actions<T> = actions.into_iter().collect();
-
         let game_advance = self.state.advance(
-            &self.settings,
+            self.settings.settings(),
             actions
                 .iter()
                 .map(|(player, action)| (player, Cow::Borrowed(action))),
@@ -74,7 +74,9 @@ impl<T: Play> GameProgressionBuilder<T> {
             .as_ref()
             .map(|arc| arc.as_ref())
             .cloned()
-            .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
+            .unwrap_or_else(|| {
+                T::initial_state_for_settings(settings.settings(), &mut seed.rng_for_init())
+            });
         let history = Vector::new();
 
         Ok(GameProgression {

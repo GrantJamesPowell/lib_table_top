@@ -26,7 +26,7 @@ impl<T: Play> GamePlayer<T> {
             secret_info: &self.secret_info,
             turn_num: self.game_observer.turn_num,
             action_requests: self.game_observer.action_requests,
-            settings: &self.game_observer.settings,
+            settings: self.game_observer.settings(),
             public_info: &self.game_observer.public_info,
         }
     }

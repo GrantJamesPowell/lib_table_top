@@ -196,12 +196,18 @@ fn test_serializing_game_player_and_observer_and_updates() {
         json!({
             "seed":"2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
             "settings":{
-                "range": {
-                    "start": 1,
-                    "end":10
-                },
-                "number_of_players": 1
-            },
+                "Custom": {
+                    "name": serde_json::Value::Null,
+                    "settings": {
+                        "range": {
+                            "start": 1,
+                            "end":10
+                            },
+                        "number_of_players": 1
+                    }
+                }
+            }
+            ,
             "initial_state": Null,
             "turn_num": 0,
             "state":{
@@ -220,11 +226,16 @@ fn test_serializing_game_player_and_observer_and_updates() {
             "turn_num": 0,
             "action_requests": [1, 0, 0, 0],
             "settings": {
-              "range": {
-                "start": 1,
-                "end": 10
-              },
-              "number_of_players": 1
+                "Custom": {
+                    "name": serde_json::Value::Null,
+                    "settings": {
+                        "range": {
+                            "start": 1,
+                            "end": 10
+                        },
+                        "number_of_players": 1
+                    }
+                }
             },
             "public_info": "InProgress"
           },

@@ -1,16 +1,21 @@
-use crate::play::View;
+use crate::play::{SettingsPtr, View};
 use crate::pov::{ObserverPov, ObserverUpdate};
 use crate::{Play, PlayerSet, TurnNum};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GameObserver<T: Play> {
     pub(crate) turn_num: TurnNum,
     pub(crate) action_requests: PlayerSet,
-    pub(crate) settings: Arc<T::Settings>,
+    pub(crate) settings: SettingsPtr<T::Settings>,
     pub(crate) public_info: T::PublicInfo,
+}
+
+impl<T: Play> GameObserver<T> {
+    pub fn settings(&self) -> &T::Settings {
+        self.settings.settings()
+    }
 }
 
 impl<T: Play> GameObserver<T> {
@@ -18,7 +23,7 @@ impl<T: Play> GameObserver<T> {
         ObserverPov {
             turn_num: self.turn_num,
             action_requests: self.action_requests,
-            settings: &self.settings,
+            settings: self.settings(),
             public_info: &self.public_info,
         }
     }
