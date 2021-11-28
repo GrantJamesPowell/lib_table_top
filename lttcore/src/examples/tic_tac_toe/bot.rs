@@ -1,10 +1,10 @@
-use super::{Action, Board, Marker, Position, TicTacToe};
+use super::{Action, Board, Position, TicTacToe};
 use crate::bots::Bot;
 use crate::pov::PlayerPov;
 use crate::{Play, Seed};
 
 pub trait TicTacToeBot {
-    fn claim_space(&self, marker: Marker, board: &Board, seed: Seed) -> Position;
+    fn claim_space(&self, board: &Board, seed: Seed) -> Position;
 }
 
 #[derive(Debug)]
@@ -18,10 +18,8 @@ impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
         player_pov: &PlayerPov<'_, Self::Game>,
         seed: Seed,
     ) -> <Self::Game as Play>::Action {
-        let marker = Marker::try_from(player_pov.player).expect("is a valid player for TicTacToe");
         let board = player_pov.public_info.board();
-        let position = self.0.claim_space(marker, board, seed);
-
+        let position = self.0.claim_space(board, seed);
         Action { position }
     }
 }

@@ -1,4 +1,4 @@
-use super::Marker;
+use super::{ActionError, Marker};
 use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY};
 use crate::Player;
 use itertools::iproduct;
@@ -174,6 +174,30 @@ impl Board {
         })
     }
 
+    /// Whether the board is empty (all spaces are open)
+    ///
+    /// ```
+    /// use lttcore::ttt;
+    ///
+    /// let board = ttt!([
+    ///   - - -
+    ///   - - -
+    ///   - - -
+    /// ]);
+    /// assert!(board.is_empty());
+    ///
+    /// let board = ttt!([
+    ///   - - -
+    ///   - X -
+    ///   - - -
+    /// ]);
+    ///
+    /// assert!(!board.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.empty_spaces().count() == 9
+    }
+
     /// Returns a marker at a position, if the row or col is greater than 2, this returns None
     ///
     /// ```
@@ -338,6 +362,39 @@ impl Board {
                     Status::Draw
                 }
             })
+    }
+
+    /// Claims a space for a marker, returns an error if that space is taken
+    ///
+    /// ```
+    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Marker::*, Position, ActionError::*};
+    ///
+    /// let mut game: TicTacToe = Default::default();
+    /// let pos = Position::new(0, 0);
+    ///
+    /// assert_eq!(game.board()[pos], None);
+    /// assert!(game.claim_space(X, pos).is_ok());
+    /// assert_eq!(game.board()[pos], Some(X.into()));
+    ///
+    /// // Taking an already claimed space returns an error
+    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos.into() }));
+    /// ```
+    pub fn claim_space(
+        &mut self,
+        marker: Marker,
+        position: impl Into<Position>,
+    ) -> Result<(), ActionError> {
+        let position = position.into();
+
+        match self[position] {
+            None => {
+                self[position] = Some(marker);
+                Ok(())
+            }
+            Some(_) => Err(ActionError::SpaceIsTaken {
+                attempted: position,
+            }),
+        }
     }
 }
 

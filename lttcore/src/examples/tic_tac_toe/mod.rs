@@ -3,6 +3,7 @@ pub mod board;
 mod bot;
 pub mod helpers;
 mod marker;
+pub mod prebuilt_bots;
 mod public_info;
 mod settings;
 
@@ -102,16 +103,9 @@ impl TicTacToe {
         position: impl Into<Position>,
     ) -> Result<PublicInfoUpdate, ActionError> {
         let position = position.into();
-
-        match self.board[position] {
-            None => {
-                self.board[position] = Some(marker);
-                Ok(PublicInfoUpdate::Claim(marker, position))
-            }
-            Some(_) => Err(ActionError::SpaceIsTaken {
-                attempted: position,
-            }),
-        }
+        self.board
+            .claim_space(marker, position)
+            .map(|_| PublicInfoUpdate::Claim(marker, position))
     }
 
     /// Claims the next available space on the board.

@@ -15,8 +15,17 @@ impl From<[u8; 32]> for Seed {
 }
 
 impl Seed {
+    /// Create a random seed using the `rand::thread_rng` generator
     pub fn random() -> Self {
         rand::thread_rng().gen::<[u8; 32]>().into()
+    }
+
+    pub fn rng(&self) -> impl rand::Rng {
+        ChaCha20Rng::from_seed(self.0)
+    }
+
+    pub fn bytes(&self) -> &[u8; 32] {
+        &self.0
     }
 
     pub fn rng_for_init(&self) -> impl rand::Rng {
