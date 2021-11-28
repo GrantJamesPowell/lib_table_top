@@ -11,3 +11,6 @@ lttcore = { path = "../lttcore", features = ["encoder"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 sqlx = { version = "0.5", features = [ "runtime-tokio-native-tls" , "sqlite", "migrate"] }
 tokio = { version = "1", features = ["full"] }
+bytes = "1.1.0"
+chrono = { version = "0.4" , features = ["serde"] }
+uuid = { version = "0.8.2", features = ["serde", "v4"] }
