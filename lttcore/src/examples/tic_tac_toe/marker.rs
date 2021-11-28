@@ -24,6 +24,14 @@ pub enum Marker {
 }
 
 impl Marker {
+    /// Returns the opponent of the [`Marker`]
+    ///
+    /// ```
+    /// use lttcore::examples::tic_tac_toe::Marker::*;
+    ///
+    /// assert_eq!(X.opponent(), O);
+    /// assert_eq!(O.opponent(), X);
+    /// ```
     pub fn opponent(&self) -> Self {
         match self {
             Marker::X => Marker::O,

@@ -69,19 +69,15 @@
 //!     }
 //! }
 //!
+//! let bot = MySuperCoolBot { favorite_number: 1 };
+//!
 //! #[rustfmt::skip]
 //! let board = ttt!([
 //!     - - -
 //!     - - -
 //!     - - -
 //! ]);
-//!
-//! assert_bot_takes_position(
-//!     MySuperCoolBot { favorite_number: 1 },
-//!     board,
-//!     Position::new(1, 1),
-//!     Seed::random(),
-//! );
+//! assert_bot_takes_position(&bot, board, (1, 1), Seed::random());
 //!
 //! #[rustfmt::skip]
 //! let board = ttt!([
@@ -89,10 +85,16 @@
 //!   O - X
 //!   X O O
 //! ]);
-//!
-//! assert_bot_wins(MySuperCoolBot { favorite_number: 1 }, board, Seed::random())
+//! assert_bot_wins(&bot, board, Seed::random())
 //! ```
+//!
+//! # Where to go now?
+//!
+//! The [`board`] module (and specifically the [`Board`](board::Board)) struct are good starting
+//! points to learn how to interact with this game. The [`Board`](board::Board) is what
+//! [`TicTacToeBot`]s are passed when they are invoked
 
+#[warn(missing_docs)]
 mod action;
 pub mod board;
 pub mod bot;
@@ -148,10 +150,12 @@ impl TicTacToe {
         PublicInfoUpdate::Resign(marker)
     }
 
+    /// Returns the marker of the player who resigned, if any
     pub fn resigned(&self) -> Option<Marker> {
         self.resigned.clone()
     }
 
+    /// Returns a reference to the underlying board
     pub fn board(&self) -> &Board {
         &self.board
     }

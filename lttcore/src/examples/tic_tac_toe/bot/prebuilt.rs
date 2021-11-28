@@ -2,7 +2,9 @@ use super::super::{Board, Position, TicTacToeBot};
 use crate::Seed;
 use rand::prelude::IteratorRandom;
 
-/// A bot that just randomly picks an open space... Not very good strategy
+/// A bot that just randomly picks an open space
+///
+/// ... Not very good strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RandomSelector;
 
@@ -15,6 +17,11 @@ impl TicTacToeBot for RandomSelector {
     }
 }
 
+/// An itermediate level bot
+///
+/// This bot always chooses the center if going first. From there this bot will try to block an
+/// opponent from winning if the opponent has a square they could win on, or take a spot that would
+/// win them the game. If all else fails this bot chooses a square randomly
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Intermediate;
 
@@ -26,6 +33,10 @@ impl TicTacToeBot for Intermediate {
         }
 
         // Take the winning spot, or block opponent from winning
+        //
+        // Note: if exists two disjoint squares one giving a win to this bot and the other giving a
+        // win to the opponent, it will pick the square that happens to show up first in
+        // `board.triples()`
         for triple in board.triples() {
             match triple {
                 [(_, Some(a)), (_, Some(b)), (pos, None)] if a == b => return pos,
@@ -59,7 +70,7 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(RandomSelector, board, Position::new(1, 0), SEED_42);
+        assert_bot_takes_position(&RandomSelector, board, Position::new(1, 0), SEED_42);
 
         #[rustfmt::skip]
         let board = ttt!([
@@ -68,7 +79,7 @@ mod tests {
             X O X
         ]);
 
-        assert_bot_takes_position(RandomSelector, board, Position::new(2, 1), SEED_42);
+        assert_bot_takes_position(&RandomSelector, board, Position::new(2, 1), SEED_42);
     }
 
     #[test]
@@ -81,8 +92,8 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(Intermediate, board, Position::new(1, 1), SEED_0);
-        assert_bot_takes_position(Intermediate, board, Position::new(1, 1), SEED_42);
+        assert_bot_takes_position(&Intermediate, board, Position::new(1, 1), SEED_0);
+        assert_bot_takes_position(&Intermediate, board, Position::new(1, 1), SEED_42);
 
         // Block opponent from winning
         #[rustfmt::skip]
@@ -92,8 +103,8 @@ mod tests {
             X - O
         ]);
 
-        assert_bot_takes_position(Intermediate, board, Position::new(1, 1), SEED_0);
-        assert_bot_takes_position(Intermediate, board, Position::new(1, 1), SEED_42);
+        assert_bot_takes_position(&Intermediate, board, Position::new(1, 1), SEED_0);
+        assert_bot_takes_position(&Intermediate, board, Position::new(1, 1), SEED_42);
 
         // Takes win if possible
         #[rustfmt::skip]
@@ -103,8 +114,8 @@ mod tests {
             X - X
         ]);
 
-        assert_bot_wins(Intermediate, board, SEED_0);
-        assert_bot_wins(Intermediate, board, SEED_42);
+        assert_bot_wins(&Intermediate, board, SEED_0);
+        assert_bot_wins(&Intermediate, board, SEED_42);
 
         // Doesn't freak out if there isn't an obvious move
         #[rustfmt::skip]
@@ -114,6 +125,6 @@ mod tests {
             X - -
         ]);
 
-        assert_bot_takes_position(Intermediate, board, Position::new(2, 0), SEED_42);
+        assert_bot_takes_position(&Intermediate, board, Position::new(2, 0), SEED_42);
     }
 }

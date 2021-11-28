@@ -2,8 +2,10 @@ use super::Position;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// Wrapper representing the choosing of a position to play on by a player
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Action {
+    /// The position to claim
     pub position: Position,
 }
 
@@ -15,6 +17,7 @@ impl<T: Into<Position>> From<T> for Action {
     }
 }
 
+/// The possible failures that can happen when trying to apply a user provided action to the game
 #[derive(Error, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionError {
     /// Returned when trying to claim _any_ square when the board is full
@@ -22,5 +25,8 @@ pub enum ActionError {
     AllSpacesTaken,
     /// Returned when trying to claim an already claimed space
     #[error("space {} is taken", attempted)]
-    SpaceIsTaken { attempted: Position },
+    SpaceIsTaken {
+        /// The space that was attempted to be claimed
+        attempted: Position,
+    },
 }

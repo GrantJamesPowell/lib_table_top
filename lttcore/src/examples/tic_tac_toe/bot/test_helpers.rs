@@ -3,7 +3,7 @@ use crate::Seed;
 
 /// Test helper that asserts a bot will make a winning move on a certain board
 #[track_caller]
-pub fn assert_bot_wins(bot: impl TicTacToeBot, mut board: Board, seed: Seed) {
+pub fn assert_bot_wins(bot: &impl TicTacToeBot, mut board: Board, seed: Seed) {
     if let Status::InProgress { next_up } = board.status() {
         let pos = bot.claim_space(&board, seed);
         match board.claim_space(next_up, pos) {
@@ -35,11 +35,14 @@ pub fn assert_bot_wins(bot: impl TicTacToeBot, mut board: Board, seed: Seed) {
 
 #[track_caller]
 pub fn assert_bot_takes_position(
-    bot: impl TicTacToeBot,
+    bot: &impl TicTacToeBot,
     mut before: Board,
-    expected: impl Into<Position>,
+    expected: impl TryInto<Position>,
     seed: Seed,
 ) {
+    let expected = expected
+        .try_into()
+        .unwrap_or_else(|_| panic!("expected was not within the bounds of the board"));
     let pos = bot.claim_space(&before, seed);
     match before.claim_space(before.whose_turn(), pos) {
         Err(ActionError::SpaceIsTaken { .. }) => {
@@ -49,7 +52,6 @@ pub fn assert_bot_takes_position(
             panic!("Test was given a full starting board which is invalid")
         }
         Ok(_) => {
-            let expected = expected.into();
             assert_eq!(
                 pos, expected,
                 "Bot picked {} instead of the expected position {}",
