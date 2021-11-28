@@ -15,12 +15,12 @@
 ///   X - X
 /// ]);
 ///
-/// assert_eq!(board.at((0, 0)), Some(X));
-/// assert_eq!(board.at((1, 1)), Some(O));
-/// assert_eq!(board.at((1, 2)), Some(O));
-/// assert_eq!(board.at((0, 2)), None);
-/// assert_eq!(board.at((2, 0)), Some(X));
-/// assert_eq!(board.at((2, 2)), None);
+/// assert_eq!(board.at((0, 0)), Ok(Some(X)));
+/// assert_eq!(board.at((1, 1)), Ok(Some(O)));
+/// assert_eq!(board.at((1, 2)), Ok(Some(O)));
+/// assert_eq!(board.at((0, 2)), Ok(None));
+/// assert_eq!(board.at((2, 0)), Ok(Some(X)));
+/// assert_eq!(board.at((2, 2)), Ok(None));
 /// ```
 #[macro_export]
 macro_rules! ttt {

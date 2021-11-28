@@ -1,34 +1,75 @@
+//! A tic-tac-toe board
+//!
+//! See [`Board`] for more details
+//!
+//! # Quick Examples
+//!
+//! ```
+//! use lttcore::ttt;
+//! use lttcore::examples::tic_tac_toe::{Position, Status, Marker::*};
+//!
+//! let board = ttt!([
+//!   X O X
+//!   - - -
+//!   O X O
+//! ]);
+//!
+//! assert_eq!(board.at((0, 0)), Ok(Some(O)));
+//! assert_eq!(board[Position::new(0, 2)], Some(X));
+//! assert_eq!(board.status(), Status::InProgress { next_up: X });
+//! ```
+//!
+//! # Implementation notes
+//!
+//! [`Board`] is built on the [bounded](crate::common::cartesian::bounded) primatives. Bounded
+//! primatives are cool for the compile time bounds checking, but aren't super erognomic to use,
+//! especially for beginners. When writing this I got the opportunity to learn about
+//! `macro_rules!` and const generics, but its probably overkill for this use case.
+
 use super::{ActionError, Marker};
-use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY};
+use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY, BoundsError};
 use crate::Player;
 use itertools::iproduct;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::ops::{Index, IndexMut};
 
+/// A space on the tic-tac-toe board. Built ontop of [bounded](crate::common::cartesian::bounded)
+/// primatives which bound the points to be within (0-2, 0-2)
 pub type Position = BoundedPoint<2, 2>;
+
+/// A row on the tic-tac-toe board. Built ontop of [bounded](crate::common::cartesian::bounded)
+/// primatives which bound the row to [0, 1, 2]
 pub type Row = BoundedY<2>;
+
+/// A col on the tic-tac-toe board. Built ontop of [bounded](crate::common::cartesian::bounded)
+/// primatives which bound the row to [0, 1, 2]
 pub type Col = BoundedX<2>;
 
-const ROW_0: Row = unsafe { Row::new_unchecked(0) };
-const ROW_1: Row = unsafe { Row::new_unchecked(1) };
-const ROW_2: Row = unsafe { Row::new_unchecked(2) };
+pub const ROW_0: Row = unsafe { Row::new_unchecked(0) };
+pub const ROW_1: Row = unsafe { Row::new_unchecked(1) };
+pub const ROW_2: Row = unsafe { Row::new_unchecked(2) };
+pub const COL_0: Col = unsafe { Col::new_unchecked(0) };
+pub const COL_1: Col = unsafe { Col::new_unchecked(1) };
+pub const COL_2: Col = unsafe { Col::new_unchecked(2) };
 
-const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
+pub const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
+pub const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
 
-const COL_0: Col = unsafe { Col::new_unchecked(0) };
-const COL_1: Col = unsafe { Col::new_unchecked(1) };
-const COL_2: Col = unsafe { Col::new_unchecked(2) };
-
-const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
-
+/// The possible statuses of the game
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     /// There are still available positions to be claimed on the board
     InProgress { next_up: Marker },
     /// All positions have been claimed and there is no winner
     Draw,
-    /// Win by resignation
+    /// Win by resignation.
+    ///
+    /// # Note
+    ///
+    /// This can only be produced by the [`status`](super::TicTacToe::status) method on
+    /// [`TicTacToe`](super::TicTacToe) and not the [`status`](Board::status) method on [`Board`]
+    /// because only [`TicTacToe`](super::TicTacToe) knows about resignations
     WinByResignation { winner: Marker },
     /// There *is* a winner via connecting three spaces
     Win {
@@ -38,6 +79,7 @@ pub enum Status {
 }
 
 impl Status {
+    /// Returns the winning marker, if there is one
     pub fn winner(&self) -> Option<Marker> {
         match self {
             Status::Win { winner, .. } | Status::WinByResignation { winner, .. } => Some(*winner),
@@ -46,6 +88,12 @@ impl Status {
     }
 }
 
+/// Representation of the tic-tac-toe board. Meant to be indexed via [`Position`]
+///
+/// Note: [`Board`] is stored in memory "upside" down to how it's traditionally rendered to humans
+/// or how it's interperted by the `ttt!` macro. To display to humans, place `(0, 0)` in the bottom
+/// left corner. When storing in memory, have `(0, 0)` represent the `0th` index of the `0th` array
+/// which conceptually puts it in the top left corner.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Board([[Option<Marker>; 3]; 3]);
 
@@ -58,12 +106,12 @@ impl From<[[Option<Marker>; 3]; 3]> for Board {
 impl Board {
     pub fn rows(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         ROWS.into_iter()
-            .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)].clone())))
+            .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)])))
     }
 
     pub fn cols(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         COLS.into_iter()
-            .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)].clone())))
+            .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)])))
     }
 
     pub fn diagonals(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -72,7 +120,7 @@ impl Board {
             [(COL_0, ROW_2), (COL_1, ROW_1), (COL_2, ROW_0)],
         ]
         .into_iter()
-        .map(|group| group.map(|pos| (pos.into(), self[pos].clone())))
+        .map(|group| group.map(|pos| (pos.into(), self[pos])))
     }
 
     pub fn triples(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -106,7 +154,7 @@ impl Board {
     /// );
     /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Marker>)> + '_ {
-        iproduct!(COLS, ROWS).map(|pos| (pos.into(), self[pos].clone()))
+        iproduct!(COLS, ROWS).map(|pos| (pos.into(), self[pos]))
     }
 
     /// Iterate over the spaces on the board that are taken
@@ -132,7 +180,7 @@ impl Board {
     /// );
     pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Marker)> + '_ {
         self.spaces()
-            .flat_map(|(position, maybe_marker)| maybe_marker.map(|marker| (position, marker)))
+            .filter_map(|(position, maybe_marker)| maybe_marker.map(|marker| (position, marker)))
     }
 
     /// Iterator over the empty spaces on the board
@@ -198,7 +246,8 @@ impl Board {
         self.empty_spaces().count() == 9
     }
 
-    /// Returns a marker at a position, if the row or col is greater than 2, this returns None
+    /// Returns a marker at a position, if the row or col is greater than 2, this returns a bounds
+    /// error
     ///
     /// ```
     /// use lttcore::ttt;
@@ -209,23 +258,19 @@ impl Board {
     ///   - - -
     ///   - X O
     /// ]);
-    /// assert_eq!(board.at((2, 0)), Some(O));
-    /// // assert_eq!(board.at((0, 2)), Some(X));
-    /// // assert_eq!(board.at((1, 0)), Some(X));
-    /// // assert_eq!(board.at((0, 0)), None);
+    /// assert_eq!(board.at((2, 0)), Ok(Some(O)));
+    /// assert_eq!(board.at((0, 2)), Ok(Some(X)));
+    /// assert_eq!(board.at((1, 0)), Ok(Some(X)));
+    /// assert_eq!(board.at((0, 0)), Ok(None));
     ///
-    /// // // Out of bounds numbers return None
-    /// // assert_eq!(board.at((0, 1000)), None);
-    /// // assert_eq!(board.at((1000, 0)), None);
+    /// // Out of bounds numbers return an error
+    /// assert!(board.at((0, 1000)).is_err());
+    /// assert!(board.at((1000, 0)).is_err());
     /// ```
-    pub fn at(&self, (x, y): (usize, usize)) -> Option<Marker> {
-        println!("col/x {:?} row/y {:?}", x, y);
-        let col = Col::try_new(x)?;
-        println!("col/x {:?}", col);
-        let row = Row::try_new(y)?;
-        println!("row {:?}", row);
-
-        self[(col, row)]
+    pub fn at(&self, (x, y): (usize, usize)) -> Result<Option<Marker>, BoundsError> {
+        let col: Col = x.try_into()?;
+        let row: Row = y.try_into()?;
+        Ok(self[(col, row)])
     }
 
     /// Return the marker who's turn it is
@@ -272,8 +317,7 @@ impl Board {
         let [xs, os] = counts;
         match xs.cmp(&os) {
             Ordering::Greater => Marker::O,
-            Ordering::Equal => Marker::X,
-            Ordering::Less => Marker::X,
+            Ordering::Equal | Ordering::Less => Marker::X,
         }
     }
 
@@ -374,10 +418,10 @@ impl Board {
     ///
     /// assert_eq!(game.board()[pos], None);
     /// assert!(game.claim_space(X, pos).is_ok());
-    /// assert_eq!(game.board()[pos], Some(X.into()));
+    /// assert_eq!(game.board()[pos], Some(X));
     ///
     /// // Taking an already claimed space returns an error
-    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos.into() }));
+    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
     /// ```
     pub fn claim_space(
         &mut self,
@@ -402,7 +446,6 @@ impl<T: Into<Position>> Index<T> for Board {
     type Output = Option<Marker>;
 
     fn index(&self, pos: T) -> &Self::Output {
-        println!("BOARD: {:?}", self);
         let pos = pos.into();
         &self[pos.y()][usize::from(pos.x())]
     }

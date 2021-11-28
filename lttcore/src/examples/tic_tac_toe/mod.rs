@@ -1,9 +1,105 @@
+//! An implementation of [tic-tac-toe](https://en.wikipedia.org/wiki/Tic-tac-toe)
+//!
+//! # Why is this here?
+//!
+//! [`TicTacToe`] is designed to be used as a reference implementation of how a
+//! board game should implement the [`Play`] trait. It is also useful to test higher level
+//! features that operate on things implementing [`Play`].
+//!
+//! # What other board games is tic-tac-toe similar to?
+//!
+//! [`TicTacToe`] has the following properties which may or may not make it a good example to
+//! follow for a board game you're interested in implementing
+//!
+//! * tic-tac-toe is not configurable, there are no custom settings.
+//! * tic-tac-toe has no secret information
+//! * tic-tac-toe has sequential turns (never simultaneous)
+//!
+//! # Quick examples
+//!
+//! ### Board Literals via `ttt!` Macro
+//!
+//! [`TicTacToe`] provides the `ttt!` macro which allows for [`Board`] literals to be used in
+//! source code.
+//!
+//! ```
+//! use lttcore::ttt;
+//! use lttcore::examples::tic_tac_toe::{Status, Marker::*};
+//!
+//! #[rustfmt::skip]
+//! let board = ttt!([
+//!   X - X
+//!   - O -
+//!   O - -
+//! ]);
+//!
+//! assert_eq!(board.whose_turn(), X);
+//! assert_eq!(board.status(), Status::InProgress { next_up: X });
+//! ```
+//!
+//! ### Building/Testing a `TicTacToeBot`
+//!
+//! For bot writers, [`TicTacToe`] provides the following things
+//!
+//! * A simplified [Bot](`crate::bots::Bot`) wrapper called [`TicTacToeBot`]
+//! * Convenience functions for testing in [`test_helpers`](`bot::test_helpers`)
+//! * Prebuilt example bots in the [prebuilt](`bot::prebuilt`) module
+//!
+//! Note: [`TicTacToe`] is a solved game and the prebuilt bots reflect that, [`TicTacToe`] in
+//! general is more designed to serve as a learning/testing example
+//!
+//! ```
+//! use lttcore::{Seed, ttt};
+//! use lttcore::examples::tic_tac_toe::{Position, Board, TicTacToeBot};
+//! use lttcore::examples::tic_tac_toe::bot::{
+//!   prebuilt::RandomSelector,
+//!   test_helpers::{assert_bot_takes_position, assert_bot_wins}
+//! };
+//!
+//! struct MySuperCoolBot {
+//!     favorite_number: usize,
+//! }
+//!
+//! impl TicTacToeBot for MySuperCoolBot {
+//!     fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+//!         match board.at((self.favorite_number, self.favorite_number)) {
+//!             Ok(None) => Position::new(self.favorite_number, self.favorite_number),
+//!             _ => RandomSelector.claim_space(board, seed)
+//!         }
+//!     }
+//! }
+//!
+//! let bot = MySuperCoolBot { favorite_number: 1 };
+//!
+//! #[rustfmt::skip]
+//! let board = ttt!([
+//!     - - -
+//!     - - -
+//!     - - -
+//! ]);
+//! assert_bot_takes_position(&bot, board, (1, 1), Seed::random());
+//!
+//! #[rustfmt::skip]
+//! let board = ttt!([
+//!   X O X
+//!   O - X
+//!   X O O
+//! ]);
+//! assert_bot_wins(&bot, board, Seed::random())
+//! ```
+//!
+//! # Where to go now?
+//!
+//! The [`board`] module (and specifically the [`Board`](board::Board)) struct are good starting
+//! points to learn how to interact with this game. The [`Board`](board::Board) is what
+//! [`TicTacToeBot`]s are passed when they are invoked
+
+#[warn(missing_docs)]
 mod action;
 pub mod board;
-mod bot;
-pub mod helpers;
+pub mod bot;
+mod macros;
 mod marker;
-pub mod prebuilt_bots;
 mod public_info;
 mod settings;
 
@@ -54,10 +150,12 @@ impl TicTacToe {
         PublicInfoUpdate::Resign(marker)
     }
 
+    /// Returns the marker of the player who resigned, if any
     pub fn resigned(&self) -> Option<Marker> {
-        self.resigned.clone()
+        self.resigned
     }
 
+    /// Returns a reference to the underlying board
     pub fn board(&self) -> &Board {
         &self.board
     }
@@ -73,13 +171,12 @@ impl TicTacToe {
     /// assert_eq!(game.status(), WinByResignation { winner: O });
     /// ```
     pub fn status(&self) -> Status {
-        if let Some(loser) = self.resigned() {
-            Status::WinByResignation {
+        self.resigned.map_or_else(
+            || self.board.status(),
+            |loser| Status::WinByResignation {
                 winner: loser.opponent(),
-            }
-        } else {
-            self.board().status()
-        }
+            },
+        )
     }
 
     /// Claims a space for a marker, returns an error if that space is taken

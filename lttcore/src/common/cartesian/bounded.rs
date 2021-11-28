@@ -73,6 +73,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> BoundedPoint<WIDTH, HEIGHT> {
         self.y
     }
 
+    pub fn try_new(x: usize, y: usize) -> Option<Self> {
+        (x, y).try_into().ok()
+    }
+
     pub fn new(x: usize, y: usize) -> Self {
         (x, y).try_into().unwrap()
     }
@@ -104,6 +108,15 @@ macro_rules! bounded_coord_component {
         impl<const BOUND: usize> From<$id<BOUND>> for usize {
             fn from(bounded: $id<BOUND>) -> Self {
                 bounded.0
+            }
+        }
+
+        impl<const BOUND: usize> TryFrom<usize> for $id<BOUND> {
+            type Error = BoundsError;
+
+            fn try_from(n: usize) -> Result<Self, Self::Error> {
+                let counterpart = $counterpart(n);
+                counterpart.try_into()
             }
         }
 
@@ -143,6 +156,11 @@ macro_rules! bounded_coord_component {
             }
 
             /// Creates a new instance without doing any bounds checking
+            ///
+            /// # Safety
+            ///
+            /// This function is safe so long as `n` is strictly less than the `BOUND` of the
+            /// coordinate
             pub const unsafe fn new_unchecked(n: usize) -> Self {
                 Self(n)
             }

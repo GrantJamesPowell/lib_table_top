@@ -1,3 +1,6 @@
+pub mod prebuilt;
+pub mod test_helpers;
+
 use super::{Action, Board, Position, TicTacToe};
 use crate::bots::Bot;
 use crate::pov::PlayerPov;
