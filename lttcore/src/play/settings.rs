@@ -1,4 +1,4 @@
-use crate::{id::SettingsId, NumberOfPlayers};
+use crate::NumberOfPlayers;
 use semver::Version;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
@@ -11,7 +11,6 @@ use std::sync::Arc;
 pub struct Custom<T: BuiltinGameModes> {
     pub name: Option<Cow<'static, str>>,
     pub settings: Arc<T>,
-    pub id: Option<SettingsId>,
 }
 
 /// Builtin settings
@@ -169,7 +168,6 @@ impl<T: BuiltinGameModes> From<Arc<T>> for SettingsPtr<T> {
         Self::Custom(Custom {
             settings,
             name: None,
-            id: None,
         })
     }
 }
@@ -225,7 +223,6 @@ mod test {
             serialized,
             serde_json::json!({"Custom": {
                 "name": serde_json::Value::Null,
-                "id": serde_json::Value::Null,
                 "settings": {
                     "number_of_players": 1,
                     "range": {"start": 0, "end": u64::MAX }
