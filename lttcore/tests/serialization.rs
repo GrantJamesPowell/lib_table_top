@@ -194,11 +194,11 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(
         serialized,
         json!({
+            "history":[],
             "seed":"2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
             "settings":{
                 "Custom": {
                     "name": serde_json::Value::Null,
-                    "id": serde_json::Value::Null,
                     "settings": {
                         "range": {
                             "start": 1,
@@ -213,8 +213,8 @@ fn test_serializing_game_player_and_observer_and_updates() {
             "turn_num": 0,
             "state":{
                 "secret_number": 8,
-                "guesses": Null},
-                "history":[]
+                "guesses": Null
+            }
         })
     );
 
@@ -228,7 +228,6 @@ fn test_serializing_game_player_and_observer_and_updates() {
             "action_requests": [1, 0, 0, 0],
             "settings": {
                 "Custom": {
-                    "id": serde_json::Value::Null,
                     "name": serde_json::Value::Null,
                     "settings": {
                         "range": {

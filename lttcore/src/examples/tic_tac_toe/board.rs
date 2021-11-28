@@ -374,10 +374,10 @@ impl Board {
     ///
     /// assert_eq!(game.board()[pos], None);
     /// assert!(game.claim_space(X, pos).is_ok());
-    /// assert_eq!(game.board()[pos], Some(X.into()));
+    /// assert_eq!(game.board()[pos], Some(X));
     ///
     /// // Taking an already claimed space returns an error
-    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos.into() }));
+    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
     /// ```
     pub fn claim_space(
         &mut self,

@@ -1,6 +1,7 @@
-use super::{ActionError, Board, Position, Status, TicTacToeBot};
+use super::super::{ActionError, Board, Position, Status, TicTacToeBot};
 use crate::Seed;
 
+/// Test helper that asserts a bot will make a winning move on a certain board
 #[track_caller]
 pub fn assert_bot_wins(bot: impl TicTacToeBot, mut board: Board, seed: Seed) {
     if let Status::InProgress { next_up } = board.status() {

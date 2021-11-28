@@ -73,6 +73,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> BoundedPoint<WIDTH, HEIGHT> {
         self.y
     }
 
+    pub fn try_new(x: usize, y: usize) -> Option<Self> {
+        (x, y).try_into().ok()
+    }
+
     pub fn new(x: usize, y: usize) -> Self {
         (x, y).try_into().unwrap()
     }

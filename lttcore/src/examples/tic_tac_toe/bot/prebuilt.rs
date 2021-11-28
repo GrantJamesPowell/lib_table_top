@@ -1,7 +1,6 @@
-use rand::prelude::IteratorRandom;
-
-use super::{Board, Position, TicTacToeBot};
+use super::super::{Board, Position, TicTacToeBot};
 use crate::Seed;
+use rand::prelude::IteratorRandom;
 
 /// A bot that just randomly picks an open space... Not very good strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,7 +42,7 @@ impl TicTacToeBot for Intermediate {
 
 #[cfg(test)]
 mod tests {
-    use super::super::bot_test_helpers::{assert_bot_takes_position, assert_bot_wins};
+    use super::super::test_helpers::{assert_bot_takes_position, assert_bot_wins};
     use crate::{
         seed::{SEED_0, SEED_42},
         ttt,
