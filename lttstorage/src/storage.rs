@@ -10,16 +10,19 @@ use lttcore::{
 use lttcore::{play::settings::Custom, Play};
 use std::borrow::Cow;
 
+#[derive(Debug)]
 pub enum StorageError {
     NotFound,
     EncodingError(EncodingError),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SettingsType {
     Builtin(String),
     Custom(SettingsId),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MetaData {
     pub owner: Option<UserId>,
     pub created_at: DateTime<Utc>,

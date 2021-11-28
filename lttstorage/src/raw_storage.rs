@@ -7,17 +7,20 @@ use lttcore::{
 };
 use lttcore::{utilities::PlayerIndexedData, Seed, TurnNum};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawCustomSettings {
     pub name: Option<String>,
     pub bytes: Bytes,
     pub game_type: String,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawHistoryEvent {
     turn_num: TurnNum,
     actions: PlayerIndexedData<Bytes>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawGameProgression {
     seed: Seed,
     settings: SettingsType,
