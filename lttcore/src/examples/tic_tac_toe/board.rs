@@ -106,12 +106,12 @@ impl From<[[Option<Marker>; 3]; 3]> for Board {
 impl Board {
     pub fn rows(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         ROWS.into_iter()
-            .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)].clone())))
+            .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)])))
     }
 
     pub fn cols(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         COLS.into_iter()
-            .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)].clone())))
+            .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)])))
     }
 
     pub fn diagonals(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -120,7 +120,7 @@ impl Board {
             [(COL_0, ROW_2), (COL_1, ROW_1), (COL_2, ROW_0)],
         ]
         .into_iter()
-        .map(|group| group.map(|pos| (pos.into(), self[pos].clone())))
+        .map(|group| group.map(|pos| (pos.into(), self[pos])))
     }
 
     pub fn triples(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
@@ -154,7 +154,7 @@ impl Board {
     /// );
     /// ```
     pub fn spaces(&self) -> impl Iterator<Item = (Position, Option<Marker>)> + '_ {
-        iproduct!(COLS, ROWS).map(|pos| (pos.into(), self[pos].clone()))
+        iproduct!(COLS, ROWS).map(|pos| (pos.into(), self[pos]))
     }
 
     /// Iterate over the spaces on the board that are taken
@@ -180,7 +180,7 @@ impl Board {
     /// );
     pub fn taken_spaces(&self) -> impl Iterator<Item = (Position, Marker)> + '_ {
         self.spaces()
-            .flat_map(|(position, maybe_marker)| maybe_marker.map(|marker| (position, marker)))
+            .filter_map(|(position, maybe_marker)| maybe_marker.map(|marker| (position, marker)))
     }
 
     /// Iterator over the empty spaces on the board
@@ -317,8 +317,7 @@ impl Board {
         let [xs, os] = counts;
         match xs.cmp(&os) {
             Ordering::Greater => Marker::O,
-            Ordering::Equal => Marker::X,
-            Ordering::Less => Marker::X,
+            Ordering::Equal | Ordering::Less => Marker::X,
         }
     }
 

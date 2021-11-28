@@ -37,12 +37,12 @@
 //! assert_eq!(board.status(), Status::InProgress { next_up: X });
 //! ```
 //!
-//! ### Building/Testing a TicTacToeBot
+//! ### Building/Testing a `TicTacToeBot`
 //!
 //! For bot writers, [`TicTacToe`] provides the following things
 //!
 //! * A simplified [Bot](`crate::bots::Bot`) wrapper called [`TicTacToeBot`]
-//! * Convenience functions for testing in [test_helpers](`bot::test_helpers`)
+//! * Convenience functions for testing in [`test_helpers`](`bot::test_helpers`)
 //! * Prebuilt example bots in the [prebuilt](`bot::prebuilt`) module
 //!
 //! Note: [`TicTacToe`] is a solved game and the prebuilt bots reflect that, [`TicTacToe`] in
@@ -152,7 +152,7 @@ impl TicTacToe {
 
     /// Returns the marker of the player who resigned, if any
     pub fn resigned(&self) -> Option<Marker> {
-        self.resigned.clone()
+        self.resigned
     }
 
     /// Returns a reference to the underlying board
@@ -171,13 +171,12 @@ impl TicTacToe {
     /// assert_eq!(game.status(), WinByResignation { winner: O });
     /// ```
     pub fn status(&self) -> Status {
-        if let Some(loser) = self.resigned() {
-            Status::WinByResignation {
+        self.resigned.map_or_else(
+            || self.board.status(),
+            |loser| Status::WinByResignation {
                 winner: loser.opponent(),
-            }
-        } else {
-            self.board().status()
-        }
+            },
+        )
     }
 
     /// Claims a space for a marker, returns an error if that space is taken

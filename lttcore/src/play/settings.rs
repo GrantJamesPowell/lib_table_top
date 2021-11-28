@@ -110,24 +110,18 @@ pub enum SettingsPtr<T: BuiltinGameModes + 'static> {
 impl<T: BuiltinGameModes + Default> Default for SettingsPtr<T> {
     fn default() -> Self {
         VerifiedBuiltin::<T>::from_str("default")
-            .map(|builtin| SettingsPtr::from(builtin))
+            .map(SettingsPtr::from)
             .unwrap_or_else(|_| SettingsPtr::from(T::default()))
     }
 }
 
 impl<T: BuiltinGameModes> SettingsPtr<T> {
     pub fn is_builtin(&self) -> bool {
-        match self {
-            SettingsPtr::Builtin(_) => true,
-            _ => false,
-        }
+        matches!(self, SettingsPtr::Builtin(_))
     }
 
     pub fn is_custom(&self) -> bool {
-        match self {
-            SettingsPtr::Custom { .. } => true,
-            _ => false,
-        }
+        matches!(self, SettingsPtr::Custom(_))
     }
 
     pub fn name(&self) -> Option<&str> {
@@ -140,7 +134,7 @@ impl<T: BuiltinGameModes> SettingsPtr<T> {
     pub fn settings(&self) -> &T {
         match self {
             SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => &builtin.settings,
-            SettingsPtr::Custom(Custom { settings, .. }) => &settings,
+            SettingsPtr::Custom(Custom { settings, .. }) => settings,
         }
     }
 }

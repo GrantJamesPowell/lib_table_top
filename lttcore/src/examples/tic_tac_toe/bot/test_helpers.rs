@@ -46,17 +46,17 @@ pub fn assert_bot_takes_position(
     let pos = bot.claim_space(&before, seed);
     match before.claim_space(before.whose_turn(), pos) {
         Err(ActionError::SpaceIsTaken { .. }) => {
-            panic!("Bot tried to claim space {} but it was already taken", pos)
+            panic!("Bot tried to claim space {} but it was already taken", pos);
         }
         Err(ActionError::AllSpacesTaken) => {
-            panic!("Test was given a full starting board which is invalid")
+            panic!("Test was given a full starting board which is invalid");
         }
         Ok(_) => {
             assert_eq!(
                 pos, expected,
                 "Bot picked {} instead of the expected position {}",
                 pos, expected
-            )
+            );
         }
     }
 }

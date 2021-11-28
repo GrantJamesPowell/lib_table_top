@@ -156,6 +156,11 @@ macro_rules! bounded_coord_component {
             }
 
             /// Creates a new instance without doing any bounds checking
+            ///
+            /// # Safety
+            ///
+            /// This function is safe so long as `n` is strictly less than the `BOUND` of the
+            /// coordinate
             pub const unsafe fn new_unchecked(n: usize) -> Self {
                 Self(n)
             }

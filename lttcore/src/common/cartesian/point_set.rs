@@ -17,6 +17,10 @@ impl<T: Hash + Eq> PointSet<T> {
         self.points.contains(point)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn len(&self) -> usize {
         self.points.len()
     }

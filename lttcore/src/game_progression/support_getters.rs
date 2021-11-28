@@ -18,7 +18,7 @@ impl<T: Play> GameProgression<T> {
     }
 
     pub fn settings(&self) -> &T::Settings {
-        &self.settings.settings()
+        self.settings.settings()
     }
 
     pub fn history_events(&self) -> impl Iterator<Item = &HistoryEvent<T>> + '_ {
