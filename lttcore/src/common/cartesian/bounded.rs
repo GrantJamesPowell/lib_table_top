@@ -10,6 +10,8 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BoundsError {}
 
+// X, Y are manually implemented and preserve invariants when serializing
+#[allow(clippy::unsafe_derive_deserialize)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct BoundedPoint<const WIDTH: usize, const HEIGHT: usize> {
     x: BoundedX<WIDTH>,
@@ -79,6 +81,21 @@ impl<const WIDTH: usize, const HEIGHT: usize> BoundedPoint<WIDTH, HEIGHT> {
 
     pub fn new(x: usize, y: usize) -> Self {
         (x, y).try_into().unwrap()
+    }
+
+    /// Create a bounded point (available in a const context)
+    ///
+    /// This should really only be used to set constants use [`Self::try_new`] for doing things on
+    /// non constants.
+    ///
+    /// # Safety
+    ///
+    /// This is sound so long as `x` and `y` are less than their respective bounds
+    pub const unsafe fn new_unchecked(x: usize, y: usize) -> Self {
+        Self {
+            x: BoundedX::new_unchecked(x),
+            y: BoundedY::new_unchecked(y),
+        }
     }
 }
 

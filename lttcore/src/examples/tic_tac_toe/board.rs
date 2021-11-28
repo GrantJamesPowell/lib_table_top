@@ -53,6 +53,18 @@ pub const COL_0: Col = unsafe { Col::new_unchecked(0) };
 pub const COL_1: Col = unsafe { Col::new_unchecked(1) };
 pub const COL_2: Col = unsafe { Col::new_unchecked(2) };
 
+pub const CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
+
+pub const BOTTOM_LEFT: Position = unsafe { Position::new_unchecked(0, 0) };
+pub const BOTTOM_CENTER: Position = unsafe { Position::new_unchecked(1, 0) };
+pub const BOTTOM_RIGHT: Position = unsafe { Position::new_unchecked(2, 0) };
+pub const MIDDLE_LEFT: Position = unsafe { Position::new_unchecked(0, 1) };
+pub const MIDDLE_CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
+pub const MIDDLE_RIGHT: Position = unsafe { Position::new_unchecked(2, 1) };
+pub const TOP_LEFT: Position = unsafe { Position::new_unchecked(0, 2) };
+pub const TOP_CENTER: Position = unsafe { Position::new_unchecked(1, 2) };
+pub const TOP_RIGHT: Position = unsafe { Position::new_unchecked(2, 2) };
+
 pub const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
 pub const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
 

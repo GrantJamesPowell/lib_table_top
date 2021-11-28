@@ -33,6 +33,8 @@ pub fn assert_bot_wins(bot: &impl TicTacToeBot, mut board: Board, seed: Seed) {
     }
 }
 
+/// Test helper that asserts a bot takes a certain position when looking at a particular [`Board`]
+/// with a particular [`Seed`]
 #[track_caller]
 pub fn assert_bot_takes_position(
     bot: &impl TicTacToeBot,

@@ -1,8 +1,9 @@
+use crate::Player;
 use serde::{Deserialize, Serialize};
 
-use crate::Player;
-
 /// Conveniences for Player 0 and Player 1
+///
+/// [Xs and Os](https://www.youtube.com/watch?v=0uLI6BnVh6w)
 ///
 /// Markers implement `Into<Player>` and `PartialEq` with Player,
 /// most methods and functions accept an `impl Into<Player>` so markers
