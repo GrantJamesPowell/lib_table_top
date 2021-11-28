@@ -1,6 +1,7 @@
 mod action;
 pub mod board;
 mod bot;
+pub mod bot_test_helpers;
 pub mod helpers;
 mod marker;
 pub mod prebuilt_bots;
