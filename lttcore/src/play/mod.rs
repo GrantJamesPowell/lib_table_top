@@ -70,6 +70,8 @@ pub trait Play:
     type PublicInfo: View + Score;
     type PlayerSecretInfo: View;
 
+    fn string_id() -> &'static str;
+
     fn player_secret_info(
         &self,
         settings: &Self::Settings,

@@ -48,6 +48,10 @@ impl Play for GuessTheNumber {
     type Settings = Settings;
     type PlayerSecretInfo = NoSecretPlayerInfo;
 
+    fn string_id() -> &'static str {
+        "GuessTheNumber"
+    }
+
     fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
         Cow::Owned(NoSecretPlayerInfo)
     }

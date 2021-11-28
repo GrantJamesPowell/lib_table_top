@@ -21,6 +21,13 @@ macro_rules! uuid_id {
                 Self(::uuid::Uuid::new_v4())
             }
         }
+
+        impl From<$id> for ::uuid::Uuid {
+            fn from($id(uuid): $id) -> Self {
+                uuid
+            }
+        }
+
         impl From<::uuid::Uuid> for $id {
             fn from(uuid: ::uuid::Uuid) -> Self {
                 Self(uuid)
@@ -44,3 +51,4 @@ macro_rules! uuid_id {
 uuid_id!(UserId);
 uuid_id!(GameId);
 uuid_id!(SettingsId);
+uuid_id!(ScenarioId);
