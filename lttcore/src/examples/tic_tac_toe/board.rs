@@ -1,5 +1,5 @@
 use super::{ActionError, Marker};
-use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY};
+use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY, BoundsError};
 use crate::Player;
 use itertools::iproduct;
 use serde::{Deserialize, Serialize};
@@ -198,7 +198,8 @@ impl Board {
         self.empty_spaces().count() == 9
     }
 
-    /// Returns a marker at a position, if the row or col is greater than 2, this returns None
+    /// Returns a marker at a position, if the row or col is greater than 2, this returns a bounds
+    /// error
     ///
     /// ```
     /// use lttcore::ttt;
@@ -209,23 +210,19 @@ impl Board {
     ///   - - -
     ///   - X O
     /// ]);
-    /// assert_eq!(board.at((2, 0)), Some(O));
-    /// // assert_eq!(board.at((0, 2)), Some(X));
-    /// // assert_eq!(board.at((1, 0)), Some(X));
-    /// // assert_eq!(board.at((0, 0)), None);
+    /// assert_eq!(board.at((2, 0)), Ok(Some(O)));
+    /// assert_eq!(board.at((0, 2)), Ok(Some(X)));
+    /// assert_eq!(board.at((1, 0)), Ok(Some(X)));
+    /// assert_eq!(board.at((0, 0)), Ok(None));
     ///
-    /// // // Out of bounds numbers return None
-    /// // assert_eq!(board.at((0, 1000)), None);
-    /// // assert_eq!(board.at((1000, 0)), None);
+    /// // Out of bounds numbers return an error
+    /// assert!(board.at((0, 1000)).is_err());
+    /// assert!(board.at((1000, 0)).is_err());
     /// ```
-    pub fn at(&self, (x, y): (usize, usize)) -> Option<Marker> {
-        println!("col/x {:?} row/y {:?}", x, y);
-        let col = Col::try_new(x)?;
-        println!("col/x {:?}", col);
-        let row = Row::try_new(y)?;
-        println!("row {:?}", row);
-
-        self[(col, row)]
+    pub fn at(&self, (x, y): (usize, usize)) -> Result<Option<Marker>, BoundsError> {
+        let col: Col = x.try_into()?;
+        let row: Row = y.try_into()?;
+        Ok(self[(col, row)])
     }
 
     /// Return the marker who's turn it is

@@ -35,7 +35,6 @@
 //!
 //! assert_eq!(board.whose_turn(), X);
 //! assert_eq!(board.status(), Status::InProgress { next_up: X });
-//! assert!(false)
 //! ```
 //!
 //! ### Building/Testing a TicTacToeBot
@@ -63,13 +62,10 @@
 //!
 //! impl TicTacToeBot for MySuperCoolBot {
 //!     fn claim_space(&self, board: &Board, seed: Seed) -> Position {
-//!         if let Some(pos) = Position::try_new(self.favorite_number, self.favorite_number) {
-//!             if board[pos].is_none() {
-//!                 return pos;
-//!             }
+//!         match board.at((self.favorite_number, self.favorite_number)) {
+//!             Ok(None) => Position::new(self.favorite_number, self.favorite_number),
+//!             _ => RandomSelector.claim_space(board, seed)
 //!         }
-//!
-//!         RandomSelector.claim_space(board, seed)
 //!     }
 //! }
 //!

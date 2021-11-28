@@ -111,6 +111,15 @@ macro_rules! bounded_coord_component {
             }
         }
 
+        impl<const BOUND: usize> TryFrom<usize> for $id<BOUND> {
+            type Error = BoundsError;
+
+            fn try_from(n: usize) -> Result<Self, Self::Error> {
+                let counterpart = $counterpart(n);
+                counterpart.try_into()
+            }
+        }
+
         impl<const BOUND: usize> TryFrom<$counterpart<usize>> for $id<BOUND> {
             type Error = BoundsError;
 
