@@ -4,7 +4,7 @@ use lttcore::examples::GuessTheNumber;
 use lttcore::play::{number_of_players::FOUR_PLAYER, seed::SEED_42, NumberOfPlayers, Player, Seed};
 use lttcore::{
     pov::{GamePlayer, GameProgression},
-    PlayerSet,
+    utilities::PlayerSet,
 };
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};

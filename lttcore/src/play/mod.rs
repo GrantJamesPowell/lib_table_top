@@ -19,7 +19,7 @@ pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
 pub use view::View;
 
-use crate::{utilities::PlayerIndexedData, PlayerSet};
+use crate::utilities::{PlayerIndexedData, PlayerSet};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;

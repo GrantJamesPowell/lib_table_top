@@ -1,5 +1,5 @@
-use crate::utilities::PlayerIndexedData;
-use crate::{play::Player, PlayerSet};
+use crate::play::Player;
+use crate::utilities::{PlayerIndexedData, PlayerSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerItemCollector<Item> {

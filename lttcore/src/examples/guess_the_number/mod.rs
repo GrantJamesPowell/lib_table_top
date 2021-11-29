@@ -7,8 +7,7 @@ use crate::{
     play::{
         view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, LttVersion, Play, Player,
     },
-    utilities::PlayerIndexedData as PID,
-    PlayerSet,
+    utilities::{PlayerIndexedData as PID, PlayerSet},
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

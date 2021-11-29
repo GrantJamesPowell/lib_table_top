@@ -23,14 +23,13 @@ extern crate lazy_static;
 #[macro_use]
 extern crate static_assertions;
 
-pub mod bots;
-pub mod common;
 #[cfg(feature = "encoding")]
 pub mod encoding;
+
+pub mod bots;
+pub mod common;
 pub mod examples;
 pub mod id;
 pub mod play;
 pub mod pov;
 pub mod utilities;
-
-pub use utilities::PlayerSet;

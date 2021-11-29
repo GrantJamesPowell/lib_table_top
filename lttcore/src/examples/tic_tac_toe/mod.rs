@@ -49,7 +49,7 @@
 //! general is more designed to serve as a learning/testing example
 //!
 //! ```
-//! use lttcore::{Seed, ttt};
+//! use lttcore::{play::Seed, ttt};
 //! use lttcore::examples::tic_tac_toe::{Position, Board, TicTacToeBot};
 //! use lttcore::examples::tic_tac_toe::bot::{
 //!   prebuilt::RandomSelector,
@@ -113,7 +113,7 @@ pub use settings::Settings;
 use crate::play::{view::NoSecretPlayerInfo, LttVersion};
 use crate::{
     play::{ActionResponse, DebugMsgs, GameAdvance, Play, Player},
-    PlayerSet,
+    utilities::PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

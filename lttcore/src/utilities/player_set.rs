@@ -25,7 +25,7 @@ macro_rules! player_set {
     ( $( $expr:expr ),* ) => {
         [$($expr,)*].into_iter()
             .map(::lttcore::play::Player::new)
-            .collect::<::lttcore::PlayerSet>()
+            .collect::<::lttcore::utilities::PlayerSet>()
     };
 }
 
@@ -45,7 +45,7 @@ macro_rules! zip_with {
     }};
 }
 
-/// A set of [`Player`](crate::Player)
+/// A set of [`Player`]
 ///
 /// # Design goals
 ///

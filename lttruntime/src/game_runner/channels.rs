@@ -2,7 +2,7 @@ use super::id::ConnectionId;
 use crate::messages::{FromPlayerMsg, ToGameHostMsg, ToObserverMsg, ToPlayerMsg};
 use bytes::Bytes;
 use lttcore::{encoding::Encoding, utilities::PlayerIndexedData as PID};
-use lttcore::{play::Play, PlayerSet};
+use lttcore::{play::Play, utilities::PlayerSet};
 use serde::Serialize;
 use tokio::sync::mpsc::{
     error::{SendError, TryRecvError},

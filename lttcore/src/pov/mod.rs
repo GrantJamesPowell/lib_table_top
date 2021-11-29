@@ -9,7 +9,7 @@ pub use game_progression::{GameProgression, GameProgressionBuilder};
 pub use scenario::Scenario;
 
 use crate::play::{Play, Player, TurnNum, View};
-use crate::PlayerSet;
+use crate::utilities::PlayerSet;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 

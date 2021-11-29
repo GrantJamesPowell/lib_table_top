@@ -1,7 +1,9 @@
 //! Number of players
 
-use super::PlayerIndexedData;
-use crate::{play::Player, PlayerSet};
+use crate::{
+    play::Player,
+    utilities::{PlayerIndexedData, PlayerSet},
+};
 use serde::{Deserialize, Serialize};
 use std::num::{NonZeroU8, TryFromIntError};
 use std::ops::Deref;
@@ -55,7 +57,7 @@ impl NumberOfPlayers {
     /// Returns the `PlayerSet` containing all the players for that number of players
     ///
     /// ```
-    /// use lttcore::{PlayerSet, play::{Player, NumberOfPlayers, number_of_players::THREE_PLAYER}};
+    /// use lttcore::{utilities::PlayerSet, play::{Player, NumberOfPlayers, number_of_players::THREE_PLAYER}};
     ///
     /// let mut expected = PlayerSet::new();
     /// expected.insert(0);

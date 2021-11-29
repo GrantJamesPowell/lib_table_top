@@ -1,4 +1,4 @@
-use crate::{play::Player, PlayerSet};
+use crate::{play::Player, utilities::PlayerSet};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::hash::Hash;
