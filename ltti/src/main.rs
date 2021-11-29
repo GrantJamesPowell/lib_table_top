@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
         while let Ok((stream, remote_addr)) = listener.accept().await {
             println!("Accepted Connection {:?}", remote_addr);
 
-            tokio::spawn(accept_connection::<Games, _, _>(
+            tokio::spawn(accept_connection::<Games, _>(
                 Auth,
                 server_info.clone(),
                 runtimes.clone(),

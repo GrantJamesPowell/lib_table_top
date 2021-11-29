@@ -8,21 +8,19 @@ use crate::messages::{
 use crate::SupportedGames;
 use crate::User;
 use bytes::Bytes;
-use lttcore::encoder::Encoder;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc;
 
-pub async fn run_server_connection<Games, Enc, Conn, Auth>(
+pub async fn run_server_connection<Games, Conn, Auth>(
     authenticate: Auth,
     server_info: &ServerInfo,
     runtimes: Arc<Games::Runtimes>,
     mut conn: Conn,
 ) -> Result<Closed, Closed>
 where
-    Games: SupportedGames<Enc>,
-    Enc: Encoder,
+    Games: SupportedGames,
     Conn: RawConnection,
     Auth: Authenticate,
 {
@@ -53,7 +51,7 @@ where
                                     id,
                                     receiver,
                                     sender: Some(from_sub_connections_sender.clone()),
-                                    encoding: Enc::encoding(),
+                                    encoding: conn.encoding(),
                                 };
 
                                 sub_connections.insert(id, sender);

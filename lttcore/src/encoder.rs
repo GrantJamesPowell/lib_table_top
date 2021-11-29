@@ -3,7 +3,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 use std::hash::Hash;
 
-pub trait Encoder: Debug + Clone + Copy + PartialEq + Eq + Hash + Send + Sync + 'static {
+trait Encoder: Debug + Clone + Copy + PartialEq + Eq + Hash + Send + Sync + 'static {
     type Error: Debug + Send + Sync + std::error::Error;
 
     fn encoding() -> Encoding;
