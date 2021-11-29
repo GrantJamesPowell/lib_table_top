@@ -1,5 +1,5 @@
 use crate::common::direction::LeftOrRight::{self, Left, Right};
-use crate::{NumberOfPlayers, Player};
+use crate::{play::NumberOfPlayers, Player};
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;

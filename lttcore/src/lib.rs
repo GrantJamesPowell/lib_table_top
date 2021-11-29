@@ -47,4 +47,4 @@ pub use play::Play;
 pub use player::Player;
 pub use scenario::Scenario;
 pub use seed::Seed;
-pub use utilities::{NumberOfPlayers, PlayerSet};
+pub use utilities::PlayerSet;

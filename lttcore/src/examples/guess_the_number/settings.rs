@@ -1,6 +1,6 @@
-use crate::{
-    play::settings::{Builtin, BuiltinGameModes, NumPlayers},
-    utilities::number_of_players::ONE_PLAYER,
+use crate::play::{
+    number_of_players::ONE_PLAYER,
+    settings::{Builtin, BuiltinGameModes, NumPlayers},
     NumberOfPlayers,
 };
 use semver::Version;

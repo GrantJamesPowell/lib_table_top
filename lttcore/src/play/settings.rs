@@ -1,4 +1,4 @@
-use crate::NumberOfPlayers;
+use super::NumberOfPlayers;
 use semver::Version;
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;

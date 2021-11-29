@@ -2,12 +2,14 @@ mod game_advance;
 mod ltt_version;
 mod turn_num;
 
+pub mod number_of_players;
 pub mod score;
 pub mod settings;
 pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
 pub use ltt_version::LttVersion;
+pub use number_of_players::NumberOfPlayers;
 pub use score::Score;
 pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;

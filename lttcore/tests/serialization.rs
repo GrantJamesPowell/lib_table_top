@@ -1,9 +1,9 @@
 use lttcore::common::deck::{Card, Color::*, DrawPile, Rank, Suit::*};
 use lttcore::examples::guess_the_number::Settings;
 use lttcore::examples::GuessTheNumber;
+use lttcore::play::{number_of_players::FOUR_PLAYER, NumberOfPlayers};
 use lttcore::seed::SEED_42;
-use lttcore::utilities::number_of_players::FOUR_PLAYER;
-use lttcore::{GamePlayer, GameProgression, NumberOfPlayers, Player, PlayerSet, Seed};
+use lttcore::{GamePlayer, GameProgression, Player, PlayerSet, Seed};
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::{json, Value::Null};
 use std::fmt::Debug;

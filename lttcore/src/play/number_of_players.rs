@@ -24,7 +24,7 @@ impl NumberOfPlayers {
     /// Returns an iterator over the players for a `NumberOfPlayers`
     ///
     /// ```
-    /// use lttcore::{Player, NumberOfPlayers, utilities::number_of_players::THREE_PLAYER};
+    /// use lttcore::{Player, play::{NumberOfPlayers, number_of_players::THREE_PLAYER}};
     ///
     /// let expected: Vec<Player> = [0, 1, 2].iter().map(|&n| n.into()).collect();
     ///
@@ -40,7 +40,7 @@ impl NumberOfPlayers {
     /// Returns `PlayerIndexedData<T>` using `PlayerIndexedData::init_with`
     ///
     /// ```
-    /// use lttcore::utilities::number_of_players::THREE_PLAYER;
+    /// use lttcore::play::number_of_players::THREE_PLAYER;
     /// use lttcore::utilities::PlayerIndexedData as PID;
     ///
     /// let data: PID<u64> = THREE_PLAYER.player_indexed_data(|player| player.into());
@@ -55,7 +55,7 @@ impl NumberOfPlayers {
     /// Returns the `PlayerSet` containing all the players for that number of players
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, NumberOfPlayers, utilities::number_of_players::THREE_PLAYER};
+    /// use lttcore::{Player, PlayerSet, play::{NumberOfPlayers, number_of_players::THREE_PLAYER}};
     ///
     /// let mut expected = PlayerSet::new();
     /// expected.insert(0);
@@ -79,7 +79,7 @@ impl NumberOfPlayers {
     ///
     /// Players are zero indexed, so 2 players would represent players 0 && 1
     /// ```
-    /// use lttcore::{Player, NumberOfPlayers, utilities::number_of_players::{TWO_PLAYER, THREE_PLAYER}};
+    /// use lttcore::{Player, play::{NumberOfPlayers, number_of_players::{TWO_PLAYER, THREE_PLAYER}}};
     ///
     /// let p0: Player = 0.into();
     /// let p1: Player = 1.into();

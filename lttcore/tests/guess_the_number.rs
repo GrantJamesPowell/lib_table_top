@@ -2,10 +2,9 @@ use lttcore::examples::guess_the_number::{
     ActionError::*, Guess, PublicInfo, Settings, SettingsBuilder,
 };
 use lttcore::examples::GuessTheNumber;
-use lttcore::play::{view::NoSecretPlayerInfo, ActionResponse::*};
-use lttcore::play::{Actions, DebugMsgs};
+use lttcore::play::number_of_players::{ONE_PLAYER, TWO_PLAYER};
+use lttcore::play::{view::NoSecretPlayerInfo, ActionResponse::*, Actions, DebugMsgs};
 use lttcore::seed::SEED_42;
-use lttcore::utilities::number_of_players::{ONE_PLAYER, TWO_PLAYER};
 use lttcore::{GamePlayer, GameProgression, Player};
 
 #[test]
