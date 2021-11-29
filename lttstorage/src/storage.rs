@@ -4,7 +4,7 @@ use super::raw_storage::{RawCustomSettings, RawStorage};
 use chrono::prelude::*;
 use lttcore::play::{settings::Custom, Play};
 use lttcore::{
-    encoder::EncodingError,
+    encoding::EncodingError,
     id::{GameId, SettingsId, UserId},
     pov::GameProgression,
 };
@@ -58,7 +58,7 @@ impl<T: Play, Raw: RawStorage> Storage<T> for Raw {
             .and_then(|(id, raw, meta)| {
                 let settings = self
                     .encoding()
-                    .deserialize(raw.bytes)
+                    .deserialize(&raw.bytes)
                     .map_err(StorageError::EncodingError)?;
 
                 let custom = Custom {

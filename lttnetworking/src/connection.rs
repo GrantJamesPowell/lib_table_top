@@ -1,7 +1,7 @@
 use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
-use lttcore::encoder::Encoding;
+use lttcore::encoding::Encoding;
 use lttcore::uuid_id;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::mpsc;
@@ -67,7 +67,7 @@ impl<Raw: RawConnection> ConnectionIO for Raw {
             }
         };
 
-        match self.encoding().deserialize::<T>(bytes) {
+        match self.encoding().deserialize::<T>(&bytes) {
             Ok(msg) => Ok(msg),
             Err(_) => {
                 self.close().await;

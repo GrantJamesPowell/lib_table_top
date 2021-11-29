@@ -3,7 +3,7 @@ use crate::messages::closed::Closed;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
-use lttcore::encoder::Encoding;
+use lttcore::encoding::Encoding;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;

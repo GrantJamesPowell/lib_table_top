@@ -2,7 +2,7 @@ use super::game_runner::GameRunner;
 use super::match_maker::{run_match_maker, GameRequestTicket, MatchMakerRequestSender};
 use crate::messages::MatchMakerRequest;
 use crate::{ObserverConnection, PlayerConnection};
-use lttcore::encoder::Encoding;
+use lttcore::encoding::Encoding;
 use lttcore::{
     id::GameId,
     play::{Play, Player},

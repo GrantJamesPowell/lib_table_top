@@ -25,8 +25,8 @@ extern crate static_assertions;
 
 pub mod bots;
 pub mod common;
-#[cfg(feature = "encoder")]
-pub mod encoder;
+#[cfg(feature = "encoding")]
+pub mod encoding;
 pub mod examples;
 pub mod id;
 pub mod play;

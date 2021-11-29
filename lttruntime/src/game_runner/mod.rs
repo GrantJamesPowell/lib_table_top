@@ -8,7 +8,7 @@ mod player_connections;
 use dashmap::DashMap;
 use game_meta::GameMeta;
 pub use game_meta::{ObserverConnection, PlayerConnection};
-use lttcore::encoder::Encoding;
+use lttcore::encoding::Encoding;
 use lttcore::{
     id::GameId,
     play::{Play, Player},

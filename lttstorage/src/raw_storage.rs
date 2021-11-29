@@ -2,7 +2,7 @@ use super::storage::{MetaData, SettingsType, StorageError};
 use async_trait::async_trait;
 use bytes::Bytes;
 use lttcore::{
-    encoder::Encoding,
+    encoding::Encoding,
     id::{GameId, SettingsId},
 };
 use lttcore::{play::TurnNum, utilities::PlayerIndexedData, Seed};

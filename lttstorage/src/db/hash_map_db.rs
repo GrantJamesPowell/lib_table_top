@@ -4,7 +4,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use lttcore::{
-    encoder::Encoding,
+    encoding::Encoding,
     id::{GameId, SettingsId},
 };
 use std::collections::HashMap;

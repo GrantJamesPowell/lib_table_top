@@ -224,7 +224,7 @@ mod tests {
     };
     use super::super::id::ConnectionIdSource;
     use super::*;
-    use lttcore::encoder::Encoding;
+    use lttcore::encoding::Encoding;
     use lttcore::examples::{
         guess_the_number::{Guess, Settings},
         GuessTheNumber,
@@ -299,7 +299,7 @@ mod tests {
             .unwrap();
         for stream in connection_streams.iter_mut().take(2) {
             let msg = stream.next_bytes().await.unwrap();
-            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(&msg).unwrap();
             assert_eq!(decoded, SyncState(game_player.clone()));
         }
 
@@ -320,7 +320,7 @@ mod tests {
 
         for stream in connection_streams.iter_mut().take(2) {
             let msg = stream.next_bytes().await.unwrap();
-            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
+            let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(&msg).unwrap();
             assert_eq!(decoded, Update(player_update.clone()))
         }
 
@@ -336,7 +336,7 @@ mod tests {
         }
 
         let msg = connection_streams[2].next_bytes().await.unwrap();
-        let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(msg).unwrap();
+        let decoded: ToPlayerMsg<GuessTheNumber> = Encoding::Json.deserialize(&msg).unwrap();
         assert_eq!(decoded, SyncState(game_player.clone()));
     }
 
