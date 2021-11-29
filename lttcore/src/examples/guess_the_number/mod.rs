@@ -4,10 +4,11 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
-    play::{view::NoSecretPlayerInfo, LttVersion},
-    play::{ActionResponse, DebugMsgs, GameAdvance, Player},
+    play::{
+        view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, LttVersion, Play, Player,
+    },
     utilities::PlayerIndexedData as PID,
-    Play, PlayerSet,
+    PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

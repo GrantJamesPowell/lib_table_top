@@ -2,12 +2,12 @@ use async_trait::async_trait;
 
 use super::raw_storage::{RawCustomSettings, RawStorage};
 use chrono::prelude::*;
+use lttcore::play::{settings::Custom, Play};
 use lttcore::{
     encoder::EncodingError,
     id::{GameId, SettingsId, UserId},
     GameProgression,
 };
-use lttcore::{play::settings::Custom, Play};
 use std::borrow::Cow;
 
 #[derive(Debug)]

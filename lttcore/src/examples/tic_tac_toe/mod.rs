@@ -112,8 +112,8 @@ pub use settings::Settings;
 
 use crate::play::{view::NoSecretPlayerInfo, LttVersion};
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance, Player},
-    Play, PlayerSet,
+    play::{ActionResponse, DebugMsgs, GameAdvance, Play, Player},
+    PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -137,7 +137,7 @@ impl TicTacToe {
     /// Resigns a player, ending the game
     ///
     /// ```
-    /// use lttcore::Play;
+    /// use lttcore::play::Play;
     /// use lttcore::examples::tic_tac_toe::{TicTacToe, Status::*, Marker::*, PublicInfoUpdate::*};
     ///
     /// let mut game: TicTacToe = Default::default();

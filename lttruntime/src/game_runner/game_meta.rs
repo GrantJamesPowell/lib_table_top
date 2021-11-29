@@ -5,8 +5,8 @@ use super::id::{ConnectionId, ConnectionIdSource};
 use crate::error::GameNotFound;
 use crate::messages::FromPlayerMsg;
 use bytes::Bytes;
+use lttcore::play::{Play, Player};
 use lttcore::{encoder::Encoding, utilities::PlayerIndexedData as PID};
-use lttcore::{play::Player, Play};
 
 #[derive(Debug)]
 pub struct PlayerConnection<T: Play> {

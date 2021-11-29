@@ -3,7 +3,10 @@ use super::match_maker::{run_match_maker, GameRequestTicket, MatchMakerRequestSe
 use crate::messages::MatchMakerRequest;
 use crate::{ObserverConnection, PlayerConnection};
 use lttcore::encoder::Encoding;
-use lttcore::{id::GameId, play::Player, Play};
+use lttcore::{
+    id::GameId,
+    play::{Play, Player},
+};
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 

@@ -3,7 +3,7 @@ use super::channels::{
 };
 use super::id::ConnectionId;
 use crate::messages::{ToGameHostMsg::*, ToObserverMsg::*};
-use lttcore::Play;
+use lttcore::play::Play;
 use serde::Serialize;
 use smallvec::SmallVec;
 use tokio::select;

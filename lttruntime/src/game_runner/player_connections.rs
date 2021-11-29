@@ -9,8 +9,7 @@ use crate::messages::{
     ToGameHostMsg::*,
     ToPlayerMsg::{self, *},
 };
-use lttcore::play::{ActionResponse, Player, TurnNum};
-use lttcore::Play;
+use lttcore::play::{ActionResponse, Play, Player, TurnNum};
 use serde::Serialize;
 use smallvec::SmallVec;
 use std::time::Duration;

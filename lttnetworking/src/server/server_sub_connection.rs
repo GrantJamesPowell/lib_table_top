@@ -1,7 +1,7 @@
 use crate::connection::ConnectionIO;
 use crate::messages::closed::Closed;
 use crate::messages::conn_ctrl::{JoinAs, SubConnMode};
-use lttcore::Play;
+use lttcore::play::Play;
 use lttruntime::Runtime;
 use std::sync::Arc;
 

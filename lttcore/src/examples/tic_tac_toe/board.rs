@@ -360,8 +360,8 @@ impl Board {
 
     /// Returns the status of the current game
     /// ```
-    /// use lttcore::{Play, play::Player};
     /// use lttcore::ttt;
+    /// use lttcore::play::{Play, Player};
     /// use lttcore::examples::tic_tac_toe::{Board, Position, Status::*, Marker::*};
     ///
     /// // In progress

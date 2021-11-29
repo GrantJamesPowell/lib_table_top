@@ -1,5 +1,4 @@
-use lttcore::play::{ActionResponse, Player};
-use lttcore::Play;
+use lttcore::play::{ActionResponse, Play, Player};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ToGameHostMsg<T: Play> {

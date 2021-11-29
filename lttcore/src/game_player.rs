@@ -1,6 +1,6 @@
-use crate::play::{Player, TurnNum, View};
+use crate::play::{Play, Player, TurnNum, View};
 use crate::pov::{ObserverPov, PlayerPov, PlayerUpdate};
-use crate::{GameObserver, Play};
+use crate::GameObserver;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

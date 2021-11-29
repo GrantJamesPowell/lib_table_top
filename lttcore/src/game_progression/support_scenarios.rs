@@ -1,4 +1,4 @@
-use crate::{GameProgression, Play, Scenario};
+use crate::{play::Play, GameProgression, Scenario};
 use std::sync::Arc;
 
 impl<T: Play> From<Scenario<T>> for GameProgression<T> {

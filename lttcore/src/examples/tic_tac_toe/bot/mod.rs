@@ -6,7 +6,7 @@ pub mod test_helpers;
 use super::{Action, Board, Position, TicTacToe};
 use crate::bots::Bot;
 use crate::pov::PlayerPov;
-use crate::{Play, Seed};
+use crate::{play::Play, Seed};
 
 /// A simplified [`Bot`](`crate::bots::Bot`) wrapper specialized for playing [`TicTacToe`]
 pub trait TicTacToeBot {

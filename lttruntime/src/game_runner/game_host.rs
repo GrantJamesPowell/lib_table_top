@@ -2,7 +2,7 @@ use super::channels::{ToGameHostMsgReceiver, ToObserverMsgSender, ToPlayerMsgSen
 use crate::messages::{ToGameHostMsg::*, ToObserverMsg, ToPlayerMsg};
 use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
-use lttcore::{GameProgression, Play};
+use lttcore::{play::Play, GameProgression};
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,
