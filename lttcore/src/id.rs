@@ -4,7 +4,6 @@
 //! systems can use these types to communicate with each other. In practice all the IDs in this
 //! module are wrappers around [`Uuid`](uuid::Uuid).
 
-
 /// Create a wrapper type around [`Uuid`](uuid::Uuid)
 ///
 /// ```

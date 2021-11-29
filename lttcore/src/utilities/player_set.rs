@@ -52,7 +52,7 @@ macro_rules! zip_with {
 /// * Avoids allocating
 ///
 /// # Implmentation notes
-/// 
+///
 /// [`PlayerSet`] stores it's data as 256 bits, one for each potential value of [`Player`]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlayerSet([u64; 4]);

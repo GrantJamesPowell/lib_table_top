@@ -1,5 +1,5 @@
 use lttcore::pov::PlayerUpdate;
-use lttcore::{GamePlayer, Play, TurnNum};
+use lttcore::{play::TurnNum, GamePlayer, Play};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

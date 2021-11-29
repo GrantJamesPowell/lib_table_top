@@ -1,6 +1,6 @@
-use super::{DebugMsgs, Play, PlayerSecretInfoUpdates, View};
+use super::{DebugMsgs, Play, PlayerSecretInfoUpdates, TurnNum, View};
 use crate::pov::{ObserverUpdate, PlayerUpdate};
-use crate::{Player, PlayerSet, TurnNum};
+use crate::{Player, PlayerSet};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

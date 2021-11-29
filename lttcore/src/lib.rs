@@ -43,7 +43,7 @@ pub mod utilities;
 pub use game_observer::GameObserver;
 pub use game_player::GamePlayer;
 pub use game_progression::{GameProgression, GameProgressionBuilder};
-pub use play::{Play, TurnNum};
+pub use play::Play;
 pub use player::Player;
 pub use scenario::Scenario;
 pub use seed::Seed;

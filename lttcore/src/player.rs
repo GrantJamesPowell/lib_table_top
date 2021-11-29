@@ -1,15 +1,13 @@
-//! An identifier for a "player" within Lib Table Top
-//!
-//! Conceptually a player is someone who can act upon a the game. A player may or may not have
-//! secret information and will have between 0 and many turns over the course of the game.
-//!
-//! # Implementation notes:
-//!
-//! [`Player`] is a wrapper around a [`u8`], letting games have a maximum of 256 players. 
-
 use serde::{Deserialize, Serialize};
 
 /// An identifier for a "player" within Lib Table Top
+///
+/// Conceptually a player is someone who can act upon a the game. A player may or may not have
+/// secret information and will have between 0 and many turns over the course of the game.
+///
+/// # Implementation notes:
+///
+/// [`Player`] is a wrapper around a [`u8`], letting games have a maximum of 256 players.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Player(u8);
 
