@@ -27,9 +27,12 @@ macro_rules! uuid_id {
             ::serde::Serialize,
             ::serde::Deserialize,
         )]
+        /// Identifier
         pub struct $id(::uuid::Uuid);
 
         impl $id {
+            #[doc = "Create a new "]
+            #[doc = stringify!($id)]
             pub fn new() -> Self {
                 Self(::uuid::Uuid::new_v4())
             }

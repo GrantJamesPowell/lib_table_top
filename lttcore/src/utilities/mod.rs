@@ -1,3 +1,5 @@
+//! Set of utilities for working with `LibTableTop` concepts
+
 mod player_indexed_data;
 mod player_item_collector;
 mod player_set;

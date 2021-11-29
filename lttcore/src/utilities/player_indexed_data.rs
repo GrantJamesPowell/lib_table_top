@@ -3,6 +3,13 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::hash::Hash;
 
+/// A mapping from [`Player`] and some item `T`
+///
+/// # Implementation notes:
+///
+/// This uses a [`PlayerSet`] and [`SmallVec`] under the hood to represent the mapping, making
+/// lookups an array index and optimizing for the case where the number of items <= 4 by
+/// being able to place 4 items directly on the stack
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerIndexedData<T> {
     players: PlayerSet,

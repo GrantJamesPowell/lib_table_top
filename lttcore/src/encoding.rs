@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use bytes::Bytes;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;

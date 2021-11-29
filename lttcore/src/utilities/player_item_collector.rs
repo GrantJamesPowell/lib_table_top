@@ -1,6 +1,8 @@
 use crate::play::Player;
 use crate::utilities::{PlayerIndexedData, PlayerSet};
 
+/// Convenience for when you have a list of players and want to collect an item `T` from each of
+/// them
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerItemCollector<Item> {
     data: PlayerIndexedData<Option<Item>>,

@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 mod game_advance;
 mod ltt_version;
 mod player;

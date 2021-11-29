@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 mod public_info;
 mod settings;
 pub use public_info::{PublicInfo, PublicInfoUpdate};
