@@ -5,7 +5,10 @@ use lttcore::{
     encoding::Encoding,
     id::{GameId, SettingsId},
 };
-use lttcore::{play::TurnNum, utilities::PlayerIndexedData, Seed};
+use lttcore::{
+    play::{Seed, TurnNum},
+    utilities::PlayerIndexedData,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawCustomSettings {

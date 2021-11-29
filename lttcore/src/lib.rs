@@ -31,8 +31,6 @@ pub mod examples;
 pub mod id;
 pub mod play;
 pub mod pov;
-pub mod seed;
 pub mod utilities;
 
-pub use seed::Seed;
 pub use utilities::PlayerSet;

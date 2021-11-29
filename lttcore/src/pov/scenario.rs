@@ -1,5 +1,4 @@
-use crate::play::{Play, SettingsPtr, TurnNum};
-use crate::Seed;
+use crate::play::{Play, Seed, SettingsPtr, TurnNum};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 

@@ -1,5 +1,5 @@
 use super::super::{ActionError, Board, Position, Status, TicTacToeBot};
-use crate::Seed;
+use crate::play::Seed;
 
 /// Test helper that asserts a bot will make a winning move on a certain board
 #[track_caller]

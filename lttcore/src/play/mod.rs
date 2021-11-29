@@ -5,6 +5,7 @@ mod turn_num;
 
 pub mod number_of_players;
 pub mod score;
+pub mod seed;
 pub mod settings;
 pub mod view;
 
@@ -13,6 +14,7 @@ pub use ltt_version::LttVersion;
 pub use number_of_players::NumberOfPlayers;
 pub use player::Player;
 pub use score::Score;
+pub use seed::Seed;
 pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
 pub use view::View;

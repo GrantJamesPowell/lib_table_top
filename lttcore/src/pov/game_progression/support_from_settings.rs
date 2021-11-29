@@ -1,7 +1,6 @@
 use crate::{
-    play::Play,
+    play::{Play, Seed},
     pov::{GameProgression, GameProgressionBuilder},
-    Seed,
 };
 
 impl<T: Play> GameProgression<T> {

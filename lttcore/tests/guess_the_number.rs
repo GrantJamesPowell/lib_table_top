@@ -4,12 +4,12 @@ use lttcore::examples::guess_the_number::{
 use lttcore::examples::GuessTheNumber;
 use lttcore::play::{
     number_of_players::{ONE_PLAYER, TWO_PLAYER},
+    seed::SEED_42,
     view::NoSecretPlayerInfo,
     ActionResponse::*,
     Actions, DebugMsgs, Player,
 };
 use lttcore::pov::{GamePlayer, GameProgression};
-use lttcore::seed::SEED_42;
 
 #[test]
 fn test_building_default_settings() {

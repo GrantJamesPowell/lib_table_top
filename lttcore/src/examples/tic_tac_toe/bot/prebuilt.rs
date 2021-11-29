@@ -10,7 +10,7 @@ use crate::{
         board::{BOTTOM_LEFT, BOTTOM_RIGHT, CENTER},
         Marker,
     },
-    Seed,
+    play::Seed,
 };
 use rand::prelude::IteratorRandom;
 
@@ -118,7 +118,7 @@ mod tests {
     use super::super::test_helpers::{assert_bot_takes_position, assert_bot_wins};
     use crate::{
         examples::tic_tac_toe::board::MIDDLE_LEFT,
-        seed::{SEED_0, SEED_42},
+        play::seed::{SEED_0, SEED_42},
         ttt,
     };
 
