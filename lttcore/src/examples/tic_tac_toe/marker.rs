@@ -1,7 +1,7 @@
 use crate::play::Player;
 use serde::{Deserialize, Serialize};
 
-/// Conveniences for Player 0 and Player 1
+/// Conveniences for [`Player`] 0 and [`Player`] 1
 ///
 /// [Xs and Os](https://www.youtube.com/watch?v=0uLI6BnVh6w)
 ///
@@ -20,7 +20,9 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Marker {
+    /// The X marker
     X,
+    /// The O marker
     O,
 }
 

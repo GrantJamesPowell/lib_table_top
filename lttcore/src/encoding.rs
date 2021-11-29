@@ -36,8 +36,9 @@ impl Encoding {
     pub fn deserialize<T: DeserializeOwned>(&self, bytes: &Bytes) -> Result<T, EncodingError> {
         match self {
             Encoding::Bincode => bincode::deserialize(bytes).map_err(EncodingError::Bincode),
-            Encoding::Json => serde_json::from_slice(bytes).map_err(EncodingError::Json),
-            Encoding::PrettyJson => serde_json::from_slice(bytes).map_err(EncodingError::Json),
+            Encoding::Json | Encoding::PrettyJson => {
+                serde_json::from_slice(bytes).map_err(EncodingError::Json)
+            }
         }
     }
 }

@@ -2,6 +2,8 @@ use super::Position;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+/// [`Action`](crate::play::Play::Action) of the [`TicTacToe`](super::TicTacToe) game
+///
 /// Wrapper representing the choosing of a position to play on by a player
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Action {

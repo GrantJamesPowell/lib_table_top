@@ -7,7 +7,7 @@
 use super::super::{Board, Position, TicTacToeBot};
 use crate::{
     examples::tic_tac_toe::{
-        board::{BOTTOM_LEFT, BOTTOM_RIGHT, CENTER},
+        board::consts::{BOTTOM_LEFT, BOTTOM_RIGHT, CENTER},
         Marker,
     },
     play::Seed,
@@ -117,7 +117,7 @@ impl TicTacToeBot for Expert {
 mod tests {
     use super::super::test_helpers::{assert_bot_takes_position, assert_bot_wins};
     use crate::{
-        examples::tic_tac_toe::board::MIDDLE_LEFT,
+        examples::tic_tac_toe::board::consts::MIDDLE_LEFT,
         play::seed::{SEED_0, SEED_42},
         ttt,
     };

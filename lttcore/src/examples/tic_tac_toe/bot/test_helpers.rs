@@ -1,3 +1,5 @@
+//! Helpers for testing [`TicTacToeBot`] implementations
+
 use super::super::{ActionError, Board, Position, Status, TicTacToeBot};
 use crate::play::Seed;
 

@@ -94,6 +94,8 @@
 //! points to learn how to interact with this game. The [`Board`](board::Board) is what
 //! [`TicTacToeBot`]s are passed when they are invoked
 
+#![warn(missing_docs)]
+
 mod action;
 pub mod board;
 pub mod bot;
@@ -117,6 +119,9 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+/// The main tic-tac-toe struct (implements [`Play`])
+///
+/// see the [module](self) documentation
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TicTacToe {
     board: Board,

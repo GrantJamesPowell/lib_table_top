@@ -19,7 +19,7 @@
 //! assert_eq!(board.status(), Status::InProgress { next_up: X });
 //! ```
 //!
-//! # Implementation notes
+//! # Implementation Notes
 //!
 //! [`Board`] is built on the [bounded](crate::common::cartesian::bounded) primatives. Bounded
 //! primatives are cool for the compile time bounds checking, but aren't super erognomic to use,
@@ -46,33 +46,42 @@ pub type Row = BoundedY<2>;
 /// primatives which bound the row to [0, 1, 2]
 pub type Col = BoundedX<2>;
 
-pub const ROW_0: Row = unsafe { Row::new_unchecked(0) };
-pub const ROW_1: Row = unsafe { Row::new_unchecked(1) };
-pub const ROW_2: Row = unsafe { Row::new_unchecked(2) };
-pub const COL_0: Col = unsafe { Col::new_unchecked(0) };
-pub const COL_1: Col = unsafe { Col::new_unchecked(1) };
-pub const COL_2: Col = unsafe { Col::new_unchecked(2) };
+#[allow(missing_docs)]
+pub mod consts {
+    //! Self explanatory constants around tic-tac-toe
+    use super::{Col, Position, Row};
 
-pub const CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
+    pub const ROW_0: Row = unsafe { Row::new_unchecked(0) };
+    pub const ROW_1: Row = unsafe { Row::new_unchecked(1) };
+    pub const ROW_2: Row = unsafe { Row::new_unchecked(2) };
+    pub const COL_0: Col = unsafe { Col::new_unchecked(0) };
+    pub const COL_1: Col = unsafe { Col::new_unchecked(1) };
+    pub const COL_2: Col = unsafe { Col::new_unchecked(2) };
 
-pub const BOTTOM_LEFT: Position = unsafe { Position::new_unchecked(0, 0) };
-pub const BOTTOM_CENTER: Position = unsafe { Position::new_unchecked(1, 0) };
-pub const BOTTOM_RIGHT: Position = unsafe { Position::new_unchecked(2, 0) };
-pub const MIDDLE_LEFT: Position = unsafe { Position::new_unchecked(0, 1) };
-pub const MIDDLE_CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
-pub const MIDDLE_RIGHT: Position = unsafe { Position::new_unchecked(2, 1) };
-pub const TOP_LEFT: Position = unsafe { Position::new_unchecked(0, 2) };
-pub const TOP_CENTER: Position = unsafe { Position::new_unchecked(1, 2) };
-pub const TOP_RIGHT: Position = unsafe { Position::new_unchecked(2, 2) };
+    pub const CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
 
-pub const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
-pub const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
+    pub const BOTTOM_LEFT: Position = unsafe { Position::new_unchecked(0, 0) };
+    pub const BOTTOM_CENTER: Position = unsafe { Position::new_unchecked(1, 0) };
+    pub const BOTTOM_RIGHT: Position = unsafe { Position::new_unchecked(2, 0) };
+    pub const MIDDLE_LEFT: Position = unsafe { Position::new_unchecked(0, 1) };
+    pub const MIDDLE_CENTER: Position = unsafe { Position::new_unchecked(1, 1) };
+    pub const MIDDLE_RIGHT: Position = unsafe { Position::new_unchecked(2, 1) };
+    pub const TOP_LEFT: Position = unsafe { Position::new_unchecked(0, 2) };
+    pub const TOP_CENTER: Position = unsafe { Position::new_unchecked(1, 2) };
+    pub const TOP_RIGHT: Position = unsafe { Position::new_unchecked(2, 2) };
+
+    pub const ROWS: [Row; 3] = [ROW_0, ROW_1, ROW_2];
+    pub const COLS: [Col; 3] = [COL_0, COL_1, COL_2];
+}
 
 /// The possible statuses of the game
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     /// There are still available positions to be claimed on the board
-    InProgress { next_up: Marker },
+    InProgress {
+        /// The next marker to move
+        next_up: Marker,
+    },
     /// All positions have been claimed and there is no winner
     Draw,
     /// Win by resignation.
@@ -82,10 +91,16 @@ pub enum Status {
     /// This can only be produced by the [`status`](super::TicTacToe::status) method on
     /// [`TicTacToe`](super::TicTacToe) and not the [`status`](Board::status) method on [`Board`]
     /// because only [`TicTacToe`](super::TicTacToe) knows about resignations
-    WinByResignation { winner: Marker },
+    WinByResignation {
+        /// The marker of the player who has won
+        winner: Marker,
+    },
     /// There *is* a winner via connecting three spaces
     Win {
+        /// The marker of the player who has won
         winner: Marker,
+        /// The winning position
+        /// Note: If there is more than one, only the first one is shown
         positions: [Position; 3],
     },
 }
@@ -102,10 +117,12 @@ impl Status {
 
 /// Representation of the tic-tac-toe board. Meant to be indexed via [`Position`]
 ///
-/// Note: [`Board`] is stored in memory "upside" down to how it's traditionally rendered to humans
-/// or how it's interperted by the `ttt!` macro. To display to humans, place `(0, 0)` in the bottom
-/// left corner. When storing in memory, have `(0, 0)` represent the `0th` index of the `0th` array
-/// which conceptually puts it in the top left corner.
+/// # Implementation Notes
+///
+/// [`Board`] is stored in memory "upside down" to how it's traditionally rendered to humans or how
+/// it's interperted by the `ttt!` macro. To display to humans, `(0, 0)` in the bottom left corner.
+/// When storing in memory, `(0, 0)` represents the `0th` index of the `0th` array which
+/// conceptually puts it in the top left corner.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Board([[Option<Marker>; 3]; 3]);
 
@@ -115,17 +132,23 @@ impl From<[[Option<Marker>; 3]; 3]> for Board {
     }
 }
 
+#[allow(clippy::wildcard_imports)]
+use consts::*;
+
 impl Board {
+    /// An iterator over the rows of the [`Board`]
     pub fn rows(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         ROWS.into_iter()
             .map(|row| COLS.map(|col| ((col, row).into(), self[(col, row)])))
     }
 
+    /// An iterator over the cols of the [`Board`]
     pub fn cols(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         COLS.into_iter()
             .map(|col| ROWS.map(|row| ((col, row).into(), self[(col, row)])))
     }
 
+    /// An iterator over the diagonals of the [`Board`]
     pub fn diagonals(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         [
             [(COL_0, ROW_0), (COL_1, ROW_1), (COL_2, ROW_2)],
@@ -135,6 +158,8 @@ impl Board {
         .map(|group| group.map(|pos| (pos.into(), self[pos])))
     }
 
+    /// An iterator over all of the connection "triples" of the [`Board`]. This represents all
+    /// possible positions that could contain a winning group of three [`Marker`]
     pub fn triples(&self) -> impl Iterator<Item = [(Position, Option<Marker>); 3]> + '_ {
         self.rows().chain(self.cols()).chain(self.diagonals())
     }

@@ -7,6 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::ops::Deref;
 
+/// [`PublicInfo`](crate::play::Play::PublicInfo) of the [`TicTacToe`] game
+///
+/// This [`Deref`]s to a [`TicTacToe`] struct so you can use the immutable methods on
+/// [`TicTacToe`] on this struct
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicInfo(TicTacToe);
 
@@ -41,9 +45,12 @@ impl Score for PublicInfo {
     }
 }
 
+/// Update to the [`PublicInfo`]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PublicInfoUpdate {
+    /// A [`Marker`] has resigned from the game
     Resign(Marker),
+    /// A [`Marker`] has claimed a [`Position`]
     Claim(Marker, Position),
 }
 

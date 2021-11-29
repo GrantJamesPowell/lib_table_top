@@ -7,6 +7,9 @@ use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+/// [`Settings`](crate::play::Play::Settings) of the [`TicTacToe`](super::TicTacToe) game
+///
+/// since there are no configurable settings in tic-tac-toe, this is a unit struct.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct Settings;
 

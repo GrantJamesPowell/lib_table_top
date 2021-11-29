@@ -2,9 +2,9 @@
 ///
 /// ## Notes
 ///
-/// Visually ttt! uses Cartesian coordinates for representing games ((0, 0) is in the bottom left
-/// corner). In memory the actual `TicTacToe::Board` struct represents the board with (0, 0) in the
-/// top left corner.
+/// Visually `ttt!` uses Cartesian coordinates for representing games (`(0, 0)` is in the bottom
+/// left corner). In memory the actual [`Board`](crate::examples::tic_tac_toe::Board) struct
+/// represents the board with `(0, 0)` in the top left corner.
 /// ```
 /// use lttcore::ttt;
 /// use lttcore::examples::tic_tac_toe::Marker::*;
