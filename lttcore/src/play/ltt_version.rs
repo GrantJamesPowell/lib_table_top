@@ -9,7 +9,7 @@ pub trait LttVersion {
     /// game as long as it's conceptually the same. Most tooling will not be able support multiple
     /// games with the same value [`lib_table_top_identifier`](LttVersion::lib_table_top_identifier). The
     /// value provided by this trait should should likely just be the string literal version of
-    /// your game's name [`TicTacToe`](crate::examples::TicTacToe) => `"TicTacToe"
+    /// your game's name.
     ///
     /// ```
     /// use lttcore::examples::TicTacToe;

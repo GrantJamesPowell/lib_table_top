@@ -13,7 +13,7 @@ impl<Item> From<PlayerSet> for PlayerItemCollector<Item> {
 }
 
 impl<Item> PlayerItemCollector<Item> {
-    /// Returns a new `PlayerItemCollector` for a `PlayerSet`
+    /// Returns a new [`PlayerItemCollector`] for a [`PlayerSet`]
     ///
     /// ```
     /// use lttcore::{player_set, utilities::PlayerItemCollector};
@@ -81,7 +81,7 @@ impl<Item> PlayerItemCollector<Item> {
             .collect()
     }
 
-    /// Returns all the players who haven't submitted yet
+    /// Returns whether all players have submitted
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
@@ -126,7 +126,7 @@ impl<Item> PlayerItemCollector<Item> {
             .filter_map(|(player, item)| item.map(|x| (player, x)))
     }
 
-    /// Adds a player and associated item to the collector. Returning the old value
+    /// Adds a [`Player`] and associated item to the [`PlayerItemCollector`], returning the old value
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
@@ -142,7 +142,7 @@ impl<Item> PlayerItemCollector<Item> {
     ///
     /// # Panics
     ///
-    /// panics if the player isn't in the `PlayerSet`
+    /// panics if the [`Player`] isn't in the [`PlayerSet`]
     ///
     /// ```should_panic
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
@@ -156,7 +156,7 @@ impl<Item> PlayerItemCollector<Item> {
         std::mem::replace(&mut self.data[player.into()], Some(item))
     }
 
-    /// Removes a player from the collector, returning the associated item if it's there
+    /// Removes a [`Player`] from the [`PlayerItemCollector`], returning the associated item if it's there
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
@@ -174,7 +174,7 @@ impl<Item> PlayerItemCollector<Item> {
     ///
     /// # Panics
     ///
-    /// Panics if the player isn't in the playerset
+    /// Panics if the [`Player`] isn't in the [`PlayerSet`]
     ///
     /// ```should_panic
     /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};

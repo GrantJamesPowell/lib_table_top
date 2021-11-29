@@ -1,4 +1,18 @@
-/// Create Uuid `NewType` wrappers with all the fixin's
+//! Helpers around ids
+//!
+//! This module contains the "ID"s for various domain concepts within `lib_table_top`. Higher level
+//! systems can use these types to communicate with each other. In practice all the IDs in this
+//! module are wrappers around [`Uuid`](uuid::Uuid).
+
+
+/// Create a wrapper type around [`Uuid`](uuid::Uuid)
+///
+/// ```
+/// use lttcore::uuid_id;
+///
+/// uuid_id!(Foo);
+/// assert!(Foo::new() != Foo::default());
+/// ```
 #[macro_export]
 macro_rules! uuid_id {
     ($id:ident) => {

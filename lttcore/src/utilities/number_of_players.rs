@@ -1,9 +1,12 @@
+//! Number of players
+
 use super::PlayerIndexedData;
 use crate::{Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use std::num::{NonZeroU8, TryFromIntError};
 use std::ops::Deref;
 
+/// Wrapper around [`NonZeroU8`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct NumberOfPlayers(NonZeroU8);
 

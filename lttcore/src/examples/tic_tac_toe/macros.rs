@@ -1,4 +1,4 @@
-/// Helper function to have `tic_tac_toe::Board` literals
+/// Helper function to have [`Board`](crate::examples::tic_tac_toe::Board) literals
 ///
 /// ## Notes
 ///

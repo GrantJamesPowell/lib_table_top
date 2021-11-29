@@ -1,5 +1,15 @@
+//! An identifier for a "player" within Lib Table Top
+//!
+//! Conceptually a player is someone who can act upon a the game. A player may or may not have
+//! secret information and will have between 0 and many turns over the course of the game.
+//!
+//! # Implementation notes:
+//!
+//! [`Player`] is a wrapper around a [`u8`], letting games have a maximum of 256 players. 
+
 use serde::{Deserialize, Serialize};
 
+/// An identifier for a "player" within Lib Table Top
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Player(u8);
 
@@ -28,7 +38,7 @@ impl Player {
         (0..=u8::MAX).map(Self::new)
     }
 
-    /// Return the previous player, wrapping around from 0 => 255
+    /// Return the previous [`Player`], wrapping around from 0 => 255
     ///
     /// ```
     /// use lttcore::Player;
@@ -46,7 +56,7 @@ impl Player {
         Self(self.0.wrapping_sub(1))
     }
 
-    /// Return the next player, wrapping around from 255 => 0
+    /// Return the next [`Player`], wrapping around from 255 => 0
     ///
     /// ```
     /// use lttcore::Player;

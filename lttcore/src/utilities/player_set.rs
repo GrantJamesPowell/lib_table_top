@@ -4,7 +4,7 @@ use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
 
-/// Helper function to define `PlayerSet` literals
+/// Helper macro to define [`PlayerSet`] literals
 ///
 /// ```
 /// use lttcore::{player_set, Player, PlayerSet};
@@ -43,9 +43,17 @@ macro_rules! zip_with {
     }};
 }
 
-/// High performance player set abstraction designd to be O(1) for
-/// Add/Remove/Lookup and to only use a fixed 32 bytes of memory. Is also
-/// `Copy` which makes it super ergonomic to use
+/// A set of [`Player`](crate::Player)
+///
+/// # Design goals
+///
+/// * `O(1)` Add/Remove/Lookup
+/// * Serializes nicely
+/// * Avoids allocating
+///
+/// # Implmentation notes
+/// 
+/// [`PlayerSet`] stores it's data as 256 bits, one for each potential value of [`Player`]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlayerSet([u64; 4]);
 
@@ -71,7 +79,7 @@ impl PlayerSet {
 
     /// Returns the offset of the player relative to the playerset
     ///
-    /// Note: `PlayerSet` is iterated in increasing order starting with Player 0
+    /// Note: [`PlayerSet`] is iterated in increasing order starting with [`Player`] `0`
     ///
     /// ```
     /// use lttcore::player_set;
@@ -133,7 +141,7 @@ impl PlayerSet {
         self.count()
     }
 
-    /// Returns if a player is in set
+    /// Returns whether the [`Player`] is in [`PlayerSet`]
     ///
     /// ```
     /// use lttcore::{Player, PlayerSet};
@@ -150,7 +158,7 @@ impl PlayerSet {
         (self.0[section(player)] & (1_usize << offset(player)) as u64) > 0
     }
 
-    /// If a `PlayerSet` is empty
+    /// If a [`PlayerSet`] is empty
     ///
     /// ```
     /// use lttcore::PlayerSet;
@@ -185,7 +193,7 @@ impl PlayerSet {
         (*self).into_iter()
     }
 
-    /// Adds the player to the set, is a noop if player is already in set
+    /// Adds the [`Player`] to the set, is a noop if [`Player`] is already in set
     /// returns the player offset
     ///
     /// ```
@@ -209,7 +217,7 @@ impl PlayerSet {
             .expect("we just inserted the player")
     }
 
-    /// Remove a player from the set, is a noop if player is not in the set
+    /// Remove a [`Player`] from the set, is a noop if [`Player`] is not in the set
     ///
     /// ```
     /// use lttcore::player_set;
@@ -225,7 +233,7 @@ impl PlayerSet {
         self.0[section(player)] &= !(1_usize << offset(player)) as u64;
     }
 
-    /// The `PlayerSet` representing the union, i.e. the players that are in self, other, or both
+    /// The [`PlayerSet`] representing the union, i.e. the players that are in self, other, or both
     ///
     /// ```
     /// use lttcore::player_set;
@@ -239,7 +247,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y)| { x | y })
     }
 
-    /// The `PlayerSet` representing the intersection, i.e. the players that are in self and also in other
+    /// The [`PlayerSet`] representing the intersection, i.e. the players that are in self and also in other
     ///
     /// ```
     /// use lttcore::player_set;
@@ -253,7 +261,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y)| { x & y })
     }
 
-    /// The `PlayerSet` representing the difference, i.e., the players that are in self but not in other.
+    /// The [`PlayerSet`] representing the difference, i.e., the players that are in self but not in other.
     ///
     /// ```
     /// use lttcore::player_set;
@@ -267,7 +275,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y): (u64, u64)| { x & !y })
     }
 
-    /// The `PlayerSet` representing the symmetric difference, i.e., the players in self or other but
+    /// The [`PlayerSet`] representing the symmetric difference, i.e., the players in self or other but
     /// not both
     ///
     /// ```
@@ -282,7 +290,7 @@ impl PlayerSet {
         zip_with!(self, other, |(x, y)| { x ^ y })
     }
 
-    /// Returns the next player to the right of the given player, wrapping around if required
+    /// Returns the next [`Player`] to the right of the given [`Player`], wrapping around if required
     ///
     /// ```
     /// use lttcore::player_set;
@@ -315,7 +323,7 @@ impl PlayerSet {
         self.into_iter_from_starting_player(player.next()).next()
     }
 
-    /// Returns the next player to the left of the given player, wrapping around if required
+    /// Returns the next player to the left of the given [`Player`], wrapping around if required
     ///
     /// ```
     /// use lttcore::player_set;
@@ -348,7 +356,7 @@ impl PlayerSet {
             .next_back()
     }
 
-    /// Convenience wrapper around `next_player_left` and `next_player_right`
+    /// see [`PlayerSet::next_player_left`] and [`PlayerSet::next_player_right`]
     pub fn next_player_in_direction(
         &self,
         player: impl Into<Player>,
