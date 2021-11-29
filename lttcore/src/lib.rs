@@ -50,9 +50,11 @@ extern crate static_assertions;
 #[cfg(feature = "encoding")]
 pub mod encoding;
 
+#[cfg(feature = "examples")]
+pub mod examples;
+
 pub mod bots;
 pub mod common;
-pub mod examples;
 pub mod id;
 pub mod play;
 pub mod pov;
