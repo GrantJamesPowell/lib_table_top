@@ -1,6 +1,5 @@
 use crate::messages::MatchMakerRequest;
-use lttcore::id::GameId;
-use lttcore::Player;
+use lttcore::{id::GameId, play::Player};
 use tokio::sync::{mpsc, oneshot};
 
 pub type GameRequestTicket = oneshot::Receiver<(GameId, Player)>;

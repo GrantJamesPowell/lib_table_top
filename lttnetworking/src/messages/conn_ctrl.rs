@@ -2,7 +2,7 @@ use crate::connection::SubConnId;
 use crate::messages::closed::Closed;
 use bytes::Bytes;
 use lttcore::id::GameId;
-use lttcore::Player;
+use lttcore::play::Player;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

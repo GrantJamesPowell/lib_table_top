@@ -5,9 +5,9 @@ pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
     play::{view::NoSecretPlayerInfo, LttVersion},
-    play::{ActionResponse, DebugMsgs, GameAdvance},
+    play::{ActionResponse, DebugMsgs, GameAdvance, Player},
     utilities::PlayerIndexedData as PID,
-    Play, Player, PlayerSet,
+    Play, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

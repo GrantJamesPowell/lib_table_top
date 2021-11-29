@@ -3,8 +3,8 @@ mod support_getters;
 mod support_povs;
 mod support_scenarios;
 
-use crate::play::{ActionResponse, Actions, EnumeratedGameAdvance, SettingsPtr, TurnNum};
-use crate::{Play, Player, Seed};
+use crate::play::{ActionResponse, Actions, EnumeratedGameAdvance, Player, SettingsPtr, TurnNum};
+use crate::{Play, Seed};
 use im::Vector;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

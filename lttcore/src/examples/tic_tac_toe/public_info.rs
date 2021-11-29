@@ -1,7 +1,6 @@
 use super::{Marker, Position, TicTacToe};
-use crate::Player;
 use crate::{
-    play::{Score, View},
+    play::{Player, Score, View},
     utilities::PlayerIndexedData as PID,
 };
 use serde::{Deserialize, Serialize};

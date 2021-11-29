@@ -10,7 +10,7 @@ use game_meta::GameMeta;
 pub use game_meta::{ObserverConnection, PlayerConnection};
 use lttcore::encoder::Encoding;
 use lttcore::id::GameId;
-use lttcore::{GameProgression, Play, Player};
+use lttcore::{play::Player, GameProgression, Play};
 use std::time::Duration;
 
 #[derive(Debug)]

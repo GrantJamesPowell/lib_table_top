@@ -1,4 +1,4 @@
-use crate::Player;
+use crate::play::Player;
 use serde::{Deserialize, Serialize};
 
 /// Conveniences for Player 0 and Player 1
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 /// most methods and functions accept an `impl Into<Player>` so markers
 /// can be used in their stead
 /// ```
-/// use lttcore::Player;
+/// use lttcore::play::Player;
 /// use lttcore::examples::tic_tac_toe::Marker::*;
 ///
 /// let p0: Player = 0.into();

@@ -1,4 +1,4 @@
-use crate::{Player, PlayerSet};
+use crate::{play::Player, PlayerSet};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::hash::Hash;
@@ -257,7 +257,7 @@ impl<T> std::ops::IndexMut<Player> for PlayerIndexedData<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Player;
+    use crate::play::Player;
 
     #[test]
     fn test_player_indexing() {

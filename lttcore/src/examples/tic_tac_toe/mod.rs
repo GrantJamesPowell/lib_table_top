@@ -112,8 +112,8 @@ pub use settings::Settings;
 
 use crate::play::{view::NoSecretPlayerInfo, LttVersion};
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance},
-    Play, Player, PlayerSet,
+    play::{ActionResponse, DebugMsgs, GameAdvance, Player},
+    Play, PlayerSet,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;

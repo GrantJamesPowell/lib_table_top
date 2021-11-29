@@ -1,5 +1,5 @@
-use crate::play::{settings::NumPlayers, NumberOfPlayers, TurnNum};
-use crate::{GameProgression, Play, Player, PlayerSet};
+use crate::play::{settings::NumPlayers, NumberOfPlayers, Player, TurnNum};
+use crate::{GameProgression, Play, PlayerSet};
 use std::borrow::Cow;
 
 use super::HistoryEvent;

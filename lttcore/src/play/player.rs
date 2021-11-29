@@ -39,7 +39,7 @@ impl Player {
     /// Return the previous [`Player`], wrapping around from 0 => 255
     ///
     /// ```
-    /// use lttcore::Player;
+    /// use lttcore::play::Player;
     ///
     /// let p0: Player = 0.into();
     /// let p1: Player = 1.into();
@@ -57,7 +57,7 @@ impl Player {
     /// Return the next [`Player`], wrapping around from 255 => 0
     ///
     /// ```
-    /// use lttcore::Player;
+    /// use lttcore::play::Player;
     ///
     /// let p0: Player = 0.into();
     /// let p1: Player = 1.into();

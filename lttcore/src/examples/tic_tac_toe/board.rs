@@ -28,7 +28,7 @@
 
 use super::{ActionError, Marker};
 use crate::common::cartesian::bounded::{BoundedPoint, BoundedX, BoundedY, BoundsError};
-use crate::Player;
+use crate::play::Player;
 use itertools::iproduct;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -360,7 +360,7 @@ impl Board {
 
     /// Returns the status of the current game
     /// ```
-    /// use lttcore::{Play, Player};
+    /// use lttcore::{Play, play::Player};
     /// use lttcore::ttt;
     /// use lttcore::examples::tic_tac_toe::{Board, Position, Status::*, Marker::*};
     ///

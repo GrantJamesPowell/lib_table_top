@@ -1,5 +1,5 @@
 use crate::utilities::PlayerIndexedData;
-use crate::{Player, PlayerSet};
+use crate::{play::Player, PlayerSet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerItemCollector<Item> {
@@ -43,7 +43,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Returns all the players who have submitted items
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -63,7 +63,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Returns all the players who haven't submitted yet
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -84,7 +84,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Returns whether all players have submitted
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -102,7 +102,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Yields the items from the collector
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -129,7 +129,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Adds a [`Player`] and associated item to the [`PlayerItemCollector`], returning the old value
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -145,7 +145,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// panics if the [`Player`] isn't in the [`PlayerSet`]
     ///
     /// ```should_panic
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -159,7 +159,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Removes a [`Player`] from the [`PlayerItemCollector`], returning the associated item if it's there
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
@@ -177,7 +177,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// Panics if the [`Player`] isn't in the [`PlayerSet`]
     ///
     /// ```should_panic
-    /// use lttcore::{Player, PlayerSet, utilities::PlayerItemCollector};
+    /// use lttcore::{play::Player, PlayerSet, utilities::PlayerItemCollector};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);

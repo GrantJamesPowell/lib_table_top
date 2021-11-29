@@ -1,5 +1,5 @@
 use crate::common::direction::LeftOrRight::{self, Left, Right};
-use crate::{play::NumberOfPlayers, Player};
+use crate::play::{NumberOfPlayers, Player};
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
@@ -7,7 +7,7 @@ use std::iter::FromIterator;
 /// Helper macro to define [`PlayerSet`] literals
 ///
 /// ```
-/// use lttcore::{player_set, Player, PlayerSet};
+/// use lttcore::{player_set, play::Player, PlayerSet};
 ///
 /// let my_empty_ps = player_set![];
 /// assert_eq!(my_empty_ps, PlayerSet::new());
@@ -23,7 +23,9 @@ use std::iter::FromIterator;
 #[macro_export]
 macro_rules! player_set {
     ( $( $expr:expr ),* ) => {
-        [$($expr,)*].into_iter().map(::lttcore::Player::new).collect::<::lttcore::PlayerSet>()
+        [$($expr,)*].into_iter()
+            .map(::lttcore::play::Player::new)
+            .collect::<::lttcore::PlayerSet>()
     };
 }
 
@@ -144,7 +146,7 @@ impl PlayerSet {
     /// Returns whether the [`Player`] is in [`PlayerSet`]
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet};
+    /// use lttcore::{play::Player, PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     /// let player: Player = 1.into();
@@ -175,7 +177,7 @@ impl PlayerSet {
     /// Iterator over players in the set
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet};
+    /// use lttcore::{play::Player, PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     ///
@@ -197,7 +199,7 @@ impl PlayerSet {
     /// returns the player offset
     ///
     /// ```
-    /// use lttcore::{Player, PlayerSet};
+    /// use lttcore::{play::Player, PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     /// let player: Player = 1.into();
