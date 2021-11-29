@@ -1,8 +1,8 @@
 use super::channels::{ToGameHostMsgReceiver, ToObserverMsgSender, ToPlayerMsgSender};
 use crate::messages::{ToGameHostMsg::*, ToObserverMsg, ToPlayerMsg};
-use lttcore::play::{ActionResponse, EnumeratedGameAdvance};
+use lttcore::play::{ActionResponse, EnumeratedGameAdvance, Play};
+use lttcore::pov::GameProgression;
 use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
-use lttcore::{play::Play, GameProgression};
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,

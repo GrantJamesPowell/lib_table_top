@@ -1,4 +1,8 @@
-use crate::{play::Play, GameProgression, GameProgressionBuilder, Seed};
+use crate::{
+    play::Play,
+    pov::{GameProgression, GameProgressionBuilder},
+    Seed,
+};
 
 impl<T: Play> GameProgression<T> {
     pub fn from_settings(settings: impl Into<T::Settings>) -> Self {

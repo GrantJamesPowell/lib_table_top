@@ -102,8 +102,8 @@ mod tests {
         guess_the_number::{Guess, Settings},
         GuessTheNumber,
     };
-    use lttcore::{play::ActionResponse, pov::ObserverUpdate};
-    use lttcore::{GameObserver, GameProgression};
+    use lttcore::play::ActionResponse;
+    use lttcore::pov::{GameObserver, GameProgression, ObserverUpdate};
 
     use super::super::channels::{
         bytes_channels, AddConnectionSender, ToGameHostMsgReceiver, ToObserverMsgSender,

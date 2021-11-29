@@ -8,8 +8,8 @@ use lttcore::play::{
     ActionResponse::*,
     Actions, DebugMsgs, Player,
 };
+use lttcore::pov::{GamePlayer, GameProgression};
 use lttcore::seed::SEED_42;
-use lttcore::{GamePlayer, GameProgression};
 
 #[test]
 fn test_building_default_settings() {

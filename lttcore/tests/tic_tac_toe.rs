@@ -1,5 +1,5 @@
 use lttcore::examples::TicTacToe;
-use lttcore::GameProgressionBuilder;
+use lttcore::pov::GameProgressionBuilder;
 
 #[test]
 fn test_you_can_build_a_tic_tac_toe_game_progression() {

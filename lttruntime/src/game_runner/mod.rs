@@ -9,9 +9,11 @@ use dashmap::DashMap;
 use game_meta::GameMeta;
 pub use game_meta::{ObserverConnection, PlayerConnection};
 use lttcore::encoder::Encoding;
-use lttcore::id::GameId;
-use lttcore::play::{Play, Player};
-use lttcore::GameProgression;
+use lttcore::{
+    id::GameId,
+    play::{Play, Player},
+    pov::GameProgression,
+};
 use std::time::Duration;
 
 #[derive(Debug)]

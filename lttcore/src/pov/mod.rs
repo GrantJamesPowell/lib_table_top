@@ -1,3 +1,13 @@
+mod game_observer;
+mod game_player;
+pub mod game_progression;
+mod scenario;
+
+pub use game_observer::GameObserver;
+pub use game_player::GamePlayer;
+pub use game_progression::{GameProgression, GameProgressionBuilder};
+pub use scenario::Scenario;
+
 use crate::play::{Play, Player, TurnNum, View};
 use crate::PlayerSet;
 use serde::{Deserialize, Serialize};

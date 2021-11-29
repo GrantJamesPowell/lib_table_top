@@ -229,7 +229,7 @@ mod tests {
         guess_the_number::{Guess, Settings},
         GuessTheNumber,
     };
-    use lttcore::{pov::PlayerUpdate, GamePlayer, GameProgression};
+    use lttcore::pov::{GamePlayer, GameProgression, PlayerUpdate};
     use tokio::sync::mpsc::error::TryRecvError;
     use tokio::time::sleep;
 

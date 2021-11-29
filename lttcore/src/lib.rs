@@ -23,25 +23,16 @@ extern crate lazy_static;
 #[macro_use]
 extern crate static_assertions;
 
-mod game_observer;
-mod game_player;
-mod scenario;
-
 pub mod bots;
 pub mod common;
 #[cfg(feature = "encoder")]
 pub mod encoder;
 pub mod examples;
-pub mod game_progression;
 pub mod id;
 pub mod play;
 pub mod pov;
 pub mod seed;
 pub mod utilities;
 
-pub use game_observer::GameObserver;
-pub use game_player::GamePlayer;
-pub use game_progression::{GameProgression, GameProgressionBuilder};
-pub use scenario::Scenario;
 pub use seed::Seed;
 pub use utilities::PlayerSet;

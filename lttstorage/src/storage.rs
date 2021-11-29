@@ -6,7 +6,7 @@ use lttcore::play::{settings::Custom, Play};
 use lttcore::{
     encoder::EncodingError,
     id::{GameId, SettingsId, UserId},
-    GameProgression,
+    pov::GameProgression,
 };
 use std::borrow::Cow;
 

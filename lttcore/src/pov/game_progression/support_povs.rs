@@ -1,5 +1,5 @@
 use crate::play::{Play, Player, SettingsPtr};
-use crate::{GameObserver, GamePlayer, GameProgression};
+use crate::pov::{GameObserver, GamePlayer, GameProgression};
 
 impl<T: Play> GameProgression<T> {
     pub fn game_observer(&self) -> GameObserver<T> {
