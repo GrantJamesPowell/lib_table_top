@@ -82,7 +82,7 @@ impl<T: Play, Raw: RawStorage> Storage<T> for Raw {
     ) -> Result<(), StorageError> {
         let raw = RawCustomSettings {
             name: custom.name.map(|name| name.into_owned()),
-            game_type: String::from(T::string_id()),
+            game_type: String::from(T::lib_table_top_identifier()),
             bytes: self
                 .encoding()
                 .serialize(&custom.settings)

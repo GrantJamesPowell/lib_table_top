@@ -4,7 +4,7 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
-    play::view::NoSecretPlayerInfo,
+    play::{view::NoSecretPlayerInfo, LttVersion},
     play::{ActionResponse, DebugMsgs, GameAdvance},
     utilities::PlayerIndexedData as PID,
     Play, Player, PlayerSet,
@@ -41,16 +41,18 @@ pub enum ActionError {
 
 use ActionError::GuessOutOfRange;
 
+impl LttVersion for GuessTheNumber {
+    fn lib_table_top_identifier() -> &'static str {
+        "GuessTheNumber"
+    }
+}
+
 impl Play for GuessTheNumber {
     type Action = Guess;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type Settings = Settings;
     type PlayerSecretInfo = NoSecretPlayerInfo;
-
-    fn string_id() -> &'static str {
-        "GuessTheNumber"
-    }
 
     fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
         Cow::Owned(NoSecretPlayerInfo)

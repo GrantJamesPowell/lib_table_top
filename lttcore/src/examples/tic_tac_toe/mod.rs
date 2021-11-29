@@ -110,7 +110,7 @@ pub use marker::Marker;
 pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
-use crate::play::view::NoSecretPlayerInfo;
+use crate::play::{view::NoSecretPlayerInfo, LttVersion};
 use crate::{
     play::{ActionResponse, DebugMsgs, GameAdvance},
     Play, Player, PlayerSet,
@@ -259,16 +259,18 @@ impl TicTacToe {
     }
 }
 
+impl LttVersion for TicTacToe {
+    fn lib_table_top_identifier() -> &'static str {
+        "TicTacToe"
+    }
+}
+
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type PlayerSecretInfo = NoSecretPlayerInfo;
     type Settings = Settings;
-
-    fn string_id() -> &'static str {
-        "TicTacToe"
-    }
 
     fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
         match self.status() {

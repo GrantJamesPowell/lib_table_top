@@ -1,4 +1,5 @@
 mod game_advance;
+mod ltt_version;
 mod turn_num;
 
 pub mod score;
@@ -6,6 +7,7 @@ pub mod settings;
 pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
+pub use ltt_version::LttVersion;
 pub use score::Score;
 pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
@@ -32,7 +34,18 @@ pub enum ActionResponse<T: Play> {
 }
 
 pub trait Play:
-    Sized + Clone + Debug + Send + Sync + PartialEq + Eq + Hash + Serialize + DeserializeOwned + 'static
+    LttVersion
+    + Sized
+    + Clone
+    + Debug
+    + Send
+    + Sync
+    + PartialEq
+    + Eq
+    + Hash
+    + Serialize
+    + DeserializeOwned
+    + 'static
 {
     type Action: Clone
         + Debug
@@ -69,8 +82,6 @@ pub trait Play:
 
     type PublicInfo: View + Score;
     type PlayerSecretInfo: View;
-
-    fn string_id() -> &'static str;
 
     fn player_secret_info(
         &self,
