@@ -1,6 +1,6 @@
 use lttcore::{
     play::{Play, TurnNum},
-    pov::{GamePlayer, PlayerUpdate},
+    pov::player::{GamePlayer, PlayerUpdate},
 };
 use serde::{Deserialize, Serialize};
 

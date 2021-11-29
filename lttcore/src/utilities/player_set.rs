@@ -7,7 +7,7 @@ use std::iter::FromIterator;
 /// Helper macro to define [`PlayerSet`] literals
 ///
 /// ```
-/// use lttcore::{player_set, play::Player, PlayerSet};
+/// use lttcore::{player_set, play::Player, utilities::PlayerSet};
 ///
 /// let my_empty_ps = player_set![];
 /// assert_eq!(my_empty_ps, PlayerSet::new());
@@ -45,7 +45,7 @@ macro_rules! zip_with {
     }};
 }
 
-/// A set of [`Player`]
+/// A set of [`Player`](crate::play::Player)
 ///
 /// # Design goals
 ///
@@ -116,7 +116,7 @@ impl PlayerSet {
 
     /// Return the count of players in the set
     /// ```
-    /// use lttcore::PlayerSet;
+    /// use lttcore::utilities::PlayerSet;
     ///
     /// let mut set: PlayerSet = Default::default();
     /// assert_eq!(set.count(), 0);
@@ -146,7 +146,7 @@ impl PlayerSet {
     /// Returns whether the [`Player`] is in [`PlayerSet`]
     ///
     /// ```
-    /// use lttcore::{play::Player, PlayerSet};
+    /// use lttcore::{play::Player, utilities::PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     /// let player: Player = 1.into();
@@ -163,7 +163,7 @@ impl PlayerSet {
     /// If a [`PlayerSet`] is empty
     ///
     /// ```
-    /// use lttcore::PlayerSet;
+    /// use lttcore::utilities::PlayerSet;
     ///
     /// let mut set: PlayerSet = Default::default();
     /// assert!(set.is_empty());
@@ -177,7 +177,7 @@ impl PlayerSet {
     /// Iterator over players in the set
     ///
     /// ```
-    /// use lttcore::{play::Player, PlayerSet};
+    /// use lttcore::{play::Player, utilities::PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     ///
@@ -199,7 +199,7 @@ impl PlayerSet {
     /// returns the player offset
     ///
     /// ```
-    /// use lttcore::{play::Player, PlayerSet};
+    /// use lttcore::{play::Player, utilities::PlayerSet};
     ///
     /// let mut set = PlayerSet::new();
     /// let player: Player = 1.into();

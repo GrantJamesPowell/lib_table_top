@@ -1,5 +1,5 @@
 use lttcore::play::Play;
-use lttcore::pov::{GameObserver, ObserverUpdate};
+use lttcore::pov::observer::{GameObserver, ObserverUpdate};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

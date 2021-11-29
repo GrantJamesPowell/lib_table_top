@@ -1,5 +1,5 @@
 use super::{DebugMsgs, Play, PlayerSecretInfoUpdates, TurnNum, View};
-use crate::pov::{ObserverUpdate, PlayerUpdate};
+use crate::pov::{observer::ObserverUpdate, player::PlayerUpdate};
 use crate::{play::Player, utilities::PlayerSet};
 use std::borrow::Cow;
 

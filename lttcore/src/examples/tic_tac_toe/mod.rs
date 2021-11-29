@@ -94,7 +94,6 @@
 //! points to learn how to interact with this game. The [`Board`](board::Board) is what
 //! [`TicTacToeBot`]s are passed when they are invoked
 
-#[warn(missing_docs)]
 mod action;
 pub mod board;
 pub mod bot;

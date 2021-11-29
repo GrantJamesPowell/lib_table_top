@@ -3,7 +3,7 @@ use lttcore::examples::guess_the_number::Settings;
 use lttcore::examples::GuessTheNumber;
 use lttcore::play::{number_of_players::FOUR_PLAYER, seed::SEED_42, NumberOfPlayers, Player, Seed};
 use lttcore::{
-    pov::{GamePlayer, GameProgression},
+    pov::{game_progression::GameProgression, player::GamePlayer},
     utilities::PlayerSet,
 };
 use serde::{de::DeserializeOwned, Serialize};

@@ -9,7 +9,7 @@ use lttcore::play::{
     ActionResponse::*,
     Actions, DebugMsgs, Player,
 };
-use lttcore::pov::{GamePlayer, GameProgression};
+use lttcore::pov::{game_progression::GameProgression, player::GamePlayer};
 
 #[test]
 fn test_building_default_settings() {

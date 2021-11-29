@@ -12,7 +12,7 @@ use lttcore::encoding::Encoding;
 use lttcore::{
     id::GameId,
     play::{Play, Player},
-    pov::GameProgression,
+    pov::game_progression::GameProgression,
 };
 use std::time::Duration;
 

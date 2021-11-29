@@ -1,5 +1,5 @@
 use crate::play::{Play, Seed};
-use crate::pov::PlayerPov;
+use crate::pov::player::PlayerPov;
 
 pub trait Bot {
     type Game: Play;
