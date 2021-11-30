@@ -22,9 +22,9 @@ pub use view::View;
 use crate::utilities::{PlayerIndexedData, PlayerSet};
 use crate::LibTableTopIdentifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use std::borrow::Cow;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::{borrow::Cow, panic::RefUnwindSafe};
 
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
 pub type PlayerSecretInfoUpdates<T> =
@@ -40,6 +40,7 @@ pub enum ActionResponse<T: Play> {
 
 pub trait Play:
     LibTableTopIdentifier
+    + RefUnwindSafe
     + Sized
     + Clone
     + Debug
@@ -53,6 +54,7 @@ pub trait Play:
     + 'static
 {
     type Action: Clone
+        + RefUnwindSafe
         + Debug
         + PartialEq
         + Eq
@@ -63,6 +65,7 @@ pub trait Play:
         + 'static;
 
     type ActionError: Clone
+        + RefUnwindSafe
         + Debug
         + PartialEq
         + Eq
@@ -73,6 +76,9 @@ pub trait Play:
         + 'static;
 
     type Settings: Clone
+        + settings::NumPlayers
+        + settings::BuiltinGameModes
+        + RefUnwindSafe
         + Debug
         + Default
         + PartialEq
@@ -81,12 +87,10 @@ pub trait Play:
         + Send
         + Serialize
         + DeserializeOwned
-        + 'static
-        + settings::NumPlayers
-        + settings::BuiltinGameModes;
+        + 'static;
 
-    type PublicInfo: View + Score;
-    type PlayerSecretInfo: View;
+    type PublicInfo: View + Score + RefUnwindSafe;
+    type PlayerSecretInfo: View + RefUnwindSafe;
 
     fn player_secret_info(
         &self,
