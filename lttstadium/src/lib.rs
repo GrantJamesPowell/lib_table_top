@@ -10,6 +10,7 @@ use lttcore::{
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
+use std::panic::catch_unwind;
 use std::sync::Arc;
 
 #[derive(Builder, Clone)]
@@ -46,8 +47,10 @@ impl<T: Play> FightCard<T> {
                         .which_players_input_needed()
                         .player_indexed_data(|player| {
                             let pov = game_players[player].player_pov();
-                            let action = self.bots[player].run(&pov, &bot_seeds[player]);
-                            ActionResponse::Response(action)
+
+                            catch_unwind(|| self.bots[player].run(&pov, &bot_seeds[player]))
+                                .map(ActionResponse::Response)
+                                .unwrap_or_else(|_| ActionResponse::Resign)
                         });
 
                     let game_advance = game.submit_actions(actions);
@@ -61,5 +64,31 @@ impl<T: Play> FightCard<T> {
                 (game, game_players)
             })
             .for_each(callback)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use lttcore::{
+        bot::Bot,
+        examples::{tic_tac_toe::bot::prebuilt::TicTacToePanicBot, TicTacToe},
+        play::Player,
+    };
+
+    #[test]
+    fn handles_panicking_bots() {
+        let bots: Vec<(Player, Arc<dyn Bot<Game = TicTacToe>>)> = vec![
+            (Player::new(0), Arc::new(TicTacToePanicBot)),
+            (Player::new(1), Arc::new(TicTacToePanicBot)),
+        ];
+
+        let fight_card = FightCardBuilder::default()
+            .iterations(1)
+            .bots(bots.into_iter().collect())
+            .build()
+            .unwrap();
+
+        fight_card.run(|_| {})
     }
 }
