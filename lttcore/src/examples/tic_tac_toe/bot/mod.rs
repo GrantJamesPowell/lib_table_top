@@ -7,6 +7,7 @@ use super::{Action, Board, Position, TicTacToe};
 use crate::bot::Bot;
 use crate::play::{Play, Seed};
 use crate::pov::player::PlayerPov;
+use std::panic::RefUnwindSafe;
 
 /// A simplified [`Bot`](`crate::bot::Bot`) wrapper specialized for playing [`TicTacToe`]
 pub trait TicTacToeBot {
@@ -18,9 +19,9 @@ pub trait TicTacToeBot {
 
 /// Wrapper type to implement [`Bot`](`crate::bot::Bot`) for any [`TicTacToeBot`]
 #[derive(Debug)]
-pub struct TicTacToeBotWrapper<T: TicTacToeBot + Sync + Send + 'static>(pub T);
+pub struct TicTacToeBotWrapper<T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static>(pub T);
 
-impl<T: TicTacToeBot + Sync + Send + 'static> Bot for TicTacToeBotWrapper<T> {
+impl<T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static> Bot for TicTacToeBotWrapper<T> {
     type Game = TicTacToe;
 
     fn run(

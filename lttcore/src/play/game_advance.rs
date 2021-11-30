@@ -1,14 +1,17 @@
-use super::{DebugMsgs, Play, PlayerSecretInfoUpdates, TurnNum, View};
+use super::{Play, PlayerSecretInfoUpdates, TurnNum, View};
 use crate::pov::{observer::ObserverUpdate, player::PlayerUpdate};
-use crate::{play::Player, utilities::PlayerSet};
+use crate::{
+    play::Player,
+    utilities::{PlayerIndexedData as PID, PlayerSet},
+};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GameAdvance<T: Play> {
     pub next_players_input_needed: PlayerSet,
-    pub public_info_update: <<T as Play>::PublicInfo as View>::Update,
+    pub public_info_update: <T::PublicInfo as View>::Update,
     pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
-    pub debug_msgs: DebugMsgs<T>,
+    pub debug_msgs: PID<T::ActionError>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,17 +32,18 @@ impl<T: Play> EnumeratedGameAdvance<T> {
     pub fn player_update(&self, player: impl Into<Player>) -> PlayerUpdate<'_, T> {
         let player = player.into();
         let observer_update = self.observer_update();
+        let debug_msg = self.game_advance.debug_msgs.get(player).map(Cow::Borrowed);
         let secret_info_update = self
             .game_advance
             .player_secret_info_updates
-            .iter()
-            .find(|(p, _)| *p == player)
-            .map(|(_, update)| Cow::Borrowed(update));
+            .get(player)
+            .map(Cow::Borrowed);
 
         PlayerUpdate {
             player,
             observer_update,
             secret_info_update,
+            debug_msg,
         }
     }
 }

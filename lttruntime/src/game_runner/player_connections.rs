@@ -410,7 +410,10 @@ mod tests {
         let settings: Settings = (0..=10).try_into().unwrap();
         let mut game_progression = GameProgression::from_settings(settings);
         let guess: Guess = 4.into();
-        let update = game_progression.submit_actions([(0.into(), ActionResponse::Response(guess))]);
+        let actions = game_progression
+            .which_players_input_needed()
+            .player_indexed_data(|_player| ActionResponse::Response(guess.clone()));
+        let update = game_progression.submit_actions(actions);
         let player_update = update.player_update(player).into_owned();
         let game_player = game_progression.game_player(player);
 

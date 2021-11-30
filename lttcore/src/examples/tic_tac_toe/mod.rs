@@ -61,7 +61,7 @@
 //! }
 //!
 //! impl TicTacToeBot for MySuperCoolBot {
-//!     fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+//!     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
 //!         match board.at((self.favorite_number, self.favorite_number)) {
 //!             Ok(None) => Position::new(self.favorite_number, self.favorite_number),
 //!             _ => RandomSelector.claim_space(board, seed)
@@ -112,8 +112,8 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
 use crate::{
-    play::{view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, Play, Player},
-    utilities::PlayerSet,
+    play::{view::NoSecretPlayerInfo, ActionResponse, GameAdvance, Play, Player},
+    utilities::{PlayerIndexedData, PlayerSet},
     LibTableTopIdentifier,
 };
 use serde::{Deserialize, Serialize};
@@ -316,7 +316,7 @@ impl Play for TicTacToe {
 
         let marker = Marker::try_from(player).expect("only p0 or p1 was passed");
 
-        let mut debug_msgs: DebugMsgs<Self> = Default::default();
+        let mut debug_msgs: PlayerIndexedData<ActionError> = Default::default();
 
         let public_info_update = {
             match response.as_ref() {

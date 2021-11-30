@@ -6,7 +6,7 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
-    play::{view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, Play, Player},
+    play::{view::NoSecretPlayerInfo, ActionResponse, GameAdvance, Play, Player},
     utilities::{PlayerIndexedData as PID, PlayerSet},
     LibTableTopIdentifier,
 };
@@ -92,7 +92,7 @@ impl Play for GuessTheNumber {
         use ActionResponse::Response;
         let actions: PID<Cow<'a, ActionResponse<Self>>> = actions.collect();
 
-        let debug_msgs: DebugMsgs<Self> = actions
+        let debug_msgs: PID<ActionError> = actions
             .iter()
             .filter_map(|(player, response)| {
                 if let Response(Guess(guess)) = response.as_ref() {

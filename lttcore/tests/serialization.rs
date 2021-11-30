@@ -225,6 +225,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(
         serialized,
         json!({
+          "debug_msgs": [],
           "game_observer": {
             "turn_num": 0,
             "action_requests": [1, 0, 0, 0],
