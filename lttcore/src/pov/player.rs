@@ -61,6 +61,7 @@ pub struct PlayerUpdate<'a, T: Play> {
     pub(crate) player: Player,
     pub(crate) observer_update: ObserverUpdate<'a, T>,
     pub(crate) secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
+    pub(crate) debug_msg: Option<Cow<'a, T::ActionError>>,
 }
 
 impl<'a, T: Play> PlayerUpdate<'a, T> {
@@ -82,6 +83,7 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
             player: self.player,
             observer_update: self.observer_update.into_owned(),
             secret_info_update: self.secret_info_update.map(|x| Cow::Owned(x.into_owned())),
+            debug_msg: self.debug_msg.map(|x| Cow::Owned(x.into_owned())),
         }
     }
 }
@@ -100,6 +102,7 @@ pub struct GamePlayer<T: Play> {
     pub(crate) game_observer: GameObserver<T>,
     pub(crate) player: Player,
     pub(crate) secret_info: T::PlayerSecretInfo,
+    pub(crate) debug_msgs: Vec<T::ActionError>,
 }
 
 impl<T: Play> GamePlayer<T> {
@@ -138,6 +141,11 @@ impl<T: Play> GamePlayer<T> {
     /// The [`Settings`](Play::Settings) of the game
     pub fn settings(&self) -> &T::Settings {
         self.game_observer.settings()
+    }
+
+    /// An iterator over the debug messages a player has received
+    pub fn debug_msgs(&self) -> impl Iterator<Item = &T::ActionError> + '_ {
+        self.debug_msgs.iter()
     }
 
     /// Apply an [`PlayerUpdate`] to this state machine, advancing the state machine

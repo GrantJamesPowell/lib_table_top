@@ -36,7 +36,7 @@ pub async fn game_host<T: Play>(
             }
         }
 
-        let game_advance = game.submit_actions(returned_actions.into_items());
+        let game_advance = game.submit_actions(returned_actions.into_items().collect());
         send_update(game_advance, &to_players, &to_observer).await;
     }
 
@@ -97,9 +97,11 @@ mod tests {
     async fn test_game_host_returns_with_a_completed_progression() {
         let settings: Settings = Default::default();
         let mut game = GameProgression::from_settings(settings);
-        let guess: Guess = 0.into();
+        let actions = game
+            .which_players_input_needed()
+            .player_indexed_data(|player| Response(Guess::from(u64::from(player))));
 
-        game.submit_actions([(0.into(), Response(guess))]);
+        game.submit_actions(actions);
 
         let (to_mailbox, mailbox) = unbounded_channel();
         let (to_observer, _) = unbounded_channel();

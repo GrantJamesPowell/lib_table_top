@@ -4,9 +4,8 @@ mod support_getters;
 mod support_povs;
 mod support_scenarios;
 
-use crate::play::{
-    ActionResponse, Actions, EnumeratedGameAdvance, Play, Player, Seed, SettingsPtr, TurnNum,
-};
+use crate::play::{ActionResponse, EnumeratedGameAdvance, Play, Seed, SettingsPtr, TurnNum};
+use crate::utilities::PlayerIndexedData as PID;
 use im::Vector;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -30,15 +29,11 @@ pub struct GameProgression<T: Play> {
 #[serde(bound = "")]
 pub struct HistoryEvent<T: Play> {
     turn_num: TurnNum,
-    actions: Actions<T>,
+    actions: PID<ActionResponse<T>>,
 }
 
 impl<T: Play> GameProgression<T> {
-    pub fn submit_actions(
-        &mut self,
-        actions: impl IntoIterator<Item = (Player, ActionResponse<T>)>,
-    ) -> EnumeratedGameAdvance<T> {
-        let actions: Actions<T> = actions.into_iter().collect();
+    pub fn submit_actions(&mut self, actions: PID<ActionResponse<T>>) -> EnumeratedGameAdvance<T> {
         let game_advance = self.state.advance(
             &self.settings,
             actions
@@ -75,9 +70,7 @@ impl<T: Play> GameProgressionBuilder<T> {
             .as_ref()
             .map(|arc| arc.as_ref())
             .cloned()
-            .unwrap_or_else(|| {
-                T::initial_state_for_settings(&settings, &mut seed.rng_for_init())
-            });
+            .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
         let history = Vector::new();
 
         Ok(GameProgression {

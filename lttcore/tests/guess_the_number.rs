@@ -1,15 +1,16 @@
-use lttcore::examples::guess_the_number::{
-    ActionError::*, Guess, PublicInfo, Settings, SettingsBuilder,
-};
 use lttcore::examples::GuessTheNumber;
 use lttcore::play::{
     number_of_players::{ONE_PLAYER, TWO_PLAYER},
     seed::SEED_42,
     view::NoSecretPlayerInfo,
     ActionResponse::*,
-    Actions, DebugMsgs, Player,
+    Player,
 };
 use lttcore::pov::{game_progression::GameProgression, player::GamePlayer};
+use lttcore::{
+    examples::guess_the_number::{ActionError::*, Guess, PublicInfo, Settings, SettingsBuilder},
+    utilities::PlayerIndexedData as PID,
+};
 
 #[test]
 fn test_building_default_settings() {
@@ -48,7 +49,7 @@ fn test_it_shows_the_player_the_correct_things() {
 
     assert_eq!(players.len(), 2);
 
-    let mut actions: Actions<GuessTheNumber> = Default::default();
+    let mut actions = PID::default();
 
     for player in &players {
         assert!(player.is_this_players_input_needed());
@@ -77,7 +78,7 @@ fn test_it_shows_the_player_the_correct_things() {
         .player_secret_info_updates
         .is_empty());
 
-    let expected_debug_msgs: DebugMsgs<GuessTheNumber> = [(
+    let expected_debug_msgs: PID<_> = [(
         Player::new(0),
         GuessOutOfRange {
             guess: 0,

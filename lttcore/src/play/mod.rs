@@ -26,9 +26,7 @@ use std::borrow::Cow;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-pub type Actions<T> = PlayerIndexedData<ActionResponse<T>>;
 pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
-pub type DebugMsgs<T> = PlayerIndexedData<<T as Play>::ActionError>;
 pub type PlayerSecretInfoUpdates<T> =
     PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 
