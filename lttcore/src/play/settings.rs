@@ -116,26 +116,34 @@ impl<T: BuiltinGameModes + Default> Default for SettingsPtr<T> {
 }
 
 impl<T: BuiltinGameModes> SettingsPtr<T> {
-    pub fn is_builtin(&self) -> bool {
-        matches!(self, SettingsPtr::Builtin(_))
+    pub fn is_builtin(ptr: &SettingsPtr<T>) -> bool {
+        matches!(ptr, SettingsPtr::Builtin(_))
     }
 
-    pub fn is_custom(&self) -> bool {
-        matches!(self, SettingsPtr::Custom(_))
+    pub fn is_custom(ptr: &SettingsPtr<T>) -> bool {
+        matches!(ptr, SettingsPtr::Custom(_))
     }
 
-    pub fn name(&self) -> Option<&str> {
-        match self {
+    pub fn name(ptr: &SettingsPtr<T>) -> Option<&str> {
+        match ptr {
             SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => Some(&builtin.name),
             SettingsPtr::Custom(Custom { name, .. }) => name.as_ref().map(|cow| cow.as_ref()),
         }
     }
 
-    pub fn settings(&self) -> &T {
-        match self {
+    pub fn settings(ptr: &SettingsPtr<T>) -> &T {
+        match ptr {
             SettingsPtr::Builtin(VerifiedBuiltin(builtin)) => &builtin.settings,
             SettingsPtr::Custom(Custom { settings, .. }) => settings,
         }
+    }
+}
+
+impl<T: BuiltinGameModes> std::ops::Deref for SettingsPtr<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        SettingsPtr::settings(self)
     }
 }
 
@@ -229,7 +237,7 @@ mod test {
 
         let deserialized: SettingsPtr<Settings> =
             serde_json::from_value(serde_json::json!({"Builtin": "default"})).unwrap();
-        assert_eq!(deserialized.settings(), &Settings::default());
+        assert_eq!(SettingsPtr::settings(&deserialized), &Settings::default());
 
         let settings_ptr: SettingsPtr<Settings> = VerifiedBuiltin::from_str("players-1-range-1-10")
             .unwrap()

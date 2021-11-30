@@ -40,7 +40,7 @@ impl<T: Play> GameProgression<T> {
     ) -> EnumeratedGameAdvance<T> {
         let actions: Actions<T> = actions.into_iter().collect();
         let game_advance = self.state.advance(
-            self.settings.settings(),
+            &self.settings,
             actions
                 .iter()
                 .map(|(player, action)| (player, Cow::Borrowed(action))),
@@ -76,7 +76,7 @@ impl<T: Play> GameProgressionBuilder<T> {
             .map(|arc| arc.as_ref())
             .cloned()
             .unwrap_or_else(|| {
-                T::initial_state_for_settings(settings.settings(), &mut seed.rng_for_init())
+                T::initial_state_for_settings(&settings, &mut seed.rng_for_init())
             });
         let history = Vector::new();
 

@@ -81,7 +81,7 @@ impl<T: Play> GameObserver<T> {
 
     /// The [`Settings`](Play::Settings) of the game
     pub fn settings(&self) -> &T::Settings {
-        self.settings.settings()
+        &self.settings
     }
 }
 
