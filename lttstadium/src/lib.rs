@@ -14,13 +14,15 @@ use std::sync::Arc;
 
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
-    bots: PID<Arc<dyn Bot<Game = T> + Send + Sync + 'static>>,
+    bots: PID<Arc<dyn Bot<Game = T>>>,
+    #[builder(default, setter(into))]
     settings: SettingsPtr<T::Settings>,
+    #[builder(default = "500")]
     iterations: usize,
 }
 
 impl<T: Play> FightCard<T> {
-    fn run(&self, callback: impl Fn((GameProgression<T>, PID<GamePlayer<T>>)) + Send + Sync) {
+    pub fn run(&self, callback: impl Fn((GameProgression<T>, PID<GamePlayer<T>>)) + Send + Sync) {
         (0..self.iterations)
             .into_par_iter()
             .map(|_i| {
