@@ -3,6 +3,7 @@
 members = [
     "lttcore",
     "lttruntime",
+    "lttstadium",
     "lttstorage",
     "lttnetworking",
     "ltti",
