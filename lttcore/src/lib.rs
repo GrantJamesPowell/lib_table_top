@@ -13,7 +13,7 @@
 //! * Look through the [`common`]/[`utilities`] modules to see if there are any off the shelf pieces you can reuse
 //! * Look at the [`play`] documentation to learn the various parts of the [`Play`](play::Play) trait your game
 //! must implement
-//! * Look at [`bots`] to learn how to provide bot wrappers for your game
+//! * Look at [`bot`] to learn how to provide bot wrappers for your game
 //!
 //! ### I want to build a new runtime/analyzer/etc for `LibTableTop`
 //!
@@ -50,7 +50,7 @@ pub mod encoding;
 #[cfg(feature = "examples")]
 pub mod examples;
 
-pub mod bots;
+pub mod bot;
 pub mod common;
 pub mod id;
 pub mod play;

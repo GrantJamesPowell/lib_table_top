@@ -41,7 +41,7 @@
 //!
 //! For bot writers, [`TicTacToe`] provides the following things
 //!
-//! * A simplified [Bot](`crate::bots::Bot`) wrapper called [`TicTacToeBot`]
+//! * A simplified [Bot](`crate::bot::Bot`) wrapper called [`TicTacToeBot`]
 //! * Convenience functions for testing in [`test_helpers`](`bot::test_helpers`)
 //! * Prebuilt example bots in the [prebuilt](`bot::prebuilt`) module
 //!

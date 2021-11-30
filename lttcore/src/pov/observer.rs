@@ -17,7 +17,7 @@ use std::borrow::Cow;
 pub struct ObserverPov<'a, T: Play> {
     /// The current turn number
     pub turn_num: TurnNum,
-    /// A [`PlayerSet`] containing the [`Player`]s that need to act during this turn
+    /// A [`PlayerSet`] containing the [`Player`](crate::play::Player)s that need to act during this turn
     pub action_requests: PlayerSet,
     /// The [`Settings`](Play::Settings) of the game
     pub settings: &'a T::Settings,
@@ -31,7 +31,7 @@ pub struct ObserverPov<'a, T: Play> {
 ///
 /// You're using the [`GameObserver`] state machine and need to send it updates, possible across a
 /// network connection or other transport mechanism
-///
+/// 
 /// # Note:
 ///
 /// The update may contain referenced data. If you need something with a `'static` lifetime
