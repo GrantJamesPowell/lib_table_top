@@ -61,7 +61,7 @@
 //! }
 //!
 //! impl TicTacToeBot for MySuperCoolBot {
-//!     fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+//!     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
 //!         match board.at((self.favorite_number, self.favorite_number)) {
 //!             Ok(None) => Position::new(self.favorite_number, self.favorite_number),
 //!             _ => RandomSelector.claim_space(board, seed)
