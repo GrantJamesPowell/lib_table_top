@@ -4,6 +4,8 @@ use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
 use std::iter::FromIterator;
 
+use super::PlayerIndexedData;
+
 /// Helper macro to define [`PlayerSet`] literals
 ///
 /// ```
@@ -115,6 +117,7 @@ impl PlayerSet {
     }
 
     /// Return the count of players in the set
+    ///
     /// ```
     /// use lttcore::utilities::PlayerSet;
     ///
@@ -141,6 +144,22 @@ impl PlayerSet {
     /// Alias for `count`
     pub fn len(&self) -> u16 {
         self.count()
+    }
+
+    /// Returns [`PlayerIndexedData`] using [`PlayerIndexedData::init_with`]
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    /// use lttcore::utilities::PlayerIndexedData as PID;
+    ///
+    /// let ps = player_set![0, 1, 2];
+    /// let data: PID<u64> = ps.player_indexed_data(|player| player.into());
+    /// assert_eq!(data[0], 0);
+    /// assert_eq!(data[1], 1);
+    /// assert_eq!(data[2], 2);
+    /// ```
+    pub fn player_indexed_data<T>(&self, func: impl FnMut(Player) -> T) -> PlayerIndexedData<T> {
+        PlayerIndexedData::init_with(*self, func)
     }
 
     /// Returns whether the [`Player`] is in [`PlayerSet`]
