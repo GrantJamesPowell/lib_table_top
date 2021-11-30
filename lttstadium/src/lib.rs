@@ -4,38 +4,18 @@
 extern crate derive_builder;
 
 use lttcore::utilities::PlayerIndexedData as PID;
-use lttcore::{bot::Bot, play::ActionResponse, pov::player::GamePlayer};
+use lttcore::{
+    bot::{Bot, Contender},
+    play::ActionResponse,
+    pov::player::GamePlayer,
+};
 use lttcore::{
     play::{settings::NumPlayers, Play, Seed, SettingsPtr},
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
-use std::borrow::Cow;
 use std::panic::catch_unwind;
-use std::sync::Arc;
-
-#[derive(Clone)]
-pub struct Contender<T: Play> {
-    name: Cow<'static, str>,
-    bot: Arc<dyn Bot<Game = T>>,
-}
-
-impl<T: Play> Contender<T> {
-    pub fn new(name: impl Into<Cow<'static, str>>, bot: impl Bot<Game = T>) -> Self {
-        Self {
-            name: name.into(),
-            bot: Arc::new(bot),
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        self.name.as_ref()
-    }
-
-    pub fn bot(&self) -> &dyn Bot<Game = T> {
-        &*self.bot
-    }
-}
+use std::panic::AssertUnwindSafe;
 
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
@@ -61,6 +41,12 @@ impl<T: Play> FightCard<T> {
                     .number_of_players()
                     .player_indexed_data(|_| Seed::random());
 
+                let mut bots: PID<Box<dyn Bot<Game = T>>> = self
+                    .contenders
+                    .iter()
+                    .map(|(player, contender)| (player, contender.make_bot_instance()))
+                    .collect();
+
                 let mut game: GameProgression<T> =
                     GameProgression::from_settings_and_seed(self.settings.clone(), game_seed);
 
@@ -75,11 +61,15 @@ impl<T: Play> FightCard<T> {
                         .player_indexed_data(|player| {
                             let pov = game_players[player].player_pov();
 
-                            catch_unwind(|| {
-                                self.contenders[player].bot.run(&pov, &bot_seeds[player])
-                            })
-                            .map(ActionResponse::Response)
-                            .unwrap_or_else(|_| ActionResponse::Resign)
+                            // On `UnwindSafety`, it is _hella_ not safe to continue to use the bot
+                            // state if the bot panics, thats why we _immediately_ resign if the
+                            // bot panics while calculating a move
+                            let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
+                            let seed = &bot_seeds[player];
+
+                            catch_unwind(move || bot_wrapper.run(&pov, seed))
+                                .map(ActionResponse::Response)
+                                .unwrap_or_else(|_| ActionResponse::Resign)
                         });
 
                     let game_advance = game.submit_actions(actions);
