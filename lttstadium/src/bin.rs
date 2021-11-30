@@ -1,5 +1,4 @@
 use lttcore::{
-    bot::Bot,
     examples::{
         tic_tac_toe::{
             bot::prebuilt::{Expert, Intermediate},
@@ -9,20 +8,29 @@ use lttcore::{
     },
     play::Player,
 };
-use lttstadium::{FightCard, FightCardBuilder};
-use std::sync::Arc;
+use lttstadium::{Contender, FightCard, FightCardBuilder};
 
 fn main() {
-    let bots: Vec<(Player, Arc<dyn Bot<Game = TicTacToe>>)> = vec![
-        (Player::new(0), Arc::new(TicTacToeBotWrapper(Expert))),
-        (Player::new(1), Arc::new(TicTacToeBotWrapper(Intermediate))),
+    let bots = vec![
+        (
+            Player::new(0),
+            Contender::new("Expert", TicTacToeBotWrapper(Expert)),
+        ),
+        (
+            Player::new(1),
+            Contender::new("Intermediate", TicTacToeBotWrapper(Intermediate)),
+        ),
     ];
 
     let fight_card: FightCard<TicTacToe> = FightCardBuilder::default()
-        .iterations(1_000_000)
-        .bots(bots.into_iter().collect())
+        .iterations(1_000_000_000)
+        .contenders(bots.into_iter().collect())
         .build()
         .unwrap();
 
-    fight_card.run(|_| println!("here!"))
+    fight_card.run(|(i, _, _)| {
+        if i % 1000 == 0 {
+            println!("Done {}", i)
+        }
+    })
 }

@@ -10,12 +10,28 @@ use lttcore::{
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
+use std::borrow::Cow;
 use std::panic::catch_unwind;
 use std::sync::Arc;
 
+#[derive(Clone)]
+pub struct Contender<T: Play> {
+    name: Cow<'static, str>,
+    bot: Arc<dyn Bot<Game = T>>,
+}
+
+impl<T: Play> Contender<T> {
+    pub fn new(name: impl Into<Cow<'static, str>>, bot: impl Bot<Game = T>) -> Self {
+        Self {
+            name: name.into(),
+            bot: Arc::new(bot),
+        }
+    }
+}
+
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
-    bots: PID<Arc<dyn Bot<Game = T>>>,
+    contenders: PID<Contender<T>>,
     #[builder(default, setter(into))]
     settings: SettingsPtr<T::Settings>,
     #[builder(default = "500")]
@@ -23,10 +39,13 @@ pub struct FightCard<T: Play> {
 }
 
 impl<T: Play> FightCard<T> {
-    pub fn run(&self, callback: impl Fn((GameProgression<T>, PID<GamePlayer<T>>)) + Send + Sync) {
+    pub fn run(
+        &self,
+        callback: impl Fn((usize, GameProgression<T>, PID<GamePlayer<T>>)) + Send + Sync,
+    ) {
         (0..self.iterations)
             .into_par_iter()
-            .map(|_i| {
+            .map(|i| {
                 let game_seed = Seed::random();
 
                 let bot_seeds = self
@@ -48,9 +67,11 @@ impl<T: Play> FightCard<T> {
                         .player_indexed_data(|player| {
                             let pov = game_players[player].player_pov();
 
-                            catch_unwind(|| self.bots[player].run(&pov, &bot_seeds[player]))
-                                .map(ActionResponse::Response)
-                                .unwrap_or_else(|_| ActionResponse::Resign)
+                            catch_unwind(|| {
+                                self.contenders[player].bot.run(&pov, &bot_seeds[player])
+                            })
+                            .map(ActionResponse::Response)
+                            .unwrap_or_else(|_| ActionResponse::Resign)
                         });
 
                     let game_advance = game.submit_actions(actions);
@@ -61,7 +82,7 @@ impl<T: Play> FightCard<T> {
                     }
                 }
 
-                (game, game_players)
+                (i, game, game_players)
             })
             .for_each(callback)
     }
