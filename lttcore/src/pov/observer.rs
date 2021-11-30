@@ -31,7 +31,7 @@ pub struct ObserverPov<'a, T: Play> {
 ///
 /// You're using the [`GameObserver`] state machine and need to send it updates, possible across a
 /// network connection or other transport mechanism
-/// 
+///
 /// # Note:
 ///
 /// The update may contain referenced data. If you need something with a `'static` lifetime

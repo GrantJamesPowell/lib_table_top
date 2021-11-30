@@ -1,7 +1,6 @@
 #![allow(missing_docs)]
 
 mod game_advance;
-mod ltt_version;
 mod player;
 mod turn_num;
 
@@ -12,7 +11,6 @@ pub mod settings;
 pub mod view;
 
 pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
-pub use ltt_version::LttVersion;
 pub use number_of_players::NumberOfPlayers;
 pub use player::Player;
 pub use score::Score;
@@ -22,6 +20,7 @@ pub use turn_num::TurnNum;
 pub use view::View;
 
 use crate::utilities::{PlayerIndexedData, PlayerSet};
+use crate::LibTableTopIdentifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
@@ -42,7 +41,7 @@ pub enum ActionResponse<T: Play> {
 }
 
 pub trait Play:
-    LttVersion
+    LibTableTopIdentifier
     + Sized
     + Clone
     + Debug

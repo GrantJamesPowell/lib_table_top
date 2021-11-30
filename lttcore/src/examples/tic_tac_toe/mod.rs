@@ -111,10 +111,10 @@ pub use marker::Marker;
 pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::Settings;
 
-use crate::play::{view::NoSecretPlayerInfo, LttVersion};
 use crate::{
-    play::{ActionResponse, DebugMsgs, GameAdvance, Play, Player},
+    play::{view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, Play, Player},
     utilities::PlayerSet,
+    LibTableTopIdentifier,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -263,7 +263,7 @@ impl TicTacToe {
     }
 }
 
-impl LttVersion for TicTacToe {
+impl LibTableTopIdentifier for TicTacToe {
     fn lib_table_top_identifier() -> &'static str {
         "TicTacToe"
     }

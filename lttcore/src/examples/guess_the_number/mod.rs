@@ -6,10 +6,9 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
-    play::{
-        view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, LttVersion, Play, Player,
-    },
+    play::{view::NoSecretPlayerInfo, ActionResponse, DebugMsgs, GameAdvance, Play, Player},
     utilities::{PlayerIndexedData as PID, PlayerSet},
+    LibTableTopIdentifier,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -43,7 +42,7 @@ pub enum ActionError {
 
 use ActionError::GuessOutOfRange;
 
-impl LttVersion for GuessTheNumber {
+impl LibTableTopIdentifier for GuessTheNumber {
     fn lib_table_top_identifier() -> &'static str {
         "GuessTheNumber"
     }
