@@ -44,9 +44,6 @@ extern crate derive_builder;
 #[macro_use]
 extern crate lazy_static;
 
-#[macro_use]
-extern crate static_assertions;
-
 #[cfg(feature = "encoding")]
 pub mod encoding;
 

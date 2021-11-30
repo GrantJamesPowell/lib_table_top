@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use crate::play::{Play, Seed, SettingsPtr, TurnNum};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

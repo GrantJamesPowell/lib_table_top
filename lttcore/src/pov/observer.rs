@@ -1,16 +1,42 @@
+//! State machines for representing whan an Observer would see during a game
+//!
+//! An "Observer" is what someone casually watching a game without playing would to see.  They have
+//! no secret information and are never called upon to interact with the game directly
+
 use crate::play::{Play, SettingsPtr, TurnNum, View};
 use crate::utilities::PlayerSet;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
+/// A particular observer's view into a game on a particular [`TurnNum`]
+///
+/// # When would I use this?
+///
+/// * You're writing a GUI to watch a game as an Observer
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ObserverPov<'a, T: Play> {
+    /// The current turn number
     pub turn_num: TurnNum,
+    /// A [`PlayerSet`] containing the [`Player`]s that need to act during this turn
     pub action_requests: PlayerSet,
+    /// The [`Settings`](Play::Settings) of the game
     pub settings: &'a T::Settings,
+    /// The [`PublicInfo`](Play::PublicInfo) for this [`TurnNum`]
     pub public_info: &'a T::PublicInfo,
 }
 
+/// An opaque update to the [`GameObserver`] state machine
+///
+/// # When would I use this?
+///
+/// You're using the [`GameObserver`] state machine and need to send it updates, possible across a
+/// network connection or other transport mechanism
+///
+/// # Note:
+///
+/// The update may contain referenced data. If you need something with a `'static` lifetime
+/// (possibly because you want to persist this update or send it across a network connection) use
+/// the [`ObserverUpdate::into_owned`] function
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(bound = "")]
 pub struct ObserverUpdate<'a, T: Play> {
@@ -30,6 +56,14 @@ impl<'a, T: Play> ObserverUpdate<'a, T> {
     }
 }
 
+/// A [state machine](https://en.wikipedia.org/wiki/Finite-state_machine) representing an observer
+/// over the course of a game
+///
+/// # When would I use this?
+///
+/// If you're writing a new `LibTableTop` compatible runtime and need a state machine to represent
+/// an observer over the course of the game. It's unlikely you'll interact directly with this as a
+/// Game/Bot author
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GameObserver<T: Play> {
@@ -40,12 +74,19 @@ pub struct GameObserver<T: Play> {
 }
 
 impl<T: Play> GameObserver<T> {
+    /// Return the [`TurnNum`] for the player update
+    pub fn turn_num(&self) -> TurnNum {
+        self.turn_num
+    }
+
+    /// The [`Settings`](Play::Settings) of the game
     pub fn settings(&self) -> &T::Settings {
         self.settings.settings()
     }
 }
 
 impl<T: Play> GameObserver<T> {
+    /// Return the [`ObserverPov`] for the current [`TurnNum`]
     pub fn observer_pov(&self) -> ObserverPov<'_, T> {
         ObserverPov {
             turn_num: self.turn_num,
@@ -55,6 +96,11 @@ impl<T: Play> GameObserver<T> {
         }
     }
 
+    /// Apply an [`ObserverUpdate`] to this state machine, advancing the state machine
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if an update is skipped or applied twice
     pub fn update(&mut self, update: ObserverUpdate<'_, T>) {
         self.turn_num = update.turn_num;
         self.action_requests = update.action_requests;

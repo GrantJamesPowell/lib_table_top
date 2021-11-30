@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 mod support_from_settings;
 mod support_getters;
 mod support_povs;
