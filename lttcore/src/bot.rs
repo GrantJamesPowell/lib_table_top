@@ -4,7 +4,7 @@ use crate::play::{Play, Seed};
 use crate::pov::player::PlayerPov;
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
-pub trait Bot {
+pub trait Bot: Sync + Send + 'static {
     /// The [`Play`] compatible game that this bot understands
     type Game: Play;
 
@@ -12,6 +12,6 @@ pub trait Bot {
     fn run(
         &self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        rng: Seed,
+        rng: &Seed,
     ) -> <Self::Game as Play>::Action;
 }

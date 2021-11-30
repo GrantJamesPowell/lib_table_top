@@ -21,7 +21,7 @@ use rand::prelude::IteratorRandom;
 pub struct RandomSelector;
 
 impl TicTacToeBot for RandomSelector {
-    fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
         board
             .empty_spaces()
             .choose_stable(&mut seed.rng())
@@ -38,7 +38,7 @@ impl TicTacToeBot for RandomSelector {
 pub struct Intermediate;
 
 impl TicTacToeBot for Intermediate {
-    fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
         // Pick the center space if we're starting
         if board.is_empty() {
             return CENTER;
@@ -70,7 +70,7 @@ impl TicTacToeBot for Intermediate {
 pub struct Expert;
 
 impl TicTacToeBot for Expert {
-    fn claim_space(&self, board: &Board, seed: Seed) -> Position {
+    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
         // Take a corner if we're the first move
         if board.is_empty() {
             return BOTTOM_LEFT;
