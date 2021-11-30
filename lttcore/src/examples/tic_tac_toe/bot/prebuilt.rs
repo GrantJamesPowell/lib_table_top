@@ -4,8 +4,9 @@
 //! out of writing your own bot because these implementations are pretty solid. These bots (and the
 //! `TicTacToe` game in general mostly exist to serve as an example for other game implementations.
 
-use super::super::{Board, Position, TicTacToeBot};
+use super::super::{Board, Position, TicTacToe, TicTacToeBot};
 use crate::{
+    bot::defective::panicking_bot,
     examples::tic_tac_toe::{
         board::consts::{BOTTOM_LEFT, BOTTOM_RIGHT, CENTER},
         Marker,
@@ -13,6 +14,8 @@ use crate::{
     play::Seed,
 };
 use rand::prelude::IteratorRandom;
+
+panicking_bot!(TicTacToe);
 
 /// A bot that  randomly picks an open space
 ///

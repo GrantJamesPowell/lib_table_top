@@ -3,6 +3,8 @@
 use crate::play::{Play, Seed};
 use crate::pov::player::PlayerPov;
 
+pub(crate) mod defective;
+
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
 pub trait Bot: Sync + Send + 'static {
     /// The [`Play`] compatible game that this bot understands
