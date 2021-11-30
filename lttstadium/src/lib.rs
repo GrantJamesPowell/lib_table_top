@@ -27,6 +27,14 @@ impl<T: Play> Contender<T> {
             bot: Arc::new(bot),
         }
     }
+
+    pub fn name(&self) -> &str {
+        self.name.as_ref()
+    }
+
+    pub fn bot(&self) -> &dyn Bot<Game = T> {
+        &*self.bot
+    }
 }
 
 #[derive(Builder, Clone)]
@@ -91,22 +99,18 @@ impl<T: Play> FightCard<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lttcore::{
-        bot::Bot,
-        examples::{tic_tac_toe::bot::prebuilt::TicTacToePanicBot, TicTacToe},
-        play::Player,
-    };
+    use lttcore::{examples::tic_tac_toe::bot::prebuilt::TicTacToePanicBot, play::Player};
 
     #[test]
     fn handles_panicking_bots() {
-        let bots: Vec<(Player, Arc<dyn Bot<Game = TicTacToe>>)> = vec![
-            (Player::new(0), Arc::new(TicTacToePanicBot)),
-            (Player::new(1), Arc::new(TicTacToePanicBot)),
+        let contenders = vec![
+            (Player::new(0), Contender::new("panic", TicTacToePanicBot)),
+            (Player::new(1), Contender::new("panic", TicTacToePanicBot)),
         ];
 
         let fight_card = FightCardBuilder::default()
             .iterations(1)
-            .bots(bots.into_iter().collect())
+            .contenders(contenders.into_iter().collect())
             .build()
             .unwrap();
 
