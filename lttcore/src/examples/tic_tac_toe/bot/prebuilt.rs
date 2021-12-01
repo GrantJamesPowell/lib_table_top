@@ -4,6 +4,8 @@
 //! out of writing your own bot because these implementations are pretty solid. These bots (and the
 //! `TicTacToe` game in general mostly exist to serve as an example for other game implementations.
 
+use std::fmt::Display;
+
 use super::super::{Board, Position, TicTacToe, TicTacToeBot};
 use crate::{
     bot::defective::panicking_bot,
@@ -16,13 +18,26 @@ use crate::{
 use rand::prelude::IteratorRandom;
 use serde::{Deserialize, Serialize};
 
+macro_rules! display_name {
+    ($ty:ty) => {
+        impl Display for $ty {
+            fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+                write!(fmt, "{}", stringify!($ty))
+            }
+        }
+    };
+}
+
 panicking_bot!(TicTacToe);
+display_name!(TicTacToePanicBot);
 
 /// A bot that  randomly picks an open space
 ///
 /// ... Not very good strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RandomSelector;
+
+display_name!(RandomSelector);
 
 impl TicTacToeBot for RandomSelector {
     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
@@ -40,6 +55,8 @@ impl TicTacToeBot for RandomSelector {
 /// win them the game. If all else fails this bot chooses a square randomly
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Intermediate;
+
+display_name!(Intermediate);
 
 impl TicTacToeBot for Intermediate {
     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
@@ -72,6 +89,8 @@ impl TicTacToeBot for Intermediate {
 /// This bot will win if possible and draw if not
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Expert;
+
+display_name!(Expert);
 
 impl TicTacToeBot for Expert {
     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
