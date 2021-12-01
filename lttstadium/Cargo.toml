@@ -12,6 +12,6 @@ name = "stadium"
 path = "src/bin.rs"
 
 [dependencies]
-lttcore = { path = "../lttcore", features = ["encoding"] }
+lttcore = { path = "../lttcore" }
 derive_builder = "0.10.2"
 rayon = "1.5.1"

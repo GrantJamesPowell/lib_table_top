@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0"
 async-trait = "0.1.51"
 dashmap = "4.0.2"
-lttcore = { path = "../lttcore", features = ["encoding"] }
+lttcore = { path = "../lttcore" }
 serde = { version = "1.0", features = ["derive", "rc"] }
 smallvec = { version = "1.7.0", features = ["serde"] }
 tokio = { version = "1", features = ["rt", "test-util", "macros"] }
