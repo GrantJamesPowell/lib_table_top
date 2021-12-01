@@ -18,9 +18,11 @@
 //!
 //! You've come to the right place.
 //!
-//! # Writing a game specific `Bot`/`StatefulBot` interface
-//!
 //! TODO:// Tutorial on how to do this, probably come back after I've implmented a few more games
+//!
+//! # I'm trying to deal with [`Bot`]s and [`StatefulBot`]s as `Trait Objects`
+//!
+//! TODO:// Explain Contenders
 
 use bytes::Bytes;
 use serde::Serialize;
@@ -32,7 +34,9 @@ use crate::{
 };
 use std::panic::RefUnwindSafe;
 
+mod contender;
 pub(crate) mod defective;
+pub use contender::Contender;
 
 /// Trait to describe the ability of turning `&self` to [`Bytes`]
 ///
@@ -119,6 +123,18 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
         rng: &Seed,
     ) -> <Self::Game as Play>::Action {
         Bot::run(&*self, player_pov, rng)
+    }
+
+    fn on_turn_advance(
+        &mut self,
+        _public_info: &<Self::Game as Play>::PublicInfo,
+        _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
+        _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
+        _player_secret_info_update: Option<
+            &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
+        >,
+    ) {
+        // We can't affect our state because we have none, so do nothing
     }
 
     fn has_immutable_state(&self) -> bool {
