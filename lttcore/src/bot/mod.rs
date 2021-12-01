@@ -44,11 +44,26 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     type Game: Play;
 
     /// Callback for when it's the bot's [`Player`](crate::play::Player)'s turn to take an action
-    fn run(
+    fn on_action_request(
         &self,
         player_pov: &PlayerPov<'_, Self::Game>,
         rng: &Seed,
     ) -> <Self::Game as Play>::Action;
+
+    /// Callback for when the turn advances and the [`Player`](crate::play::Player) gets an update.
+    /// In the context of [`Bot`] this is only useful as a debuging tool because there is no
+    /// mutable state to update
+    fn on_turn_advance(
+        &self,
+        _public_info: &<Self::Game as Play>::PublicInfo,
+        _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
+        _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
+        _player_secret_info_update: Option<
+            &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
+        >,
+    ) {
+        // by default, don't do anything on player updates
+    }
 }
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
@@ -105,19 +120,25 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
         player_pov: &PlayerPov<'_, Self::Game>,
         rng: &Seed,
     ) -> <Self::Game as Play>::Action {
-        Bot::run(&*self, player_pov, rng)
+        Bot::on_action_request(&*self, player_pov, rng)
     }
 
     fn on_turn_advance(
         &mut self,
-        _public_info: &<Self::Game as Play>::PublicInfo,
-        _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
-        _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
-        _player_secret_info_update: Option<
+        public_info: &<Self::Game as Play>::PublicInfo,
+        player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
+        public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
+        player_secret_info_update: Option<
             &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
         >,
     ) {
-        // We can't affect our state because we have none, so do nothing
+        Bot::on_turn_advance(
+            &*self,
+            public_info,
+            player_secret_info,
+            public_info_update,
+            player_secret_info_update,
+        );
     }
 
     fn has_immutable_state(&self) -> bool {

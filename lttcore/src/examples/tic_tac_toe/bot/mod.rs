@@ -37,7 +37,7 @@ where
 {
     type Game = TicTacToe;
 
-    fn run(
+    fn on_action_request(
         &self,
         player_pov: &PlayerPov<'_, Self::Game>,
         seed: &Seed,

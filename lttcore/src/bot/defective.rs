@@ -12,7 +12,7 @@ macro_rules! panicking_bot {
             impl $crate::bot::Bot for [<$game PanicBot>] {
                 type Game = $game;
 
-                fn run(
+                fn on_action_request(
                     &self,
                     _pov: &$crate::pov::player::PlayerPov<'_, Self::Game>,
                     _seed: &$crate::play::Seed
