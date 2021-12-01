@@ -14,13 +14,14 @@ use crate::{
     play::Seed,
 };
 use rand::prelude::IteratorRandom;
+use serde::{Deserialize, Serialize};
 
 panicking_bot!(TicTacToe);
 
 /// A bot that  randomly picks an open space
 ///
 /// ... Not very good strategy
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RandomSelector;
 
 impl TicTacToeBot for RandomSelector {
@@ -37,7 +38,7 @@ impl TicTacToeBot for RandomSelector {
 /// This bot always chooses the center if going first. From there this bot will try to block an
 /// opponent from winning if the opponent has a square they could win on, or take a spot that would
 /// win them the game. If all else fails this bot chooses a square randomly
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Intermediate;
 
 impl TicTacToeBot for Intermediate {
@@ -69,7 +70,7 @@ impl TicTacToeBot for Intermediate {
 /// A perfect bot
 ///
 /// This bot will win if possible and draw if not
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Expert;
 
 impl TicTacToeBot for Expert {

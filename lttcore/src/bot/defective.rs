@@ -6,7 +6,7 @@ macro_rules! panicking_bot {
             #[doc = "A bot designed to play "]
             #[doc = stringify!($game)]
             #[doc = " but will panic at every opportunity, useful for testing tools that need to handle bot panics"]
-            #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+            #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, ::serde::Serialize, ::serde::Deserialize)]
             pub struct [<$game PanicBot>];
 
             impl $crate::bot::Bot for [<$game PanicBot>] {

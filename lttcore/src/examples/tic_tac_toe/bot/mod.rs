@@ -3,6 +3,8 @@
 pub mod prebuilt;
 pub mod test_helpers;
 
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
 use super::{Action, Board, Position, TicTacToe};
 use crate::bot::Bot;
 use crate::play::{Play, Seed};
@@ -18,10 +20,16 @@ pub trait TicTacToeBot {
 }
 
 /// Wrapper type to implement [`Bot`](`crate::bot::Bot`) for any [`TicTacToeBot`]
-#[derive(Debug)]
-pub struct TicTacToeBotWrapper<T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static>(pub T);
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(bound = "")]
+pub struct TicTacToeBotWrapper<T>(pub T)
+where
+    T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static + Serialize + DeserializeOwned;
 
-impl<T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static> Bot for TicTacToeBotWrapper<T> {
+impl<T> Bot for TicTacToeBotWrapper<T>
+where
+    T: TicTacToeBot + RefUnwindSafe + Sync + Send + 'static + Serialize + DeserializeOwned,
+{
     type Game = TicTacToe;
 
     fn run(
