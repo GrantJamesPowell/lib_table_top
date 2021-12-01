@@ -49,6 +49,7 @@
 //! general is more designed to serve as a learning/testing example
 //!
 //! ```
+//! use serde::{Serialize, Deserialize};
 //! use lttcore::{play::Seed, ttt};
 //! use lttcore::examples::tic_tac_toe::{Position, Board, TicTacToeBot};
 //! use lttcore::examples::tic_tac_toe::bot::{
@@ -56,6 +57,7 @@
 //!   test_helpers::{assert_bot_takes_position, assert_bot_wins}
 //! };
 //!
+//! #[derive(Clone, Serialize, Deserialize)]
 //! struct MySuperCoolBot {
 //!     favorite_number: usize,
 //! }

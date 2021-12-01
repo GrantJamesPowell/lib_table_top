@@ -4,38 +4,13 @@
 extern crate derive_builder;
 
 use lttcore::utilities::PlayerIndexedData as PID;
-use lttcore::{bot::Bot, play::ActionResponse, pov::player::GamePlayer};
+use lttcore::{bot::Contender, play::ActionResponse, pov::player::GamePlayer};
 use lttcore::{
     play::{settings::NumPlayers, Play, Seed, SettingsPtr},
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
-use std::borrow::Cow;
-use std::panic::catch_unwind;
-use std::sync::Arc;
-
-#[derive(Clone)]
-pub struct Contender<T: Play> {
-    name: Cow<'static, str>,
-    bot: Arc<dyn Bot<Game = T>>,
-}
-
-impl<T: Play> Contender<T> {
-    pub fn new(name: impl Into<Cow<'static, str>>, bot: impl Bot<Game = T>) -> Self {
-        Self {
-            name: name.into(),
-            bot: Arc::new(bot),
-        }
-    }
-
-    pub fn name(&self) -> &str {
-        self.name.as_ref()
-    }
-
-    pub fn bot(&self) -> &dyn Bot<Game = T> {
-        &*self.bot
-    }
-}
+use std::panic::{catch_unwind, AssertUnwindSafe};
 
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
@@ -56,6 +31,13 @@ impl<T: Play> FightCard<T> {
             .map(|i| {
                 let game_seed = Seed::random();
 
+                let mut bots = self
+                    .settings
+                    .number_of_players()
+                    .player_indexed_data(|player| {
+                        self.contenders[player].make_stateful_bot_instance()
+                    });
+
                 let bot_seeds = self
                     .settings
                     .number_of_players()
@@ -73,13 +55,18 @@ impl<T: Play> FightCard<T> {
                     let actions = game
                         .which_players_input_needed()
                         .player_indexed_data(|player| {
-                            let pov = game_players[player].player_pov();
+                            let pov = &game_players[player].player_pov();
+                            let seed = &bot_seeds[player];
 
-                            catch_unwind(|| {
-                                self.contenders[player].bot.run(&pov, &bot_seeds[player])
-                            })
-                            .map(ActionResponse::Response)
-                            .unwrap_or_else(|_| ActionResponse::Resign)
+                            // # Safety
+                            //
+                            // It's _probably_ not technically "unsafe" to reuse a bot who's is
+                            // potentially in a weird state after it's panicked. For good measure,
+                            // we resign and don't continue to reuse the bot state.
+                            let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
+                            catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
+                                .map(ActionResponse::Response)
+                                .unwrap_or_else(|_| ActionResponse::Resign)
                         });
 
                     let game_advance = game.submit_actions(actions);
@@ -104,8 +91,8 @@ mod tests {
     #[test]
     fn handles_panicking_bots() {
         let contenders = vec![
-            (Player::new(0), Contender::new("panic", TicTacToePanicBot)),
-            (Player::new(1), Contender::new("panic", TicTacToePanicBot)),
+            (Player::new(0), Contender::new(TicTacToePanicBot)),
+            (Player::new(1), Contender::new(TicTacToePanicBot)),
         ];
 
         let fight_card = FightCardBuilder::default()

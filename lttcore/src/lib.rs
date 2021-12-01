@@ -44,14 +44,12 @@ extern crate derive_builder;
 #[macro_use]
 extern crate lazy_static;
 
-#[cfg(feature = "encoding")]
-pub mod encoding;
-
 #[cfg(feature = "examples")]
 pub mod examples;
 
 pub mod bot;
 pub mod common;
+pub mod encoding;
 pub mod id;
 pub mod play;
 pub mod pov;
