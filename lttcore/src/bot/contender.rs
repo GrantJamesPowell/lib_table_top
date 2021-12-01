@@ -86,20 +86,6 @@ impl<T: Play> Contender<T> {
     pub fn make_stateful_bot_instance(&self) -> Box<dyn StatefulBot<Game = T>> {
         self.bot.make_stateful_bot_instance()
     }
-
-    /// A debugging tool for trying to figure out what bot this instance of contender is associated
-    /// with
-    ///
-    /// # Warnings
-    ///
-    /// Due to tradeoffs in Rust's type system, It's *really* hard to go backwards from a `dyn
-    /// Trait` to the concrete type that implemented `Trait`. This function relies on
-    /// [`std::any::type_name`] which makes no promises about the accuracy or stability of the
-    /// output. Use this function as a debugging tool, but not to generate source code. Do not
-    /// depend on it's output
-    pub fn source_hint(&self) -> &'static str {
-        self.bot.source_hint()
-    }
 }
 
 /// Trait to generate owned instances of `dyn StatefulBot`
@@ -110,27 +96,13 @@ impl<T: Play> Contender<T> {
 ///
 /// This trait is mostly a workaround for the fact that we can't use `Clone` in trait objects. The
 /// behaviour of implementations of this trait _should_ be to produce identical instances
-/// everytime, but we can't enforce that in the type system, so we need to enforce it via
-/// convention
+/// everytime, but we can't enforce that in the type system.
 trait MakeStatefulBotInstance: Send + Sync + 'static {
     /// The game that this trait produces [`StatefulBot`]s for.
     type Game: Play;
 
     /// Generate a new owned trait object implmenting [`StatefulBot`]
     fn make_stateful_bot_instance(&self) -> Box<dyn StatefulBot<Game = Self::Game>>;
-
-    /// Helper function to generate better crash reports
-    ///
-    /// This defaults to [`std::any::type_name`] which is a crapshoot and shouldn't be relied upon,
-    /// it's also the best we have 🤷
-    ///
-    /// We can get the state of the bot via the [`SerializeSelf`] trait, but it's really difficult
-    /// to go backwards to the original struct implementing `StatefulBot` when we're using the
-    /// trait through `dyn` (most of the time). This is a hack to provide slightly better error
-    /// messages
-    fn source_hint(&self) -> &'static str {
-        "<No Source Hint Available>"
-    }
 }
 
 impl<Bot: StatefulBot + Clone> MakeStatefulBotInstance for Bot {
@@ -138,9 +110,5 @@ impl<Bot: StatefulBot + Clone> MakeStatefulBotInstance for Bot {
 
     fn make_stateful_bot_instance(&self) -> Box<dyn StatefulBot<Game = Self::Game>> {
         Box::new(self.clone())
-    }
-
-    fn source_hint(&self) -> &'static str {
-        std::any::type_name::<Bot>()
     }
 }

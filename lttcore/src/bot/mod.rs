@@ -2,7 +2,7 @@
 //!
 //! # What is this?
 //!
-//! Various traits for working with bots to `LibTableTop` games.
+//! Various functionality for working with bots playing `LibTableTop` games.
 //!
 //! # Who is this for?
 //!
@@ -24,12 +24,9 @@
 //!
 //! TODO:// Explain Contenders
 
-use bytes::Bytes;
-use serde::Serialize;
-
 use crate::pov::player::PlayerPov;
 use crate::{
-    encoding::{Encoding, EncodingError},
+    encoding::SerializeSelf,
     play::{Play, Seed, View},
 };
 use std::panic::RefUnwindSafe;
@@ -37,20 +34,6 @@ use std::panic::RefUnwindSafe;
 mod contender;
 pub(crate) mod defective;
 pub use contender::Contender;
-
-/// Trait to describe the ability of turning `&self` to [`Bytes`]
-///
-/// Required in [`Bot`] and [`StatefulBot`] so we can generate crash reports when they panic.
-pub trait SerializeSelf {
-    /// Turn `self` into some [`Bytes`]
-    fn serialize_self(&self, encoding: Encoding) -> Result<Bytes, EncodingError>;
-}
-
-impl<T: Serialize> SerializeSelf for T {
-    fn serialize_self(&self, encoding: Encoding) -> Result<Bytes, EncodingError> {
-        encoding.serialize(self)
-    }
-}
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
 ///
