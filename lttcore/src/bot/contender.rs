@@ -19,17 +19,30 @@ pub struct Contender<T: Play> {
     bot: Arc<dyn MakeStatefulBotInstance<Game = T>>,
 }
 
+impl<T: Play, Bot: StatefulBot<Game = T> + Clone + Display> From<Bot> for Contender<T> {
+    fn from(bot: Bot) -> Self {
+        Self::new(bot)
+    }
+}
+
+impl<T: Play, N: Into<Cow<'static, str>>, Bot: StatefulBot<Game = T> + Clone + Display>
+    From<(N, Bot)> for Contender<T>
+{
+    fn from((name, bot): (N, Bot)) -> Self {
+        Self::new_with_name(bot, name)
+    }
+}
+
 impl<T: Play> Contender<T> {
     /// Create a [`Contender`] from a [`Bot`](super::Bot) or [`StatefulBot`]
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper, bot::prebuilt::Intermediate
+    ///   TicTacToeBot, bot::prebuilt::IntermediateSkill
     /// }};
     ///
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    /// let contender = Contender::new(bot);
-    /// assert_eq!(contender.name(), "Intermediate");
+    /// let contender = Contender::new(IntermediateSkill.into_bot());
+    /// assert_eq!(contender.name(), "IntermediateSkill");
     /// ```
     pub fn new(bot: impl StatefulBot<Game = T> + Clone + Display) -> Self {
         let name = format!("{}", bot);
@@ -40,11 +53,13 @@ impl<T: Play> Contender<T> {
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper, bot::prebuilt::Intermediate
+    ///   TicTacToeBot, bot::prebuilt::IntermediateSkill
     /// }};
     ///
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    /// let contender = Contender::new_with_name(bot, "Custom Name");
+    /// let contender = Contender::new_with_name(
+    ///   IntermediateSkill.into_bot(),
+    ///   "Custom Name"
+    /// );
     /// assert_eq!(contender.name(), "Custom Name");
     /// ```
     pub fn new_with_name(
@@ -62,18 +77,19 @@ impl<T: Play> Contender<T> {
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper,
-    ///   bot::prebuilt::{Intermediate, Expert}
+    ///   TicTacToeBot,
+    ///   bot::prebuilt::{IntermediateSkill, Expert}
     /// }};
     ///
     /// // Use the default `Display` impl for a name
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    ///
-    /// let contender = Contender::new(bot.clone());
-    /// assert_eq!(contender.name(), "Intermediate");
+    /// let contender = Contender::new(IntermediateSkill.into_bot());
+    /// assert_eq!(contender.name(), "IntermediateSkill");
     ///
     /// // Use a custom set name
-    /// let contender = Contender::new_with_name(bot.clone(), "Custom Name");
+    /// let contender = Contender::new_with_name(
+    ///   IntermediateSkill.into_bot(),
+    ///   "Custom Name"
+    /// );
     /// assert_eq!(contender.name(), "Custom Name");
     /// ```
     pub fn name(&self) -> &str {

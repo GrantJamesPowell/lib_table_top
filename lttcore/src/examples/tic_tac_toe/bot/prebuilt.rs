@@ -54,11 +54,11 @@ impl TicTacToeBot for RandomSelector {
 /// opponent from winning if the opponent has a square they could win on, or take a spot that would
 /// win them the game. If all else fails this bot chooses a square randomly
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Intermediate;
+pub struct IntermediateSkill;
 
-display_name!(Intermediate);
+display_name!(IntermediateSkill);
 
-impl TicTacToeBot for Intermediate {
+impl TicTacToeBot for IntermediateSkill {
     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
         // Pick the center space if we're starting
         if board.is_empty() {
@@ -88,11 +88,11 @@ impl TicTacToeBot for Intermediate {
 ///
 /// This bot will win if possible and draw if not
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Expert;
+pub struct ExpertSkill;
 
-display_name!(Expert);
+display_name!(ExpertSkill);
 
-impl TicTacToeBot for Expert {
+impl TicTacToeBot for ExpertSkill {
     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
         // Take a corner if we're the first move
         if board.is_empty() {
@@ -178,8 +178,8 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(&Intermediate, board, CENTER, SEED_0);
-        assert_bot_takes_position(&Intermediate, board, CENTER, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_0);
+        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_42);
 
         // Block opponent from winning
         #[rustfmt::skip]
@@ -189,8 +189,8 @@ mod tests {
             X - O
         ]);
 
-        assert_bot_takes_position(&Intermediate, board, CENTER, SEED_0);
-        assert_bot_takes_position(&Intermediate, board, CENTER, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_0);
+        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_42);
 
         // Takes win if possible
         #[rustfmt::skip]
@@ -200,8 +200,8 @@ mod tests {
             X - X
         ]);
 
-        assert_bot_wins(&Intermediate, board, SEED_0);
-        assert_bot_wins(&Intermediate, board, SEED_42);
+        assert_bot_wins(&IntermediateSkill, board, SEED_0);
+        assert_bot_wins(&IntermediateSkill, board, SEED_42);
 
         // Doesn't freak out if there isn't an obvious move
         #[rustfmt::skip]
@@ -211,7 +211,7 @@ mod tests {
             X - -
         ]);
 
-        assert_bot_takes_position(&Intermediate, board, BOTTOM_RIGHT, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, board, BOTTOM_RIGHT, SEED_42);
     }
 
     #[test]
@@ -223,7 +223,7 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(&Expert, board, BOTTOM_LEFT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, board, BOTTOM_LEFT, SEED_42);
 
         // If we do have the the bottom left, take the bottom right
         let board = ttt!([
@@ -232,7 +232,7 @@ mod tests {
             X - -
         ]);
 
-        assert_bot_takes_position(&Expert, board, BOTTOM_RIGHT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, board, BOTTOM_RIGHT, SEED_42);
 
         // If we don't have the bottom left, take the center
         let board = ttt!([
@@ -241,7 +241,7 @@ mod tests {
             O - -
         ]);
 
-        assert_bot_takes_position(&Expert, board, CENTER, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, board, CENTER, SEED_42);
 
         // It springs the trap if opponent fell for it
         let board = ttt!([
@@ -250,7 +250,7 @@ mod tests {
             X O X
         ]);
 
-        assert_bot_takes_position(&Expert, board, CENTER, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, board, CENTER, SEED_42);
 
         // Blocks opponent win
         let board = ttt!([
@@ -259,11 +259,11 @@ mod tests {
             O X -
         ]);
 
-        assert_bot_takes_position(&Expert, board, MIDDLE_LEFT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, board, MIDDLE_LEFT, SEED_42);
 
         // Take a win over stopping opponents win
         let board = ttt!([X - X - --O - O]);
 
-        assert_bot_wins(&Expert, board, SEED_42);
+        assert_bot_wins(&ExpertSkill, board, SEED_42);
     }
 }
