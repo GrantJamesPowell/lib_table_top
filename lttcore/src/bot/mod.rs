@@ -24,11 +24,11 @@
 //!
 //! TODO:// Explain Contenders
 
-use crate::pov::player::PlayerPov;
 use crate::{
     encoding::SerializeSelf,
     play::{Play, Seed, View},
 };
+use crate::{play::TurnNum, pov::player::PlayerPov};
 use std::panic::RefUnwindSafe;
 
 mod contender;
@@ -55,6 +55,7 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     /// mutable state to update
     fn on_turn_advance(
         &self,
+        _turn_num: TurnNum,
         _public_info: &<Self::Game as Play>::PublicInfo,
         _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
         _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
@@ -87,6 +88,7 @@ pub trait StatefulBot: SerializeSelf + Sync + Send + 'static {
     /// act.
     fn on_turn_advance(
         &mut self,
+        _turn_num: TurnNum,
         _public_info: &<Self::Game as Play>::PublicInfo,
         _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
         _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
@@ -125,6 +127,7 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
 
     fn on_turn_advance(
         &mut self,
+        turn_num: TurnNum,
         public_info: &<Self::Game as Play>::PublicInfo,
         player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
         public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
@@ -134,6 +137,7 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
     ) {
         Bot::on_turn_advance(
             &*self,
+            turn_num,
             public_info,
             player_secret_info,
             public_info_update,
