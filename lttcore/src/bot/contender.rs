@@ -24,11 +24,10 @@ impl<T: Play> Contender<T> {
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper, bot::prebuilt::Intermediate
+    ///   TicTacToeBot, bot::prebuilt::Intermediate
     /// }};
     ///
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    /// let contender = Contender::new(bot);
+    /// let contender = Contender::new(Intermediate.into_bot());
     /// assert_eq!(contender.name(), "Intermediate");
     /// ```
     pub fn new(bot: impl StatefulBot<Game = T> + Clone + Display) -> Self {
@@ -40,11 +39,13 @@ impl<T: Play> Contender<T> {
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper, bot::prebuilt::Intermediate
+    ///   TicTacToeBot, bot::prebuilt::Intermediate
     /// }};
     ///
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    /// let contender = Contender::new_with_name(bot, "Custom Name");
+    /// let contender = Contender::new_with_name(
+    ///   Intermediate.into_bot(),
+    ///   "Custom Name"
+    /// );
     /// assert_eq!(contender.name(), "Custom Name");
     /// ```
     pub fn new_with_name(
@@ -62,18 +63,19 @@ impl<T: Play> Contender<T> {
     /// ```
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
-    ///   TicTacToeBotWrapper,
+    ///   TicTacToeBot,
     ///   bot::prebuilt::{Intermediate, Expert}
     /// }};
     ///
     /// // Use the default `Display` impl for a name
-    /// let bot = TicTacToeBotWrapper(Intermediate);
-    ///
-    /// let contender = Contender::new(bot.clone());
+    /// let contender = Contender::new(Intermediate.into_bot());
     /// assert_eq!(contender.name(), "Intermediate");
     ///
     /// // Use a custom set name
-    /// let contender = Contender::new_with_name(bot.clone(), "Custom Name");
+    /// let contender = Contender::new_with_name(
+    ///   Intermediate.into_bot(),
+    ///   "Custom Name"
+    /// );
     /// assert_eq!(contender.name(), "Custom Name");
     /// ```
     pub fn name(&self) -> &str {
