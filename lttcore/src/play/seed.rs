@@ -14,7 +14,18 @@ impl From<[u8; 32]> for Seed {
     }
 }
 
+impl Default for Seed {
+    fn default() -> Self {
+        Self::random()
+    }
+}
+
 impl Seed {
+    /// Alias for [`Seed::random`]
+    pub fn new() -> Self {
+        Self::random()
+    }
+
     /// Create a random seed using the `rand::thread_rng` generator
     pub fn random() -> Self {
         rand::thread_rng().gen::<[u8; 32]>().into()
