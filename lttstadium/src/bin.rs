@@ -2,7 +2,7 @@ use lttcore::{
     bot::Contender,
     examples::{
         tic_tac_toe::{
-            bot::prebuilt::{Expert, Intermediate},
+            bot::prebuilt::{ExpertSkill, IntermediateSkill},
             TicTacToeBot,
         },
         TicTacToe,
@@ -13,14 +13,8 @@ use lttstadium::{FightCard, FightCardBuilder};
 
 fn main() {
     let bots = vec![
-        (
-            Player::new(0),
-            Contender::new(Expert.into_bot()),
-        ),
-        (
-            Player::new(1),
-            Contender::new(Intermediate.into_bot()),
-        ),
+        (Player::new(0), Contender::new(ExpertSkill.into_bot())),
+        (Player::new(1), Contender::new(IntermediateSkill.into_bot())),
     ];
 
     let fight_card: FightCard<TicTacToe> = FightCardBuilder::default()
