@@ -1,7 +1,10 @@
 #![allow(missing_docs)]
 
+pub mod bot;
 mod public_info;
 mod settings;
+
+pub use bot::GuessTheNumberBot;
 pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
