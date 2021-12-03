@@ -225,26 +225,26 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(
         serialized,
         json!({
-          "debug_msgs": [],
-          "game_observer": {
-            "turn_num": 0,
-            "action_requests": [1, 0, 0, 0],
-            "settings": {
-                "Custom": {
-                    "name": serde_json::Value::Null,
+                "debug_msgs": [],
+                "game_observer": {
+                    "public_info": "InProgress",
                     "settings": {
-                        "range": {
-                            "start": 1,
-                            "end": 10
-                        },
-                        "number_of_players": 1
-                    }
-                }
-            },
-            "public_info": "InProgress"
-          },
-          "player": 0,
-          "secret_info": Null
+                        "Custom": {
+                            "name": Null,
+                            "settings": {
+                                "number_of_players": 1,
+                                "range": {
+                                    "end": 10,
+                                    "start": 1
+                                }
+                            }
+                        }
+                    },
+                    "turn_num": 0
+                },
+                "player": 0,
+                "player_should_act": true,
+                "secret_info": Null
         })
     );
     let deserialized: GamePlayer<GuessTheNumber> = serde_json::from_value(serialized).unwrap();

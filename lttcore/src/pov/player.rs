@@ -8,7 +8,6 @@
 
 use super::observer::{GameObserver, ObserverPov, ObserverUpdate};
 use crate::play::{Play, Player, TurnNum, View};
-use crate::utilities::PlayerSet;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -30,8 +29,6 @@ use std::borrow::Cow;
 pub struct PlayerPov<'a, T: Play> {
     /// The current turn number
     pub turn_num: TurnNum,
-    /// A [`PlayerSet`] containing the [`Player`]s that need to act during this turn
-    pub action_requests: Option<PlayerSet>,
     /// The [`Player`] who this view is for
     pub player: Player,
     /// The [`Settings`](Play::Settings) of the game
@@ -60,6 +57,7 @@ pub struct PlayerPov<'a, T: Play> {
 #[serde(bound = "")]
 pub struct PlayerUpdate<'a, T: Play> {
     pub(crate) player: Player,
+    pub(crate) player_should_act: bool,
     pub(crate) observer_update: ObserverUpdate<'a, T>,
     pub(crate) secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
     pub(crate) debug_msg: Option<Cow<'a, T::ActionError>>,
@@ -71,15 +69,9 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
         self.observer_update.turn_num()
     }
 
-    /// Return whether this player's input is needed this turn
-    pub fn is_this_players_input_needed_this_turn(&self) -> bool {
-        self.is_player_input_needed_this_turn(self.player)
-    }
-
-    /// Return whether a specific player's input is needed this turn
-    pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
-        self.observer_update
-            .is_player_input_needed_this_turn(player)
+    /// Whether the player should act this turn
+    pub fn player_should_act(&self) -> bool {
+        self.player_should_act
     }
 
     /// The secret info update for the player the came from the resolution of the previous turn.
@@ -99,6 +91,7 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
     pub fn into_owned(self) -> PlayerUpdate<'static, T> {
         PlayerUpdate {
             player: self.player,
+            player_should_act: self.player_should_act,
             observer_update: self.observer_update.into_owned(),
             secret_info_update: self.secret_info_update.map(|x| Cow::Owned(x.into_owned())),
             debug_msg: self.debug_msg.map(|x| Cow::Owned(x.into_owned())),
@@ -117,6 +110,7 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GamePlayer<T: Play> {
+    pub(crate) player_should_act: bool,
     pub(crate) game_observer: GameObserver<T>,
     pub(crate) player: Player,
     pub(crate) secret_info: T::PlayerSecretInfo,
@@ -140,7 +134,6 @@ impl<T: Play> GamePlayer<T> {
             player: self.player,
             secret_info: &self.secret_info,
             turn_num: self.game_observer.turn_num,
-            action_requests: self.game_observer.action_requests,
             settings: self.game_observer.settings(),
             public_info: &self.game_observer.public_info,
         }
@@ -152,11 +145,8 @@ impl<T: Play> GamePlayer<T> {
     }
 
     /// Return whether this [`Player`] needs to take an action during this turn
-    pub fn is_this_players_input_needed(&self) -> bool {
-        self.game_observer
-            .action_requests
-            .map(|player_set| player_set.contains(self.player))
-            .unwrap_or(false)
+    pub fn player_should_act(&self) -> bool {
+        self.player_should_act
     }
 
     /// The [`Settings`](Play::Settings) of the game
@@ -175,6 +165,7 @@ impl<T: Play> GamePlayer<T> {
     ///
     /// This function will panic if an update is skipped or applied twice
     pub fn update(&mut self, update: PlayerUpdate<'_, T>) {
+        self.player_should_act = update.player_should_act();
         self.game_observer.update(update.observer_update);
 
         if let Some(update) = update.secret_info_update {

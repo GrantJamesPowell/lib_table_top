@@ -52,7 +52,7 @@ fn test_it_shows_the_player_the_correct_things() {
     let mut actions = PID::default();
 
     for player in &players {
-        assert!(player.is_this_players_input_needed());
+        assert!(player.player_should_act());
         let pov = player.player_pov();
         assert_eq!(pov.turn_num, 0.into());
         assert_eq!(pov.public_info, &PublicInfo::InProgress);
@@ -92,6 +92,6 @@ fn test_it_shows_the_player_the_correct_things() {
     }
 
     for player in &players {
-        assert!(!player.is_this_players_input_needed());
+        assert!(!player.player_should_act());
     }
 }

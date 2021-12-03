@@ -35,52 +35,46 @@ impl<Item> PlayerItemCollector<Item> {
     /// use lttcore::{player_set, utilities::PlayerItemCollector};
     ///
     /// let ps = player_set![2,3,4];
-    /// let pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
-    /// assert_eq!(pic.players(), ps);
+    /// let pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps.clone());
+    /// assert!(pic.players().eq(ps.iter()));
     /// ```
-    pub fn players(&self) -> PlayerSet {
-        self.data.players()
+    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
+        self.data.players().iter()
     }
 
     /// Returns all the players who have submitted items
     ///
     /// ```
-    /// use lttcore::{play::Player, utilities::{PlayerItemCollector, PlayerSet}};
+    /// use lttcore::{player_set, play::Player, utilities::{PlayerItemCollector, PlayerSet}};
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
-    /// assert!(pic.players_who_have_submitted().is_empty());
+    /// assert!(pic.players_who_have_submitted().count() == 0);
     ///
-    /// let p2: Player = 2.into();
-    /// pic.add(p2, 42);
-    /// assert_eq!(pic.players_who_have_submitted(), p2.into());
+    /// pic.add(2, 42);
+    /// let expected = player_set![2];
+    /// assert!(pic.players_who_have_submitted().eq(expected.iter()));
     /// ```
-    pub fn players_who_have_submitted(&self) -> PlayerSet {
-        self.players()
-            .into_iter()
-            .filter(|&player| self.data[player].is_some())
-            .collect()
+    pub fn players_who_have_submitted(&self) -> impl Iterator<Item = Player> + '_ {
+        self.players().filter(|&player| self.data[player].is_some())
     }
 
     /// Returns all the players who haven't submitted yet
     ///
     /// ```
-    /// use lttcore::{play::Player, utilities::{PlayerItemCollector, PlayerSet}};
+    /// use lttcore::{player_set, play::Player, utilities::PlayerItemCollector};
     ///
-    /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
-    /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
-    /// assert_eq!(pic.unaccounted_for_players(), ps);
+    /// let ps = player_set![2,3,4];
+    /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps.clone());
+    /// assert!(pic.unaccounted_for_players().eq(ps.iter()));
     ///
     /// let p3: Player = 3.into();
     /// pic.add(p3, 42);
-    /// let expected = [2, 4].into_iter().map(Player::new).collect();
-    /// assert_eq!(pic.unaccounted_for_players(), expected);
+    /// let expected = player_set![2, 4];
+    /// assert!(pic.unaccounted_for_players().eq(expected));
     /// ```
-    pub fn unaccounted_for_players(&self) -> PlayerSet {
-        self.players()
-            .into_iter()
-            .filter(|&player| self.data[player].is_none())
-            .collect()
+    pub fn unaccounted_for_players(&self) -> impl Iterator<Item = Player> + '_ {
+        self.players().filter(|&player| self.data[player].is_none())
     }
 
     /// Returns whether all players have submitted
@@ -165,13 +159,13 @@ impl<Item> PlayerItemCollector<Item> {
     ///
     /// let ps = PlayerSet::from_iter([2,3,4].into_iter().map(Player::new));
     /// let mut pic: PlayerItemCollector<u64> = PlayerItemCollector::new(ps);
-    /// assert!(pic.players_who_have_submitted().is_empty());
+    /// assert!(pic.players_who_have_submitted().count() == 0);
     ///
     /// pic.add(2, 42);
-    /// assert!(!pic.players_who_have_submitted().is_empty());
+    /// assert!(pic.players_who_have_submitted().count() != 0);
     /// let removed = pic.remove(2);
     /// assert_eq!(removed, Some(42));
-    /// assert!(pic.players_who_have_submitted().is_empty());
+    /// assert!(pic.players_who_have_submitted().count() == 0);
     /// ```
     ///
     /// # Panics

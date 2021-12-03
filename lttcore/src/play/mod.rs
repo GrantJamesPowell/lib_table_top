@@ -103,4 +103,10 @@ pub trait Play:
         actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         rng: &mut impl rand::Rng,
     ) -> GameAdvance<Self>;
+
+    fn player_should_act(&self, player: Player, settings: &Self::Settings) -> bool {
+        self.which_players_input_needed(settings)
+            .map(|player_set| player_set.contains(player))
+            .unwrap_or(false)
+    }
 }
