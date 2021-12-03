@@ -188,7 +188,7 @@ fn process_from_game_host<T: Play>(msg: ToPlayerMsg<T>, state: &mut State) -> an
             });
         }
         Update(ref player_update) => {
-            if player_update.is_player_input_needed_this_turn(state.player) {
+            if player_update.player_should_act() {
                 let turn_num = player_update.turn_num();
                 state.awaiting_turn = Some(turn_num);
                 let sender = state.timeout_tx.clone();

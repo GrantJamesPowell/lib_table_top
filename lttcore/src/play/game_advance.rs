@@ -41,7 +41,6 @@ impl<T: Play> EnumeratedGameAdvance<T> {
     pub fn observer_update(&self) -> ObserverUpdate<'_, T> {
         ObserverUpdate {
             turn_num: self.turn_num,
-            action_requests: self.game_advance.next_players_input_needed,
             public_info_update: Cow::Borrowed(&self.game_advance.public_info_update),
         }
     }
@@ -49,6 +48,12 @@ impl<T: Play> EnumeratedGameAdvance<T> {
     /// Update that advances the [`GamePlayer`](crate::pov::player::GamePlayer) state machine
     pub fn player_update(&self, player: impl Into<Player>) -> PlayerUpdate<'_, T> {
         let player = player.into();
+        let player_should_act = self
+            .game_advance
+            .next_players_input_needed
+            .as_ref()
+            .map(|player_set| player_set.contains(player))
+            .unwrap_or(false);
         let observer_update = self.observer_update();
         let debug_msg = self.game_advance.debug_msgs.get(player).map(Cow::Borrowed);
         let secret_info_update = self
@@ -59,6 +64,7 @@ impl<T: Play> EnumeratedGameAdvance<T> {
 
         PlayerUpdate {
             player,
+            player_should_act,
             observer_update,
             secret_info_update,
             debug_msg,

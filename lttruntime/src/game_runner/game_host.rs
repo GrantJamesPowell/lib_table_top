@@ -13,7 +13,7 @@ pub async fn game_host<T: Play>(
     while let Some(players_input_needed) = game.which_players_input_needed() {
         let mut returned_actions: PIC<ActionResponse<T>> = players_input_needed.into();
 
-        while !returned_actions.unaccounted_for_players().is_empty() {
+        while !returned_actions.are_all_players_accounted_for() {
             match mailbox.recv().await {
                 None => return game,
                 Some(msg) => match msg {
@@ -49,13 +49,11 @@ async fn send_update<T: Play>(
     to_observer: &ToObserverMsgSender<T>,
 ) {
     let observer_update = update.observer_update().into_owned();
-    to_observer
-        .send(ToObserverMsg::Update(observer_update))
-        .unwrap();
+    let _maybe_send_error = to_observer.send(ToObserverMsg::Update(observer_update));
 
     for (player, to_player) in to_players.iter() {
         let player_update = update.player_update(player).into_owned();
-        to_player.send(ToPlayerMsg::Update(player_update)).unwrap();
+        let _maybe_send_error = to_player.send(ToPlayerMsg::Update(player_update));
     }
 }
 

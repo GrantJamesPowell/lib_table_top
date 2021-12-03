@@ -28,47 +28,45 @@ from_player_for_num!(u16);
 from_player_for_num!(u8);
 
 impl Player {
+    pub const MAX: Player = Player(u8::MAX);
+    pub const STARTING: Player = Player(0);
+
     /// Create a new [`Player`]
     pub const fn new(n: u8) -> Self {
         Self(n)
     }
 
-    /// An iterator over all of the players
-    pub fn all() -> impl Iterator<Item = Player> {
-        (0..=u8::MAX).map(Self::new)
-    }
-
-    /// Return the previous [`Player`], wrapping around from 0 => 255
+    /// Return the previous [`Player`], wrapping around from Player::STARTING => Player::MAX
     ///
     /// ```
     /// use lttcore::play::Player;
     ///
-    /// let p0: Player = 0.into();
+    /// let p_starting = Player::STARTING;
     /// let p1: Player = 1.into();
     /// let p2: Player = 2.into();
-    /// let p255: Player = 255.into();
+    /// let p_max = Player::MAX;
     ///
-    /// assert_eq!(p0.previous(), p255);
-    /// assert_eq!(p1.previous(), p0);
+    /// assert_eq!(p_starting.previous(), p_max);
+    /// assert_eq!(p1.previous(), p_starting);
     /// assert_eq!(p2.previous(), p1);
     /// ```
     pub fn previous(&self) -> Self {
         Self(self.0.wrapping_sub(1))
     }
 
-    /// Return the next [`Player`], wrapping around from 255 => 0
+    /// Return the next [`Player`], wrapping around from Player::MAX => Player::STARTING
     ///
     /// ```
     /// use lttcore::play::Player;
     ///
-    /// let p0: Player = 0.into();
+    /// let p_starting = Player::STARTING;
     /// let p1: Player = 1.into();
     /// let p2: Player = 2.into();
-    /// let p255: Player = 255.into();
+    /// let p_max = Player::MAX;
     ///
-    /// assert_eq!(p0.next(), p1);
+    /// assert_eq!(p_starting.next(), p1);
     /// assert_eq!(p1.next(), p2);
-    /// assert_eq!(p255.next(), p0);
+    /// assert_eq!(p_max.next(), p_starting);
     /// ```
     pub fn next(&self) -> Self {
         Self(self.0.wrapping_add(1))

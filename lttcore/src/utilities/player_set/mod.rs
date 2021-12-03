@@ -2,6 +2,7 @@ use crate::common::direction::LeftOrRight::{self, Left, Right};
 use crate::play::{NumberOfPlayers, Player};
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::iter::FromIterator;
 
 use super::PlayerIndexedData;
@@ -58,7 +59,7 @@ macro_rules! zip_with {
 /// # Implmentation notes
 ///
 /// [`PlayerSet`] stores it's data as 256 bits, one for each potential value of [`Player`]
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct PlayerSet([u64; 4]);
 
 fn section(player: Player) -> usize {
@@ -79,6 +80,11 @@ impl PlayerSet {
     /// to be empty
     pub fn empty() -> Self {
         Self::default()
+    }
+
+    /// Iterate over the players in the set
+    pub fn iter(&self) -> Iter<'_> {
+        self.iter_starting_from_player(0)
     }
 
     /// Returns the offset of the player relative to the playerset
@@ -159,7 +165,15 @@ impl PlayerSet {
     /// assert_eq!(data[2], 2);
     /// ```
     pub fn player_indexed_data<T>(&self, func: impl FnMut(Player) -> T) -> PlayerIndexedData<T> {
-        PlayerIndexedData::init_with(*self, func)
+        self.clone().into_player_indexed_data(func)
+    }
+
+    /// Same as [`PlayerSet::player_indexed_data`] but consumes `Self` to use in the indexed data
+    pub fn into_player_indexed_data<T>(
+        self,
+        func: impl FnMut(Player) -> T,
+    ) -> PlayerIndexedData<T> {
+        PlayerIndexedData::init_with(self, func)
     }
 
     /// Returns whether the [`Player`] is in [`PlayerSet`]
@@ -202,40 +216,31 @@ impl PlayerSet {
     ///
     /// assert!(set.players().next().is_none());
     ///
-    /// let player: Player = 1.into();
-    /// set.insert(player);
+    /// set.insert(1);
     ///
     /// assert_eq!(
     ///   set.players().collect::<Vec<_>>(),
-    ///   vec![player]
+    ///   vec![Player::new(1)]
     /// );
     /// ```
-    pub fn players(&self) -> impl Iterator<Item = Player> {
-        (*self).into_iter()
+    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
+        self.iter()
     }
 
     /// Adds the [`Player`] to the set, is a noop if [`Player`] is already in set
     /// returns the player offset
     ///
     /// ```
-    /// use lttcore::{play::Player, utilities::PlayerSet};
+    /// use lttcore::{player_set, play::Player};
     ///
-    /// let mut set = PlayerSet::new();
-    /// let player: Player = 1.into();
-    ///
-    /// assert!(!set.contains(player));
-    /// let idx = set.insert(player);
-    /// assert!(set.contains(player));
-    /// assert_eq!(set.player_offset(player), Some(idx));
-    ///
-    /// let idx = set.insert(u8::MAX);
-    /// assert_eq!(set.player_offset(u8::MAX), Some(idx));
+    /// let mut set = player_set![];
+    /// assert!(!set.contains(1));
+    /// set.insert(1);
+    /// assert!(set.contains(1));
     /// ```
-    pub fn insert(&mut self, player: impl Into<Player>) -> u8 {
+    pub fn insert(&mut self, player: impl Into<Player>) {
         let player = player.into();
         self.0[section(player)] |= (1_usize << offset(player)) as u64;
-        self.player_offset(player)
-            .expect("we just inserted the player")
     }
 
     /// Remove a [`Player`] from the set, is a noop if [`Player`] is not in the set
@@ -341,7 +346,7 @@ impl PlayerSet {
     ///
     pub fn next_player_right(&self, player: impl Into<Player>) -> Option<Player> {
         let player = player.into();
-        self.into_iter_from_starting_player(player.next()).next()
+        self.iter_starting_from_player(player.next()).next()
     }
 
     /// Returns the next player to the left of the given [`Player`], wrapping around if required
@@ -373,7 +378,7 @@ impl PlayerSet {
     /// ```
     pub fn next_player_left(&self, player: impl Into<Player>) -> Option<Player> {
         let player = player.into();
-        self.into_iter_from_starting_player(player.previous())
+        self.iter_starting_from_player(player.previous())
             .next_back()
     }
 
@@ -389,14 +394,27 @@ impl PlayerSet {
         }
     }
 
-    fn into_iter_from_starting_player(self, player: impl Into<Player>) -> IntoIter {
+    fn iter_starting_from_player(&self, player: impl Into<Player>) -> Iter<'_> {
         let player = player.into();
 
         let to_end = u8::from(player)..=u8::MAX;
         let from_start = 0..u8::from(player);
 
-        IntoIter {
-            set: self,
+        Iter {
+            set: Cow::Borrowed(&self),
+            to_end,
+            from_start,
+        }
+    }
+
+    fn into_iter_starting_from_player(self, player: impl Into<Player>) -> Iter<'static> {
+        let player = player.into();
+
+        let to_end = u8::from(player)..=u8::MAX;
+        let from_start = 0..u8::from(player);
+
+        Iter {
+            set: Cow::Owned(self),
             to_end,
             from_start,
         }
@@ -404,22 +422,13 @@ impl PlayerSet {
 }
 
 #[derive(Clone, Debug)]
-pub struct IntoIter {
-    set: PlayerSet,
+pub struct Iter<'a> {
+    set: Cow<'a, PlayerSet>,
     to_end: RangeInclusive<u8>,
     from_start: Range<u8>,
 }
 
-impl IntoIterator for PlayerSet {
-    type Item = Player;
-    type IntoIter = IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.into_iter_from_starting_player(0)
-    }
-}
-
-impl Iterator for IntoIter {
+impl<'a> Iterator for Iter<'a> {
     type Item = Player;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -439,7 +448,7 @@ impl Iterator for IntoIter {
     }
 }
 
-impl std::iter::DoubleEndedIterator for IntoIter {
+impl<'a> std::iter::DoubleEndedIterator for Iter<'a> {
     fn next_back(&mut self) -> Option<Self::Item> {
         while let Some(player) = self.from_start.next_back() {
             if self.set.contains(player) {
@@ -457,7 +466,16 @@ impl std::iter::DoubleEndedIterator for IntoIter {
     }
 }
 
-impl std::iter::FusedIterator for IntoIter {}
+impl IntoIterator for PlayerSet {
+    type Item = Player;
+    type IntoIter = Iter<'static>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_iter_starting_from_player(0)
+    }
+}
+
+impl<'a> std::iter::FusedIterator for Iter<'a> {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
@@ -497,10 +515,9 @@ mod tests {
 
     #[test]
     fn test_creating_a_full_player_set() {
-        let ps: PlayerSet = Player::all().collect();
-        assert_eq!(ps.count(), 256);
+        let ps: PlayerSet = (0..=255).map(Player::new).collect();
 
-        for player in Player::all() {
+        for player in ps.iter() {
             assert_eq!(ps.player_offset(player), Some(u8::from(player)))
         }
     }
@@ -542,11 +559,10 @@ mod tests {
 
     #[test]
     fn test_set_works_for_all_players() {
-        for player in Player::all() {
+        for player in (0..=255).map(Player::new) {
             let mut set = PlayerSet::new();
             assert!(!set.contains(player));
-            let idx = set.insert(player);
-            assert_eq!(set.player_offset(player), Some(idx));
+            set.insert(player);
             assert!(set.contains(player));
             set.remove(player);
             assert_eq!(set.player_offset(player), None);
@@ -555,12 +571,11 @@ mod tests {
 
         let mut set = PlayerSet::new();
 
-        for player in Player::all() {
-            let idx = set.insert(player);
-            assert_eq!(set.player_offset(player), Some(idx));
+        for player in (0..=255).map(Player::new) {
+            set.insert(player);
         }
 
-        for player in Player::all() {
+        for player in (0..=255).map(Player::new) {
             assert!(set.contains(player));
             assert_eq!(set.player_offset(player), Some(u8::from(player)));
         }
