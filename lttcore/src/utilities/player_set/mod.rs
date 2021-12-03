@@ -2,6 +2,7 @@ use crate::common::direction::LeftOrRight::{self, Left, Right};
 use crate::play::{NumberOfPlayers, Player};
 use core::ops::{Range, RangeInclusive};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::iter::FromIterator;
 
 use super::PlayerIndexedData;
@@ -408,20 +409,20 @@ impl PlayerSet {
         let from_start = 0..u8::from(player);
 
         Iter {
-            set: &self,
+            set: Cow::Borrowed(&self),
             to_end,
             from_start,
         }
     }
 
-    fn into_iter_starting_from_player(self, player: impl Into<Player>) -> IntoIter {
+    fn into_iter_starting_from_player(self, player: impl Into<Player>) -> Iter<'static> {
         let player = player.into();
 
         let to_end = u8::from(player)..=u8::MAX;
         let from_start = 0..u8::from(player);
 
-        IntoIter {
-            set: self,
+        Iter {
+            set: Cow::Owned(self),
             to_end,
             from_start,
         }
@@ -430,7 +431,7 @@ impl PlayerSet {
 
 #[derive(Clone, Debug)]
 pub struct Iter<'a> {
-    set: &'a PlayerSet,
+    set: Cow<'a, PlayerSet>,
     to_end: RangeInclusive<u8>,
     from_start: Range<u8>,
 }
@@ -473,61 +474,16 @@ impl<'a> std::iter::DoubleEndedIterator for Iter<'a> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct IntoIter {
-    set: PlayerSet,
-    to_end: RangeInclusive<u8>,
-    from_start: Range<u8>,
-}
-
 impl IntoIterator for PlayerSet {
     type Item = Player;
-    type IntoIter = IntoIter;
+    type IntoIter = Iter<'static>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.into_iter_starting_from_player(0)
     }
 }
 
-impl Iterator for IntoIter {
-    type Item = Player;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        for player in self.to_end.by_ref() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        for player in self.from_start.by_ref() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        None
-    }
-}
-
-impl std::iter::DoubleEndedIterator for IntoIter {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        while let Some(player) = self.from_start.next_back() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        while let Some(player) = self.to_end.next_back() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        None
-    }
-}
-
-impl std::iter::FusedIterator for IntoIter {}
+impl<'a> std::iter::FusedIterator for Iter<'a> {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
