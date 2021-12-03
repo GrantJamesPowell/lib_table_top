@@ -165,14 +165,16 @@ impl<T> PlayerIndexedData<T> {
     pub fn insert(&mut self, player: impl Into<Player>, item: T) -> Option<T> {
         let player = player.into();
 
-        #[allow(clippy::single_match_else)]
-        match self.players.player_offset(player) {
-            Some(idx) => Some(std::mem::replace(&mut self.data[idx as usize], item)),
-            None => {
-                let idx = self.players.insert(player);
-                self.data.insert(idx as usize, item);
-                None
-            }
+        if let Some(idx) = self.players.player_offset(player) {
+            Some(std::mem::replace(&mut self.data[idx as usize], item))
+        } else {
+            self.players.insert(player);
+            let idx = self
+                .players
+                .player_offset(player)
+                .expect("we just inserted the player");
+            self.data.insert(idx as usize, item);
+            None
         }
     }
 
