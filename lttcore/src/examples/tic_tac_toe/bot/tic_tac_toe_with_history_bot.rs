@@ -6,14 +6,11 @@ use std::{fmt::Display, panic::RefUnwindSafe};
 use crate::{
     bot::StatefulBot,
     examples::{
-        tic_tac_toe::{Action, Board, Marker, Position, PublicInfo, PublicInfoUpdate},
+        tic_tac_toe::{Action, Board, Marker, Position, PublicInfoUpdate},
         TicTacToe,
     },
-    play::{
-        view::{NoSecretPlayerInfo, NoSecretPlayerInfoUpdate},
-        Seed, TurnNum,
-    },
-    pov::player::PlayerPov,
+    play::{Seed, TurnNum},
+    pov::player::{PlayerPov, PlayerUpdate},
 };
 
 pub trait TicTacToeWithHistoryBot:
@@ -52,14 +49,12 @@ impl<T: TicTacToeWithHistoryBot> StatefulBot for TicTacToeWithHistoryBotWrapper<
 
     fn on_turn_advance(
         &mut self,
-        turn_num: TurnNum,
-        _public_info: &PublicInfo,
-        _player_secret_info: &NoSecretPlayerInfo,
-        public_info_update: &PublicInfoUpdate,
-        _player_secret_info_update: Option<&NoSecretPlayerInfoUpdate>,
+        _player_pov: &PlayerPov<'_, TicTacToe>,
+        player_update: &PlayerUpdate<'_, TicTacToe>,
     ) {
-        if let PublicInfoUpdate::Claim(marker, position) = public_info_update {
-            self.history.push((turn_num, *marker, *position));
+        if let PublicInfoUpdate::Claim(marker, position) = player_update.public_info_update() {
+            self.history
+                .push((player_update.turn_num(), *marker, *position));
         }
     }
 }

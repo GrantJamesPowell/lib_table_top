@@ -3,7 +3,7 @@
 //! An "Observer" is what someone casually watching a game without playing would to see.  They have
 //! no secret information and are never called upon to interact with the game directly
 
-use crate::play::{Play, SettingsPtr, TurnNum, View};
+use crate::play::{Play, SettingsPtr, TurnNum, View, Player};
 use crate::utilities::PlayerSet;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -46,6 +46,21 @@ pub struct ObserverUpdate<'a, T: Play> {
 }
 
 impl<'a, T: Play> ObserverUpdate<'a, T> {
+    /// Return the [`TurnNum`] for the observer update
+    pub fn turn_num(&self) -> TurnNum {
+        self.turn_num
+    }
+
+    /// The public info update that came from the resolution of the previous turn
+    pub fn public_info_update(&self) -> &<T::PublicInfo as View>::Update {
+        self.public_info_update.as_ref()
+    }
+
+    /// Return whether a specific player's input is needed this turn
+    pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
+        self.action_requests.contains(player)
+    }
+
     /// Change the lifetime to 'static making `ObserverUpdate` function like an owned type
     pub fn into_owned(self) -> ObserverUpdate<'static, T> {
         ObserverUpdate {

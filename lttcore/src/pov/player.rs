@@ -26,6 +26,7 @@ use std::borrow::Cow;
 /// [`TicTacToeBotWrapper`](crate::examples::tic_tac_toe::TicTacToeBotWrapper) as an example of the
 /// pattern of turning the general [`PlayerPov`] interface into a game specific one
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct PlayerPov<'a, T: Play> {
     /// The current turn number
     pub turn_num: TurnNum,
@@ -67,12 +68,23 @@ pub struct PlayerUpdate<'a, T: Play> {
 impl<'a, T: Play> PlayerUpdate<'a, T> {
     /// Return the [`TurnNum`] for the player update
     pub fn turn_num(&self) -> TurnNum {
-        self.observer_update.turn_num
+        self.observer_update.turn_num()
     }
 
     /// Return whether a specific player's input is needed this turn
     pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
         self.observer_update.action_requests.contains(player)
+    }
+
+    /// The secret info update for the player the came from the resolution of the previous turn.
+    /// May be [`None`] if there is no change to the player secret info
+    pub fn secret_info_update(&self) -> Option<&<T::PlayerSecretInfo as View>::Update> {
+        self.secret_info_update.as_ref().map(|cow| cow.as_ref())
+    }
+
+    /// The public info update that came from the resolution of the previous turn
+    pub fn public_info_update(&self) -> &<T::PublicInfo as View>::Update {
+        self.observer_update.public_info_update()
     }
 
     /// Change the lifetime to 'static making `PlayerUpdate` function like an owned type

@@ -42,7 +42,7 @@ fn test_serde_ttt() {
     );
 }
 
-fn test_simple_serialization<'a, T, U>(data: &T, expected: U)
+fn test_simple_serialization<T, U>(data: &T, expected: U)
 where
     T: Serialize + Debug + PartialEq + DeserializeOwned,
     U: Serialize,

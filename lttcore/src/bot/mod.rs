@@ -26,9 +26,9 @@
 
 use crate::{
     encoding::SerializeSelf,
-    play::{Play, Seed, View},
+    play::{Play, Seed}, pov::player::PlayerUpdate,
 };
-use crate::{play::TurnNum, pov::player::PlayerPov};
+use crate::pov::player::PlayerPov;
 use std::panic::RefUnwindSafe;
 
 mod contender;
@@ -55,13 +55,8 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     /// mutable state to update
     fn on_turn_advance(
         &self,
-        _turn_num: TurnNum,
-        _public_info: &<Self::Game as Play>::PublicInfo,
-        _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
-        _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
-        _player_secret_info_update: Option<
-            &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
-        >,
+        _player_pov: &PlayerPov<'_, Self::Game>,
+        _player_update: &PlayerUpdate<'_, Self::Game>
     ) {
         // by default, don't do anything on player updates
     }
@@ -88,13 +83,8 @@ pub trait StatefulBot: SerializeSelf + Sync + Send + 'static {
     /// act.
     fn on_turn_advance(
         &mut self,
-        _turn_num: TurnNum,
-        _public_info: &<Self::Game as Play>::PublicInfo,
-        _player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
-        _public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
-        _player_secret_info_update: Option<
-            &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
-        >,
+        _player_pov: &PlayerPov<'_, Self::Game>,
+        _player_update: &PlayerUpdate<'_, Self::Game>
     ) {
         // by default, don't do anything on player updates
     }
@@ -127,22 +117,10 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
 
     fn on_turn_advance(
         &mut self,
-        turn_num: TurnNum,
-        public_info: &<Self::Game as Play>::PublicInfo,
-        player_secret_info: &<Self::Game as Play>::PlayerSecretInfo,
-        public_info_update: &<<Self::Game as Play>::PublicInfo as View>::Update,
-        player_secret_info_update: Option<
-            &<<Self::Game as Play>::PlayerSecretInfo as View>::Update,
-        >,
+        player_pov: &PlayerPov<'_, Self::Game>,
+        player_update: &PlayerUpdate<'_, Self::Game> 
     ) {
-        Bot::on_turn_advance(
-            &*self,
-            turn_num,
-            public_info,
-            player_secret_info,
-            public_info_update,
-            player_secret_info_update,
-        );
+        Bot::on_turn_advance(&*self, player_pov, player_update);
     }
 
     fn has_immutable_state(&self) -> bool {
