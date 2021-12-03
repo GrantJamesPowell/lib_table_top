@@ -19,12 +19,12 @@ use std::borrow::Cow;
 ///
 /// # When would I use this?
 ///
-/// * You're writing a GUI to interact with a game as a [`Player`]
-/// * [`PlayerPov`] is part of the [`crate::bot::Bot`] interface. If you're a game author and are
-/// creating a game specific bot wrapper, you would need to use this as the input to your wrapper.
-/// See [`TicTacToeBot`](crate::examples::tic_tac_toe::TicTacToeBot) and
-/// [`TicTacToeBotWrapper`](crate::examples::tic_tac_toe::TicTacToeBotWrapper) as an example of the
-/// pattern of turning the general [`PlayerPov`] interface into a game specific one
+/// * You're writing a GUI to interact with a game as a [`Player`] * [`PlayerPov`] is part of the
+/// [`crate::bot::Bot`] interface. If you're a game author and are creating a game specific bot
+/// wrapper, you would need to use this as the input to your wrapper.  See
+/// [`TicTacToeBot`](crate::examples::tic_tac_toe::TicTacToeBot) and
+/// [`TicTacToeBotWrapper`](crate::examples::tic_tac_toe::bot::TicTacToeBotWrapper) as an example
+/// of the pattern of turning the general [`PlayerPov`] interface into a game specific one
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct PlayerPov<'a, T: Play> {

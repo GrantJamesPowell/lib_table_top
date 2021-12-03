@@ -19,16 +19,12 @@ pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
 pub use view::View;
 
-use crate::utilities::{PlayerIndexedData, PlayerSet};
+use crate::utilities::PlayerSet;
 use crate::LibTableTopIdentifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::{borrow::Cow, panic::RefUnwindSafe};
-
-pub type PlayerSecretInfos<T> = PlayerIndexedData<<T as Play>::PlayerSecretInfo>;
-pub type PlayerSecretInfoUpdates<T> =
-    PlayerIndexedData<<<T as Play>::PlayerSecretInfo as View>::Update>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
@@ -89,7 +85,7 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type PublicInfo: View + Score + RefUnwindSafe;
+    type PublicInfo: Score + View + RefUnwindSafe;
     type PlayerSecretInfo: View + RefUnwindSafe;
 
     fn player_secret_info(

@@ -1,25 +1,25 @@
+//! Functionality around machine readable scoring
 use crate::utilities::PlayerIndexedData as PID;
 
+/// Whether automated tooling should interpret a high score as being more favorable than a low
+/// score or vice versa. Defaults to `ScoreInterpertation::HigherIsBetter`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ScoreInterpertation {
-    HigherIsBetter,
-    LowerIsBetter,
-}
-
-pub trait Score {
-    /// Whether automated tooling should interpret a high score as being more favorable than a low
-    /// score or vice versa. Defaults to `ScoreInterpertation::HigherIsBetter`
-    ///
-    ///
     /// Examples of games where higher scores are better (`ScoreInterpertation::HigherIsBetter`)
     /// * Bowling
     /// * Basketball
     /// * Gin
-    ///
+    HigherIsBetter,
     /// Examples of games where lower scores are better (`ScoreInterpertation::LowerIsBetter`)
     ///  * Golf
     ///  * Hearts
-    ///  * `GuessTheNumber`
+    ///  * [`GuessTheNumber`](crate::examples::guess_the_number)
+    LowerIsBetter,
+}
+
+/// Machine readable scores
+pub trait Score {
+    /// See documentation for [`ScoreInterpertation`], defaults to [`ScoreInterpertation::HigherIsBetter`]
     fn score_interpertation() -> ScoreInterpertation {
         ScoreInterpertation::HigherIsBetter
     }

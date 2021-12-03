@@ -43,7 +43,7 @@ pub trait BuiltinGameModes: Sized + 'static {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct VerifiedBuiltin<T: BuiltinGameModes + 'static>(&'static Builtin<T>);
+pub struct VerifiedBuiltin<T: BuiltinGameModes>(&'static Builtin<T>);
 
 impl<T: BuiltinGameModes> VerifiedBuiltin<T> {
     pub fn settings(&self) -> &T {
@@ -60,7 +60,7 @@ impl<T: BuiltinGameModes> Serialize for VerifiedBuiltin<T> {
 #[derive(Debug)]
 struct VerifiedBuiltinVistor<T>(std::marker::PhantomData<fn() -> T>);
 
-impl<'de, T: BuiltinGameModes + 'static> Visitor<'de> for VerifiedBuiltinVistor<T> {
+impl<'de, T: BuiltinGameModes> Visitor<'de> for VerifiedBuiltinVistor<T> {
     type Value = VerifiedBuiltin<T>;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

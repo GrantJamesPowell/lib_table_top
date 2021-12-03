@@ -28,10 +28,12 @@ from_player_for_num!(u16);
 from_player_for_num!(u8);
 
 impl Player {
+    /// Create a new [`Player`]
     pub const fn new(n: u8) -> Self {
         Self(n)
     }
 
+    /// An iterator over all of the players
     pub fn all() -> impl Iterator<Item = Player> {
         (0..=u8::MAX).map(Self::new)
     }

@@ -1,3 +1,4 @@
+#![warn(missing_docs)]
 //! Number of players
 
 use crate::{
@@ -13,6 +14,7 @@ use std::ops::Deref;
 pub struct NumberOfPlayers(NonZeroU8);
 
 impl NumberOfPlayers {
+    /// Create a new [`NumberOfPlayers`]
     pub const fn new(n: NonZeroU8) -> Self {
         Self(n)
     }
@@ -100,20 +102,28 @@ impl NumberOfPlayers {
 
 // [const_option] isn't a feature yet, so I'm using new_unchecked. It's sound to do so because none
 // of the inputs are 0
+/// [One](https://www.youtube.com/watch?v=d5ab8BOu4LE) Player
 pub const ONE_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(1) });
+/// Two Player
 pub const TWO_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(2) });
+/// Three Player
 pub const THREE_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(3) });
+/// Four Player
 pub const FOUR_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(4) });
+/// Five Player
 pub const FIVE_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(5) });
+/// Six Player
 pub const SIX_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(6) });
+/// Seven Player
 pub const SEVEN_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(7) });
+/// Eight Player
 pub const EIGHT_PLAYER: NumberOfPlayers =
     NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(8) });
 
