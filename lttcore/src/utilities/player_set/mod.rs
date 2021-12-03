@@ -515,10 +515,9 @@ mod tests {
 
     #[test]
     fn test_creating_a_full_player_set() {
-        let ps: PlayerSet = Player::all().collect();
-        assert_eq!(ps.count(), 256);
+        let ps: PlayerSet = (0..=255).map(Player::new).collect();
 
-        for player in Player::all() {
+        for player in ps.iter() {
             assert_eq!(ps.player_offset(player), Some(u8::from(player)))
         }
     }
@@ -560,7 +559,7 @@ mod tests {
 
     #[test]
     fn test_set_works_for_all_players() {
-        for player in Player::all() {
+        for player in (0..=255).map(Player::new) {
             let mut set = PlayerSet::new();
             assert!(!set.contains(player));
             set.insert(player);
@@ -572,11 +571,11 @@ mod tests {
 
         let mut set = PlayerSet::new();
 
-        for player in Player::all() {
+        for player in (0..=255).map(Player::new) {
             set.insert(player);
         }
 
-        for player in Player::all() {
+        for player in (0..=255).map(Player::new) {
             assert!(set.contains(player));
             assert_eq!(set.player_offset(player), Some(u8::from(player)));
         }
