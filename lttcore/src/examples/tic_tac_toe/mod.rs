@@ -278,10 +278,11 @@ impl Play for TicTacToe {
     type PlayerSecretInfo = NoSecretPlayerInfo;
     type Settings = Settings;
 
-    fn which_players_input_needed(&self, _settings: &Self::Settings) -> PlayerSet {
-        match self.status() {
-            Status::InProgress { next_up } => Player::from(next_up).into(),
-            _ => Default::default(),
+    fn which_players_input_needed(&self, _settings: &Self::Settings) -> Option<PlayerSet> {
+        if let Status::InProgress { next_up } = self.status() {
+            Some(Player::from(next_up).into())
+        } else {
+            None
         }
     }
 

@@ -3,7 +3,7 @@
 //! An "Observer" is what someone casually watching a game without playing would to see.  They have
 //! no secret information and are never called upon to interact with the game directly
 
-use crate::play::{Play, SettingsPtr, TurnNum, View, Player};
+use crate::play::{Play, Player, SettingsPtr, TurnNum, View};
 use crate::utilities::PlayerSet;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -18,7 +18,7 @@ pub struct ObserverPov<'a, T: Play> {
     /// The current turn number
     pub turn_num: TurnNum,
     /// A [`PlayerSet`] containing the [`Player`](crate::play::Player)s that need to act during this turn
-    pub action_requests: PlayerSet,
+    pub action_requests: Option<PlayerSet>,
     /// The [`Settings`](Play::Settings) of the game
     pub settings: &'a T::Settings,
     /// The [`PublicInfo`](Play::PublicInfo) for this [`TurnNum`]
@@ -41,7 +41,7 @@ pub struct ObserverPov<'a, T: Play> {
 #[serde(bound = "")]
 pub struct ObserverUpdate<'a, T: Play> {
     pub(crate) turn_num: TurnNum,
-    pub(crate) action_requests: PlayerSet,
+    pub(crate) action_requests: Option<PlayerSet>,
     pub(crate) public_info_update: Cow<'a, <<T as Play>::PublicInfo as View>::Update>,
 }
 
@@ -58,7 +58,10 @@ impl<'a, T: Play> ObserverUpdate<'a, T> {
 
     /// Return whether a specific player's input is needed this turn
     pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
-        self.action_requests.contains(player)
+        self.action_requests
+            .as_ref()
+            .map(|player_set| player_set.contains(player))
+            .unwrap_or(false)
     }
 
     /// Change the lifetime to 'static making `ObserverUpdate` function like an owned type
@@ -83,7 +86,7 @@ impl<'a, T: Play> ObserverUpdate<'a, T> {
 #[serde(bound = "")]
 pub struct GameObserver<T: Play> {
     pub(crate) turn_num: TurnNum,
-    pub(crate) action_requests: PlayerSet,
+    pub(crate) action_requests: Option<PlayerSet>,
     pub(crate) settings: SettingsPtr<T::Settings>,
     pub(crate) public_info: T::PublicInfo,
 }

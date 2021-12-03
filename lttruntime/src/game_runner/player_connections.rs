@@ -412,6 +412,7 @@ mod tests {
         let guess: Guess = 4.into();
         let actions = game_progression
             .which_players_input_needed()
+            .expect("game needs actions")
             .player_indexed_data(|_player| ActionResponse::Response(guess.clone()));
         let update = game_progression.submit_actions(actions);
         let player_update = update.player_update(player).into_owned();

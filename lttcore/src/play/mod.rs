@@ -99,7 +99,7 @@ pub trait Play:
     ) -> Cow<'_, Self::PlayerSecretInfo>;
     fn public_info(&self, settings: &Self::Settings) -> Cow<'_, Self::PublicInfo>;
     fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
-    fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet;
+    fn which_players_input_needed(&self, settings: &Self::Settings) -> Option<PlayerSet>;
 
     fn advance<'a>(
         &'a mut self,

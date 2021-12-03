@@ -8,7 +8,7 @@ use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GameAdvance<T: Play> {
-    pub next_players_input_needed: PlayerSet,
+    pub next_players_input_needed: Option<PlayerSet>,
     pub public_info_update: <T::PublicInfo as View>::Update,
     pub player_secret_info_updates: PlayerSecretInfoUpdates<T>,
     pub debug_msgs: PID<T::ActionError>,

@@ -31,7 +31,7 @@ pub struct PlayerPov<'a, T: Play> {
     /// The current turn number
     pub turn_num: TurnNum,
     /// A [`PlayerSet`] containing the [`Player`]s that need to act during this turn
-    pub action_requests: PlayerSet,
+    pub action_requests: Option<PlayerSet>,
     /// The [`Player`] who this view is for
     pub player: Player,
     /// The [`Settings`](Play::Settings) of the game
@@ -71,9 +71,15 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
         self.observer_update.turn_num()
     }
 
+    /// Return whether this player's input is needed this turn
+    pub fn is_this_players_input_needed_this_turn(&self) -> bool {
+        self.is_player_input_needed_this_turn(self.player)
+    }
+
     /// Return whether a specific player's input is needed this turn
     pub fn is_player_input_needed_this_turn(&self, player: Player) -> bool {
-        self.observer_update.action_requests.contains(player)
+        self.observer_update
+            .is_player_input_needed_this_turn(player)
     }
 
     /// The secret info update for the player the came from the resolution of the previous turn.
@@ -147,7 +153,10 @@ impl<T: Play> GamePlayer<T> {
 
     /// Return whether this [`Player`] needs to take an action during this turn
     pub fn is_this_players_input_needed(&self) -> bool {
-        self.game_observer.action_requests.contains(self.player)
+        self.game_observer
+            .action_requests
+            .map(|player_set| player_set.contains(self.player))
+            .unwrap_or(false)
     }
 
     /// The [`Settings`](Play::Settings) of the game

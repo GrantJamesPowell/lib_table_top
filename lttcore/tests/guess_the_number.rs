@@ -68,11 +68,7 @@ fn test_it_shows_the_player_the_correct_things() {
     assert!(game_advance
         .game_advance
         .next_players_input_needed
-        .is_empty());
-    assert!(game_advance
-        .game_advance
-        .next_players_input_needed
-        .is_empty());
+        .is_none());
     assert!(game_advance
         .game_advance
         .player_secret_info_updates

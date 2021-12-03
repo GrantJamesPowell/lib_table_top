@@ -51,23 +51,21 @@ impl<T: Play> FightCard<T> {
                     .number_of_players()
                     .player_indexed_data(|p| game.game_player(p));
 
-                while !game.is_concluded() {
-                    let actions = game
-                        .which_players_input_needed()
-                        .player_indexed_data(|player| {
-                            let pov = &game_players[player].player_pov();
-                            let seed = &bot_seeds[player];
+                while let Some(player_input_needed) = game.which_players_input_needed() {
+                    let actions = player_input_needed.player_indexed_data(|player| {
+                        let pov = &game_players[player].player_pov();
+                        let seed = &bot_seeds[player];
 
-                            // # Safety
-                            //
-                            // It's _probably_ not technically "unsafe" to reuse a bot who's is
-                            // potentially in a weird state after it's panicked. For good measure,
-                            // we resign and don't continue to reuse the bot state.
-                            let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
-                            catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
-                                .map(ActionResponse::Response)
-                                .unwrap_or_else(|_| ActionResponse::Resign)
-                        });
+                        // # Safety
+                        //
+                        // It's _probably_ not technically "unsafe" to reuse a bot who's is
+                        // potentially in a weird state after it's panicked. For good measure,
+                        // we resign and don't continue to reuse the bot state.
+                        let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
+                        catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
+                            .map(ActionResponse::Response)
+                            .unwrap_or_else(|_| ActionResponse::Resign)
+                    });
 
                     let game_advance = game.submit_actions(actions);
 

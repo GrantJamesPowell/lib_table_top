@@ -79,10 +79,10 @@ impl Play for GuessTheNumber {
         }
     }
 
-    fn which_players_input_needed(&self, settings: &Self::Settings) -> PlayerSet {
+    fn which_players_input_needed(&self, settings: &Self::Settings) -> Option<PlayerSet> {
         match self.guesses {
-            Some(_) => PlayerSet::empty(),
-            None => settings.number_of_players().player_set(),
+            Some(_) => None,
+            None => Some(settings.number_of_players().player_set()),
         }
     }
 

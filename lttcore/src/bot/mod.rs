@@ -24,11 +24,12 @@
 //!
 //! TODO:// Explain Contenders
 
+use crate::pov::player::PlayerPov;
 use crate::{
     encoding::SerializeSelf,
-    play::{Play, Seed}, pov::player::PlayerUpdate,
+    play::{Play, Seed},
+    pov::player::PlayerUpdate,
 };
-use crate::pov::player::PlayerPov;
 use std::panic::RefUnwindSafe;
 
 mod contender;
@@ -56,7 +57,7 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     fn on_turn_advance(
         &self,
         _player_pov: &PlayerPov<'_, Self::Game>,
-        _player_update: &PlayerUpdate<'_, Self::Game>
+        _player_update: &PlayerUpdate<'_, Self::Game>,
     ) {
         // by default, don't do anything on player updates
     }
@@ -84,7 +85,7 @@ pub trait StatefulBot: SerializeSelf + Sync + Send + 'static {
     fn on_turn_advance(
         &mut self,
         _player_pov: &PlayerPov<'_, Self::Game>,
-        _player_update: &PlayerUpdate<'_, Self::Game>
+        _player_update: &PlayerUpdate<'_, Self::Game>,
     ) {
         // by default, don't do anything on player updates
     }
@@ -118,7 +119,7 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
     fn on_turn_advance(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        player_update: &PlayerUpdate<'_, Self::Game> 
+        player_update: &PlayerUpdate<'_, Self::Game>,
     ) {
         Bot::on_turn_advance(&*self, player_pov, player_update);
     }

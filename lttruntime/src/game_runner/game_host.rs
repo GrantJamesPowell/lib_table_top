@@ -10,8 +10,8 @@ pub async fn game_host<T: Play>(
     to_players: PID<ToPlayerMsgSender<T>>,
     to_observer: ToObserverMsgSender<T>,
 ) -> GameProgression<T> {
-    while !game.is_concluded() {
-        let mut returned_actions: PIC<ActionResponse<T>> = game.which_players_input_needed().into();
+    while let Some(players_input_needed) = game.which_players_input_needed() {
+        let mut returned_actions: PIC<ActionResponse<T>> = players_input_needed.into();
 
         while !returned_actions.unaccounted_for_players().is_empty() {
             match mailbox.recv().await {
@@ -99,6 +99,7 @@ mod tests {
         let mut game = GameProgression::from_settings(settings);
         let actions = game
             .which_players_input_needed()
+            .expect("game needs inputs")
             .player_indexed_data(|player| Response(Guess::from(u64::from(player))));
 
         game.submit_actions(actions);

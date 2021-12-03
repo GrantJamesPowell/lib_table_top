@@ -78,7 +78,7 @@ impl<T: Play> Contender<T> {
     /// use lttcore::bot::Contender;
     /// use lttcore::examples::{TicTacToe, tic_tac_toe::{
     ///   TicTacToeBot,
-    ///   bot::prebuilt::{IntermediateSkill, Expert}
+    ///   bot::prebuilt::{IntermediateSkill, ExpertSkill}
     /// }};
     ///
     /// // Use the default `Display` impl for a name
