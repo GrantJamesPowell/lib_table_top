@@ -6,6 +6,8 @@ use std::iter::FromIterator;
 
 use super::PlayerIndexedData;
 
+// mod bit_field;
+
 /// Helper macro to define [`PlayerSet`] literals
 ///
 /// ```
