@@ -84,6 +84,36 @@ impl BitArray256 {
         self.count()
     }
 
+    /// Returns the lowest number in the set
+    ///
+    /// ```
+    /// use lttcore::bit_array_256;
+    ///
+    /// let ba = bit_array_256![4,5,6];
+    /// assert_eq!(ba.lowest(), Some(4));
+    ///
+    /// let empty = bit_array_256![];
+    /// assert_eq!(empty.lowest(), None);
+    /// ```
+    pub fn lowest(&self) -> Option<u8> {
+        self.iter().next()
+    }
+
+    /// Returns the highest number in the set
+    ///
+    /// ```
+    /// use lttcore::bit_array_256;
+    ///
+    /// let ba = bit_array_256![4,5,6];
+    /// assert_eq!(ba.highest(), Some(6));
+    ///
+    /// let empty = bit_array_256![];
+    /// assert_eq!(empty.highest(), None);
+    /// ```
+    pub fn highest(&self) -> Option<u8> {
+        self.iter().next_back()
+    }
+
     /// Pops the lowest number in the set, returning [`None`] if empty
     ///
     /// ```
@@ -97,7 +127,7 @@ impl BitArray256 {
     /// assert_eq!(ba.pop_lowest(), None);
     /// ```
     pub fn pop_lowest(&mut self) -> Option<u8> {
-        self.iter().next().map(|num| {
+        self.lowest().map(|num| {
             self.remove(num);
             num
         })
@@ -116,7 +146,7 @@ impl BitArray256 {
     /// assert_eq!(ba.pop_highest(), None);
     /// ```
     pub fn pop_highest(&mut self) -> Option<u8> {
-        self.iter().next_back().map(|num| {
+        self.highest().map(|num| {
             self.remove(num);
             num
         })
