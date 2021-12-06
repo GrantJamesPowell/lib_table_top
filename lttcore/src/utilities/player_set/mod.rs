@@ -1,12 +1,9 @@
 use super::PlayerIndexedData;
-use crate::common::direction::LeftOrRight::{self, Left, Right};
 use crate::play::{NumberOfPlayers, Player};
 use crate::utilities::BitArray256;
-use core::ops::{Range, RangeInclusive};
 use itertools::{EitherOrBoth, Itertools};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use std::borrow::Cow;
 use std::iter::FromIterator;
 
 /// Helper macro to define [`PlayerSet`] literals
@@ -20,10 +17,10 @@ use std::iter::FromIterator;
 /// let expected: PlayerSet = [4,5,6].into_iter().map(Player::new).collect();
 /// assert_eq!(expected, player_set![4, 5, 6]);
 ///
-/// let ps = player_set![{ 1 + 1 }, { 4 * 5 }, u8::MAX];
+/// let ps = player_set![{ 1 + 1 }, { 4 * 5 }, u32::MAX];
 /// assert!(ps.contains(2));
 /// assert!(ps.contains(20));
-/// assert!(ps.contains(255));
+/// assert!(ps.contains(u32::MAX));
 /// ```
 #[macro_export]
 macro_rules! player_set {
@@ -44,33 +41,36 @@ macro_rules! player_set {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PlayerSet(SmallVec<[(u32, BitArray256); 1]>);
 
-fn join_with(
-    PlayerSet(blocks_a): PlayerSet,
-    PlayerSet(blocks_b): PlayerSet,
-    f: impl Fn(BitArray256, BitArray256) -> BitArray256,
-) -> PlayerSet {
-    let mut output = SmallVec::with_capacity(blocks_a.len().max(blocks_b.len()));
-
-    let iter = blocks_a
-        .into_iter()
-        .merge_join_by(blocks_b.into_iter(), |(a, _), (b, _)| a.cmp(b))
-        .map(|x| match x {
-            EitherOrBoth::Left(x) | EitherOrBoth::Right(x) => x,
-            EitherOrBoth::Both((i, x), (_, y)) => (i, f(x, y)),
-        });
-
-    output.extend(iter);
-    PlayerSet(output)
+fn join_with<'a>(
+    PlayerSet(blocks_a): &'a PlayerSet,
+    PlayerSet(blocks_b): &'a PlayerSet,
+    f: impl Fn(BitArray256, BitArray256) -> BitArray256 + 'static,
+) -> impl Iterator<Item = Player> + 'a {
+    Itertools::merge_join_by(blocks_a.iter(), blocks_b.iter(), |(a, _), (b, _)| a.cmp(b))
+        .map(move |x| match x {
+            EitherOrBoth::Left((i, x)) => (i, f(*x, BitArray256::empty())),
+            EitherOrBoth::Right((i, x)) => (i, f(BitArray256::empty(), *x)),
+            EitherOrBoth::Both((i, x), (_, y)) => (i, f(*x, *y)),
+        })
+        .flat_map(|(block, bit_array)| {
+            bit_array
+                .into_iter()
+                .map(move |num| player_for_block_and_offset(*block, num))
+        })
 }
 
 fn block_and_offest_for_player(player: Player) -> (u32, u8) {
-    // Each `BitArray256` holds 245 players, we assign a block based on how far from the start the
+    // Each `BitArray256` holds 256 players, we assign a block based on how far from the start the
     // player is and then calculate how deep in the 256 bit block the player is
     let num = u32::from(player);
     (
         num / 256,
         (num % 256).try_into().expect("we just modulo'd by 256"),
     )
+}
+
+fn player_for_block_and_offset(block: u32, offset: u8) -> Player {
+    Player::from((block * 256) + (offset as u32))
 }
 
 impl PlayerSet {
@@ -85,9 +85,75 @@ impl PlayerSet {
         Self::default()
     }
 
+    /// Returns the [`Player`] with the lowest id in the set
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let ps = player_set![4,5,6];
+    /// assert_eq!(ps.first(), Some(4.into()));
+    ///
+    /// let empty = player_set![];
+    /// assert_eq!(empty.first(), None);
+    /// ```
+    pub fn first(&self) -> Option<Player> {
+        self.iter().next()
+    }
+
+    /// Returns the [`Player`] with the highest id in the set
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let ps = player_set![4,5,6];
+    /// assert_eq!(ps.last(), Some(6.into()));
+    ///
+    /// let empty = player_set![];
+    /// assert_eq!(empty.last(), None);
+    /// ```
+    pub fn last(&self) -> Option<Player> {
+        self.iter().next_back()
+    }
+
+    /// Pop the [`Player`] with the lowest id
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let mut ps = player_set![4000, 5000, 6000];
+    /// assert_eq!(ps.pop_first(), Some(4000.into()));
+    /// assert_eq!(ps, player_set![5000, 6000]);
+    /// ```
+    pub fn pop_first(&mut self) -> Option<Player> {
+        self.first().map(|player| {
+            self.remove(player);
+            player
+        })
+    }
+
+    /// Pop the [`Player`] with the lowest id
+    ///
+    /// ```
+    /// use lttcore::player_set;
+    ///
+    /// let mut ps = player_set![4000, 5000, 6000];
+    /// assert_eq!(ps.pop_last(), Some(6000.into()));
+    /// assert_eq!(ps, player_set![4000, 5000]);
+    /// ```
+    pub fn pop_last(&mut self) -> Option<Player> {
+        self.last().map(|player| {
+            self.remove(player);
+            player
+        })
+    }
+
     /// Iterate over the players in the set
-    pub fn iter(&self) -> Iter<'_> {
-        self.iter_starting_from_player(0)
+    pub fn iter(&self) -> impl Iterator<Item = Player> + DoubleEndedIterator + '_ {
+        self.0.iter().flat_map(|(block, bit_array)| {
+            bit_array
+                .iter()
+                .map(move |offset| player_for_block_and_offset(*block, offset))
+        })
     }
 
     /// Returns the offset of the player relative to the playerset
@@ -97,28 +163,32 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let ps = player_set![2, 4, 6, u8::MAX];
+    /// let ps = player_set![2, 4, 6, 3000, u32::MAX];
     /// assert_eq!(ps.player_offset(2), Some(0));
     /// assert_eq!(ps.player_offset(4), Some(1));
     /// assert_eq!(ps.player_offset(6), Some(2));
-    /// assert_eq!(ps.player_offset(u8::MAX), Some(3));
+    /// assert_eq!(ps.player_offset(3000), Some(3));
+    /// assert_eq!(ps.player_offset(u32::MAX), Some(4));
     ///
     /// // When a Player isn't in the set
     ///
     /// assert_eq!(ps.player_offset(42), None);
     /// ```
     pub fn player_offset(&self, player: impl Into<Player>) -> Option<u32> {
-        let (block, offset) = block_and_offest_for_player(player.into());
+        let player = player.into();
+        let (block, offset) = block_and_offest_for_player(player);
 
-        let (_idx, bit_array) = self.0.get(block as usize)?;
-        let block_offset = bit_array.num_offset(offset).map(u32::from)?;
+        let idx = self.0.binary_search_by_key(&block, |(i, _)| *i).ok()?;
+        let (_block, bit_array) = self.0[idx];
+
+        let offset_within_block = bit_array.num_offset(offset).map(u32::from)?;
         let preceding_count = self
             .0
             .iter()
             .map_while(|(idx, bit_array)| (*idx < block).then(|| bit_array.count() as u32))
             .sum::<u32>();
 
-        Some(preceding_count + block_offset)
+        Some(preceding_count + offset_within_block)
     }
 
     /// Return the count of players in the set
@@ -130,10 +200,14 @@ impl PlayerSet {
     /// assert_eq!(set.count(), 0);
     /// set.insert(0);
     /// assert_eq!(set.count(), 1);
-    /// set.insert(1);
+    /// set.insert(1000);
     /// assert_eq!(set.count(), 2);
+    ///
+    /// // The second time inserting the same number is a no-op
     /// set.insert(1);
-    /// assert_eq!(set.count(), 2);
+    /// assert_eq!(set.count(), 3);
+    /// set.insert(1);
+    /// assert_eq!(set.count(), 3);
     /// ```
     pub fn count(&self) -> u32 {
         self.0
@@ -153,11 +227,12 @@ impl PlayerSet {
     /// use lttcore::player_set;
     /// use lttcore::utilities::PlayerIndexedData as PID;
     ///
-    /// let ps = player_set![0, 1, 2];
+    /// let ps = player_set![0, 1, 2, 1000];
     /// let data: PID<u64> = ps.player_indexed_data(|player| player.into());
     /// assert_eq!(data[0], 0);
     /// assert_eq!(data[1], 1);
     /// assert_eq!(data[2], 2);
+    /// assert_eq!(data[1000], 1000);
     /// ```
     pub fn player_indexed_data<T>(&self, func: impl FnMut(Player) -> T) -> PlayerIndexedData<T> {
         self.clone().into_player_indexed_data(func)
@@ -174,14 +249,13 @@ impl PlayerSet {
     /// Returns whether the [`Player`] is in [`PlayerSet`]
     ///
     /// ```
-    /// use lttcore::{play::Player, utilities::PlayerSet};
+    /// use lttcore::utilities::PlayerSet;
     ///
     /// let mut set = PlayerSet::new();
-    /// let player: Player = 1.into();
     ///
-    /// assert!(!set.contains(player));
-    /// set.insert(player);
-    /// assert!(set.contains(player));
+    /// assert!(!set.contains(1));
+    /// set.insert(1);
+    /// assert!(set.contains(1));
     /// ```
     pub fn contains(&self, player: impl Into<Player>) -> bool {
         let (block, offset) = block_and_offest_for_player(player.into());
@@ -208,26 +282,6 @@ impl PlayerSet {
         self.len() == 0
     }
 
-    /// Iterator over players in the set
-    ///
-    /// ```
-    /// use lttcore::{play::Player, utilities::PlayerSet};
-    ///
-    /// let mut set = PlayerSet::new();
-    ///
-    /// assert!(set.players().next().is_none());
-    ///
-    /// set.insert(1);
-    ///
-    /// assert_eq!(
-    ///   set.players().collect::<Vec<_>>(),
-    ///   vec![Player::new(1)]
-    /// );
-    /// ```
-    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
-        self.iter()
-    }
-
     /// Adds the [`Player`] to the set, is a noop if [`Player`] is already in set
     /// returns the player offset
     ///
@@ -235,9 +289,14 @@ impl PlayerSet {
     /// use lttcore::{player_set, play::Player};
     ///
     /// let mut set = player_set![];
+    ///
     /// assert!(!set.contains(1));
     /// set.insert(1);
     /// assert!(set.contains(1));
+    ///
+    /// assert!(!set.contains(1000));
+    /// set.insert(1000);
+    /// assert!(set.contains(1000));
     /// ```
     pub fn insert(&mut self, player: impl Into<Player>) {
         let (block, offset) = block_and_offest_for_player(player.into());
@@ -280,12 +339,12 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let set1 = player_set![1,2,3];
-    /// let set2 = player_set![2,3,4];
+    /// let set1 = player_set![1, 2, 3, 1000, 1001];
+    /// let set2 = player_set![2, 3, 4, 1000, 2000];
     ///
-    /// assert_eq!(set1.union(set2), player_set![1, 2, 3, 4]);
+    /// assert!(set1.union(&set2).eq(player_set![1, 2, 3, 4, 1000, 1001, 2000]));
     /// ```
-    pub fn union(self, other: Self) -> Self {
+    pub fn union<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
         join_with(self, other, |x, y| x.union(y))
     }
 
@@ -294,12 +353,12 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let set1 = player_set![1,2,3];
-    /// let set2 = player_set![2,3,4];
+    /// let set1 = player_set![1, 2, 3, 1000, 1001];
+    /// let set2 = player_set![2, 3, 4, 1000, 2000];
     ///
-    /// assert_eq!(set1.intersection(set2), player_set![2, 3]);
+    /// assert!(set1.intersection(&set2).eq(player_set![2, 3, 1000]));
     /// ```
-    pub fn intersection(self, other: Self) -> Self {
+    pub fn intersection<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
         join_with(self, other, |x, y| x.intersection(y))
     }
 
@@ -307,13 +366,16 @@ impl PlayerSet {
     ///
     /// ```
     /// use lttcore::player_set;
+    /// use lttcore::utilities::PlayerSet;
     ///
-    /// let set1 = player_set![1,2,3];
-    /// let set2 = player_set![2,3,4];
+    /// let set1 = player_set![1, 2, 3, 1000, 1001];
+    /// let set2 = player_set![2, 3, 4, 1000, 2000];
     ///
-    /// assert_eq!(set1.difference(set2), player_set![1]);
+    /// assert_eq!(set1.difference(&set2).collect::<PlayerSet>(), player_set![1, 1001]);
+    ///
+    /// assert!(set1.difference(&set2).eq(player_set![1, 1001]));
     /// ```
-    pub fn difference(self, other: Self) -> Self {
+    pub fn difference<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
         join_with(self, other, |x, y| x.difference(y))
     }
 
@@ -323,175 +385,90 @@ impl PlayerSet {
     /// ```
     /// use lttcore::player_set;
     ///
-    /// let set1 = player_set![1,2,3];
-    /// let set2 = player_set![2,3,4];
+    /// let set1 = player_set![1, 2, 3, 1000, 1001];
+    /// let set2 = player_set![2, 3, 4, 1000, 2000];
     ///
-    /// assert_eq!(set1.symmetric_difference(set2), player_set![1, 4])
+    /// assert!(set1.symmetric_difference(&set2).eq(player_set![1, 4, 1001, 2000]))
     /// ```
-    pub fn symmetric_difference(self, other: Self) -> Self {
+    pub fn symmetric_difference<'a>(
+        &'a self,
+        other: &'a Self,
+    ) -> impl Iterator<Item = Player> + 'a {
         join_with(self, other, |x, y| x.symmetric_difference(y))
-    }
-
-    /// Returns the next [`Player`] to the right of the given [`Player`], wrapping around if required
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    ///
-    /// let set = player_set![10, 20, 30];
-    /// assert_eq!(set.next_player_right(20), Some(30.into()));
-    /// assert_eq!(set.next_player_right(30), Some(10.into()));
-    /// assert_eq!(set.next_player_right(10), Some(20.into()));
-    ///
-    /// // It the player isn't in the set it will find the next player right as if the player was
-    ///
-    /// assert_eq!(set.next_player_right(25), Some(30.into()));
-    ///
-    /// // A PlayerSet with only one player will yield that player
-    ///
-    /// let set = player_set![42];
-    /// assert_eq!(set.next_player_right(0), Some(42.into()));
-    /// assert_eq!(set.next_player_right(42), Some(42.into()));
-    /// assert_eq!(set.next_player_right(42), Some(42.into()));
-    /// assert_eq!(set.next_player_right(u8::MAX), Some(42.into()));
-    ///
-    /// // An empty set will yield `None`
-    ///
-    /// let set = player_set![];
-    /// assert!(set.next_player_right(0).is_none());
-    /// ```
-    ///
-    pub fn next_player_right(&self, player: impl Into<Player>) -> Option<Player> {
-        let player = player.into();
-        self.iter_starting_from_player(player.next()).next()
-    }
-
-    /// Returns the next player to the left of the given [`Player`], wrapping around if required
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    ///
-    /// let set = player_set![10, 20, 30];
-    /// assert_eq!(set.next_player_left(20), Some(10.into()));
-    /// assert_eq!(set.next_player_left(30), Some(20.into()));
-    /// assert_eq!(set.next_player_left(10), Some(30.into()));
-    ///
-    /// // It the player isn't in the set it will find the next player right as if the player was
-    ///
-    /// assert_eq!(set.next_player_left(25), Some(20.into()));
-    ///
-    /// // A PlayerSet with only one player will yield that player
-    ///
-    /// let set = player_set![42];
-    /// assert_eq!(set.next_player_left(0), Some(42.into()));
-    /// assert_eq!(set.next_player_left(42), Some(42.into()));
-    /// assert_eq!(set.next_player_left(42), Some(42.into()));
-    /// assert_eq!(set.next_player_left(u8::MAX), Some(42.into()));
-    ///
-    /// // An empty set will yield `None`
-    ///
-    /// let set = player_set![];
-    /// assert!(set.next_player_left(0).is_none());
-    /// ```
-    pub fn next_player_left(&self, player: impl Into<Player>) -> Option<Player> {
-        let player = player.into();
-        self.iter_starting_from_player(player.previous())
-            .next_back()
-    }
-
-    /// see [`PlayerSet::next_player_left`] and [`PlayerSet::next_player_right`]
-    pub fn next_player_in_direction(
-        &self,
-        player: impl Into<Player>,
-        direction: LeftOrRight,
-    ) -> Option<Player> {
-        match direction {
-            Right => self.next_player_right(player),
-            Left => self.next_player_left(player),
-        }
-    }
-
-    fn iter_starting_from_player(&self, player: impl Into<Player>) -> Iter<'_> {
-        let player = player.into();
-
-        let to_end = u8::from(player)..=u8::MAX;
-        let from_start = 0..u8::from(player);
-
-        Iter {
-            set: Cow::Borrowed(&self),
-            to_end,
-            from_start,
-        }
-    }
-
-    fn into_iter_starting_from_player(self, player: impl Into<Player>) -> Iter<'static> {
-        let player = player.into();
-
-        let to_end = u8::from(player)..=u8::MAX;
-        let from_start = 0..u8::from(player);
-
-        Iter {
-            set: Cow::Owned(self),
-            to_end,
-            from_start,
-        }
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct Iter<'a> {
-    set: Cow<'a, PlayerSet>,
-    to_end: RangeInclusive<u8>,
-    from_start: Range<u8>,
+pub struct IntoIter {
+    remaining_blocks: smallvec::IntoIter<[(u32, BitArray256); 1]>,
+    front_cursor: Option<(u32, BitArray256)>,
+    back_cursor: Option<(u32, BitArray256)>,
 }
 
-impl<'a> Iterator for Iter<'a> {
+impl Iterator for IntoIter {
     type Item = Player;
 
     fn next(&mut self) -> Option<Self::Item> {
-        for player in self.to_end.by_ref() {
-            if self.set.contains(player) {
-                return Some(player.into());
+        loop {
+            if let Some((block, bit_array)) = self.front_cursor.as_mut() {
+                if let Some(num) = bit_array.pop_lowest() {
+                    return Some(player_for_block_and_offset(*block, num));
+                }
+            }
+
+            if let Some(next) = self.remaining_blocks.next() {
+                self.front_cursor = Some(next);
+            } else {
+                break;
             }
         }
 
-        for player in self.from_start.by_ref() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        None
+        self.back_cursor.as_mut().and_then(|(block, bit_array)| {
+            bit_array
+                .pop_lowest()
+                .map(|num| player_for_block_and_offset(*block, num))
+        })
     }
 }
 
-impl<'a> std::iter::DoubleEndedIterator for Iter<'a> {
+impl std::iter::DoubleEndedIterator for IntoIter {
     fn next_back(&mut self) -> Option<Self::Item> {
-        while let Some(player) = self.from_start.next_back() {
-            if self.set.contains(player) {
-                return Some(player.into());
+        loop {
+            if let Some((block, bit_array)) = self.back_cursor.as_mut() {
+                if let Some(num) = bit_array.pop_highest() {
+                    return Some(player_for_block_and_offset(*block, num));
+                }
+            }
+
+            if let Some(next) = self.remaining_blocks.next_back() {
+                self.back_cursor = Some(next);
+            } else {
+                break;
             }
         }
 
-        while let Some(player) = self.to_end.next_back() {
-            if self.set.contains(player) {
-                return Some(player.into());
-            }
-        }
-
-        None
+        self.front_cursor.as_mut().and_then(|(block, bit_array)| {
+            bit_array
+                .pop_highest()
+                .map(|num| player_for_block_and_offset(*block, num))
+        })
     }
 }
 
 impl IntoIterator for PlayerSet {
     type Item = Player;
-    type IntoIter = Iter<'static>;
+    type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.into_iter_starting_from_player(0)
+        IntoIter {
+            remaining_blocks: self.0.into_iter(),
+            front_cursor: None,
+            back_cursor: None,
+        }
     }
 }
 
-impl<'a> std::iter::FusedIterator for Iter<'a> {}
+impl<'a> std::iter::FusedIterator for IntoIter {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
@@ -505,8 +482,8 @@ impl From<NumberOfPlayers> for PlayerSet {
     }
 }
 
-impl FromIterator<Player> for PlayerSet {
-    fn from_iter<I: IntoIterator<Item = Player>>(iter: I) -> Self {
+impl<T: Into<Player>> FromIterator<T> for PlayerSet {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut set = PlayerSet::new();
 
         for player in iter {
@@ -525,9 +502,13 @@ mod tests {
 
     #[test]
     fn test_from_iter_for_player_set() {
-        let set: PlayerSet = [Player::new(0), Player::new(1)].into_iter().collect();
+        let set: PlayerSet = [0, 1, 1000, 10000, u32::MAX].into_iter().collect();
         assert!(set.contains(0));
         assert!(set.contains(1));
+        assert!(set.contains(1000));
+        assert!(set.contains(10000));
+        assert!(set.contains(u32::MAX));
+
         assert!(!set.contains(2));
     }
 
@@ -542,20 +523,37 @@ mod tests {
 
     #[test]
     fn test_into_iter_for_player_set() {
-        let players: Vec<Player> = [0, 1, 2, u8::MAX].into_iter().map(Player::new).collect();
-        let player_set: PlayerSet = players.iter().copied().collect();
+        let player_set = player_set![0, 1, 2, u32::MAX];
         let mut result: Vec<Player> = Vec::new();
 
-        for player in player_set {
+        for player in player_set.clone() {
             result.push(player);
         }
 
-        assert_eq!(result, players);
+        assert_eq!(result, player_set.into_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_next_and_next_back_for_player_set_iter() {
+        let set: PlayerSet = player_set![1, 2, 3, 8, 9, 10, u32::MAX];
+        let mut iter = set.iter();
+
+        assert_eq!(Some(1.into()), iter.next());
+        assert_eq!(Some(2.into()), iter.next());
+        assert_eq!(Some(u32::MAX.into()), iter.next_back());
+        assert_eq!(Some(10.into()), iter.next_back());
+        assert_eq!(Some(9.into()), iter.next_back());
+        assert_eq!(Some(3.into()), iter.next());
+        assert_eq!(Some(8.into()), iter.next());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
     }
 
     #[test]
     fn test_next_and_next_back_for_player_set_into_iter() {
-        let set: PlayerSet = [1, 2, 3, 8, 9, 10, u8::MAX]
+        let set: PlayerSet = [1, 2, 3, 8, 9, 10, u32::MAX]
             .into_iter()
             .map(Player::new)
             .collect();
@@ -564,7 +562,7 @@ mod tests {
 
         assert_eq!(Some(1.into()), iter.next());
         assert_eq!(Some(2.into()), iter.next());
-        assert_eq!(Some(u8::MAX.into()), iter.next_back());
+        assert_eq!(Some(u32::MAX.into()), iter.next_back());
         assert_eq!(Some(10.into()), iter.next_back());
         assert_eq!(Some(9.into()), iter.next_back());
         assert_eq!(Some(3.into()), iter.next());
@@ -577,7 +575,7 @@ mod tests {
 
     #[test]
     fn test_set_works_for_all_players() {
-        for player in (0..=255).map(Player::new) {
+        for player in 0..10000 {
             let mut set = PlayerSet::new();
             assert!(!set.contains(player));
             set.insert(player);
@@ -589,11 +587,11 @@ mod tests {
 
         let mut set = PlayerSet::new();
 
-        for player in (0..=255).map(Player::new) {
+        for player in 0..10000 {
             set.insert(player);
         }
 
-        for player in (0..=255).map(Player::new) {
+        for player in 0..10000 {
             assert!(set.contains(player));
             assert_eq!(set.player_offset(player), Some(u32::from(player)));
         }
@@ -602,8 +600,11 @@ mod tests {
     #[test]
     fn adding_and_removing_is_the_same_as_empty() {
         let mut set = PlayerSet::new();
-        set.insert(1);
-        set.remove(1);
+
+        for i in 0..1000 {
+            set.insert(i);
+            set.remove(i);
+        }
         assert_eq!(set, PlayerSet::empty());
 
         let mut hasher = DefaultHasher::new();
@@ -613,5 +614,31 @@ mod tests {
         PlayerSet::empty().hash(&mut hasher);
         let from_empty = hasher.finish();
         assert_eq!(roundtrip, from_empty);
+    }
+
+    #[test]
+    fn block_offset_player_conversions() {
+        for i in 1..1000 {
+            let player = Player::from(i);
+            let (block, offset) = block_and_offest_for_player(player);
+            let roundtripped_player = player_for_block_and_offset(block, offset);
+            assert_eq!(player, roundtripped_player)
+        }
+    }
+
+    #[test]
+    fn join_with_works_with_player_set_with_different_numbers_of_blocks() {
+        let ps1 = player_set![1, 2, 3, 1000];
+        let ps2 = player_set![1000, 2000, 3000, 4000];
+
+        assert_eq!(
+            join_with(&ps1, &ps2, |x, y| x.intersection(y)).collect::<PlayerSet>(),
+            player_set![1000]
+        );
+
+        assert_eq!(
+            join_with(&ps1, &ps2, |x, y| x.intersection(y)).collect::<PlayerSet>(),
+            join_with(&ps2, &ps1, |x, y| x.intersection(y)).collect::<PlayerSet>()
+        );
     }
 }
