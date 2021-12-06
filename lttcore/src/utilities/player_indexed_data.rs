@@ -178,6 +178,54 @@ impl<T> PlayerIndexedData<T> {
         }
     }
 
+    /// Pop the `(Player, T)` combo with the lowest [`Player`] value, returning [`None`] if the
+    /// [`PlayerIndexedData`] is empty
+    ///
+    /// ```
+    /// use lttcore::{play::Player, utilities::{PlayerSet, PlayerIndexedData}};
+    ///
+    /// let mut data: PlayerIndexedData<u64> = Default::default();
+    /// assert_eq!(data.pop_front(), None);
+    ///
+    /// data.insert(1, 42);
+    /// data.insert(2, 43);
+    /// data.insert(3, 44);
+    ///
+    /// assert_eq!(data.pop_front(), Some((Player::new(1), 42)));
+    /// assert_eq!(data.pop_front(), Some((Player::new(2), 43)));
+    /// assert_eq!(data.pop_front(), Some((Player::new(3), 44)));
+    /// assert_eq!(data.pop_front(), None);
+    /// ```
+    pub fn pop_front(&mut self) -> Option<(Player, T)> {
+        self.players
+            .first()
+            .and_then(|player| self.remove(player).map(|t| (player, t)))
+    }
+
+    /// Pop the `(Player, T)` combo with the highest [`Player`] value, returning [`None`] if the
+    /// [`PlayerIndexedData`] is empty
+    ///
+    /// ```
+    /// use lttcore::{play::Player, utilities::{PlayerSet, PlayerIndexedData}};
+    ///
+    /// let mut data: PlayerIndexedData<u64> = Default::default();
+    /// assert_eq!(data.pop_front(), None);
+    ///
+    /// data.insert(1, 42);
+    /// data.insert(2, 43);
+    /// data.insert(3, 44);
+    ///
+    /// assert_eq!(data.pop_back(), Some((Player::new(3), 44)));
+    /// assert_eq!(data.pop_back(), Some((Player::new(2), 43)));
+    /// assert_eq!(data.pop_back(), Some((Player::new(1), 42)));
+    /// assert_eq!(data.pop_back(), None);
+    /// ```
+    pub fn pop_back(&mut self) -> Option<(Player, T)> {
+        self.players
+            .last()
+            .and_then(|player| self.remove(player).map(|t| (player, t)))
+    }
+
     /// Removes a Player and returns the item if present
     ///
     /// ```
@@ -196,20 +244,36 @@ impl<T> PlayerIndexedData<T> {
 
         self.players.player_offset(player).map(|idx| {
             self.players.remove(player);
-            self.data.remove(idx.into())
+            self.data.remove(idx as usize)
         })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct IntoIter<T> {
+    pid: PlayerIndexedData<T>,
+}
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = (Player, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pid.pop_front()
+    }
+}
+
+impl<T> DoubleEndedIterator for IntoIter<T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.pid.pop_back()
     }
 }
 
 impl<T> IntoIterator for PlayerIndexedData<T> {
     type Item = (Player, T);
-    // This would be much better served as type `IntoIter = impl Iterator<Item = Self::Item>;`
-    // Currently the above would require unstable feature`#![feature(type_alias_impl_trait)]`
-    type IntoIter =
-        core::iter::Zip<<PlayerSet as IntoIterator>::IntoIter, smallvec::IntoIter<[T; 4]>>;
+    type IntoIter = IntoIter<T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.players.into_iter().zip(self.data.into_iter())
+        IntoIter { pid: self }
     }
 }
 

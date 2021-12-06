@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// [`Player`] is a wrapper around a [`u8`], letting games have a maximum of 256 players.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct Player(u8);
+pub struct Player(u32);
 
 macro_rules! from_player_for_num {
     ($num:ty) => {
@@ -28,11 +28,11 @@ from_player_for_num!(u16);
 from_player_for_num!(u8);
 
 impl Player {
-    pub const MAX: Player = Player(u8::MAX);
+    pub const MAX: Player = Player(u32::MAX);
     pub const STARTING: Player = Player(0);
 
     /// Create a new [`Player`]
-    pub const fn new(n: u8) -> Self {
+    pub const fn new(n: u32) -> Self {
         Self(n)
     }
 
@@ -73,8 +73,8 @@ impl Player {
     }
 }
 
-impl From<u8> for Player {
-    fn from(n: u8) -> Self {
+impl From<u32> for Player {
+    fn from(n: u32) -> Self {
         Self(n)
     }
 }

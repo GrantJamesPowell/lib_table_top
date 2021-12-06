@@ -6,16 +6,16 @@ use crate::{
     utilities::{PlayerIndexedData, PlayerSet},
 };
 use serde::{Deserialize, Serialize};
-use std::num::{NonZeroU8, TryFromIntError};
+use std::num::{NonZeroU32, TryFromIntError};
 use std::ops::Deref;
 
 /// Wrapper around [`NonZeroU8`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct NumberOfPlayers(NonZeroU8);
+pub struct NumberOfPlayers(NonZeroU32);
 
 impl NumberOfPlayers {
     /// Create a new [`NumberOfPlayers`]
-    pub const fn new(n: NonZeroU8) -> Self {
+    pub const fn new(n: NonZeroU32) -> Self {
         Self(n)
     }
 
@@ -96,7 +96,7 @@ impl NumberOfPlayers {
     /// ```
     pub fn includes_player(&self, player: impl Into<Player>) -> bool {
         let player = player.into();
-        u8::from(player) <= (self.get() - 1)
+        u32::from(player) <= (self.get() - 1)
     }
 }
 
@@ -104,45 +104,45 @@ impl NumberOfPlayers {
 // of the inputs are 0
 /// [One](https://www.youtube.com/watch?v=d5ab8BOu4LE) Player
 pub const ONE_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(1) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(1) });
 /// Two Player
 pub const TWO_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(2) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(2) });
 /// Three Player
 pub const THREE_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(3) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(3) });
 /// Four Player
 pub const FOUR_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(4) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(4) });
 /// Five Player
 pub const FIVE_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(5) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(5) });
 /// Six Player
 pub const SIX_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(6) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(6) });
 /// Seven Player
 pub const SEVEN_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(7) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(7) });
 /// Eight Player
 pub const EIGHT_PLAYER: NumberOfPlayers =
-    NumberOfPlayers::new(unsafe { NonZeroU8::new_unchecked(8) });
+    NumberOfPlayers::new(unsafe { NonZeroU32::new_unchecked(8) });
 
-impl TryFrom<u8> for NumberOfPlayers {
+impl TryFrom<u32> for NumberOfPlayers {
     type Error = TryFromIntError;
 
-    fn try_from(n: u8) -> Result<Self, Self::Error> {
+    fn try_from(n: u32) -> Result<Self, Self::Error> {
         Ok(Self(n.try_into()?))
     }
 }
 
-impl From<NonZeroU8> for NumberOfPlayers {
-    fn from(n: NonZeroU8) -> Self {
+impl From<NonZeroU32> for NumberOfPlayers {
+    fn from(n: NonZeroU32) -> Self {
         Self(n)
     }
 }
 
 impl Deref for NumberOfPlayers {
-    type Target = NonZeroU8;
+    type Target = NonZeroU32;
 
     fn deref(&self) -> &Self::Target {
         &self.0

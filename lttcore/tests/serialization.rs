@@ -14,24 +14,36 @@ use std::fmt::Debug;
 fn test_serialize_player_set() {
     let mut set: PlayerSet = Default::default();
 
-    assert_eq!(json!([0, 0, 0, 0]), serde_json::to_value(&set).unwrap());
+    assert_eq!(json!([]), serde_json::to_value(&set).unwrap());
 
     set.insert(0);
 
-    assert_eq!(json!([1, 0, 0, 0]), serde_json::to_value(&set).unwrap());
+    assert_eq!(
+        json!([[0, [1, 0, 0, 0]]]),
+        serde_json::to_value(&set).unwrap()
+    );
 
     set.insert(1);
 
-    assert_eq!(json!([3, 0, 0, 0]), serde_json::to_value(&set).unwrap());
+    assert_eq!(
+        json!([[0, [3, 0, 0, 0]]]),
+        serde_json::to_value(&set).unwrap()
+    );
 
     set.insert(64);
 
-    assert_eq!(json!([3, 1, 0, 0]), serde_json::to_value(&set).unwrap());
+    assert_eq!(
+        json!([[0, [3, 1, 0, 0]]]),
+        serde_json::to_value(&set).unwrap()
+    );
 
     set.insert(128);
     set.insert(192);
 
-    assert_eq!(json!([3, 1, 1, 1]), serde_json::to_value(&set).unwrap());
+    assert_eq!(
+        json!([[0, [3, 1, 1, 1]]]),
+        serde_json::to_value(&set).unwrap()
+    );
 }
 
 #[test]
