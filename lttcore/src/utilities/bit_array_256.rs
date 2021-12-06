@@ -16,21 +16,15 @@ macro_rules! bit_array_256 {
 // https://github.com/rust-lang/rust/issues/80094
 macro_rules! zip_with {
     ($bf1:expr, $bf2:expr, $func:expr) => {{
-        let BitArray256 {
-            bits: [a1, a2, a3, a4],
-        } = $bf1;
-        let BitArray256 {
-            bits: [b1, b2, b3, b4],
-        } = $bf2;
+        let BitArray256([a1, a2, a3, a4]) = $bf1;
+        let BitArray256([b1, b2, b3, b4]) = $bf2;
 
-        BitArray256 {
-            bits: [
-                $func((a1, b1)),
-                $func((a2, b2)),
-                $func((a3, b3)),
-                $func((a4, b4)),
-            ],
-        }
+        BitArray256([
+            $func((a1, b1)),
+            $func((a2, b2)),
+            $func((a3, b3)),
+            $func((a4, b4)),
+        ])
     }};
 }
 
@@ -42,22 +36,22 @@ fn offset(num: u8) -> usize {
     (num as usize) % 64
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct BitArray256 {
-    bits: [u64; 4],
-}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct BitArray256([u64; 4]);
 
 impl Default for BitArray256 {
     fn default() -> Self {
-        BitArray256 { bits: [0; 4] }
+        BitArray256([0; 4])
     }
 }
 
 impl BitArray256 {
+    /// Returns a new empty [`BitArray256`]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns a new empty [`BitArray256`]
     pub fn empty() -> Self {
         Self::default()
     }
@@ -66,14 +60,18 @@ impl BitArray256 {
         self.iter_starting_from_number(0)
     }
 
+    /// Returns whether the [`BitArray256`] is empty
     pub fn is_empty(&self) -> bool {
-        self.bits == [0_u64; 4]
+        self.0 == [0_u64; 4]
     }
 
     pub fn count(&self) -> u16 {
-        // We use a u16 instead of a u32 because there are 257 possible numbers of players 0-256
-        // inclusive on both sides
-        self.bits
+        // We use a u16 instead of a u8 because there are 257 possibilites
+        //
+        // u8 => [0, 255]
+        // count all empty => 0
+        // count all full => **256**
+        self.0
             .iter()
             .map(|&x| x.count_ones())
             .sum::<u32>()
@@ -84,6 +82,39 @@ impl BitArray256 {
     /// Alias for `count`
     pub fn len(&self) -> u16 {
         self.count()
+    }
+
+    /// Returns the offset of the number relative to the contents of the [`BitArray256`]
+    ///
+    /// Note: [`PlayerSet`] is iterated in increasing order starting with [`Player`] `0`
+    ///
+    /// ```
+    /// use lttcore::bit_array_256;
+    ///
+    /// let ba = bit_array_256![2, 4, 6, u8::MAX];
+    /// assert_eq!(ba.num_offset(2), Some(0));
+    /// assert_eq!(ba.num_offset(4), Some(1));
+    /// assert_eq!(ba.num_offset(6), Some(2));
+    /// assert_eq!(ba.num_offset(u8::MAX), Some(3));
+    ///
+    /// // When a number isn't in the set
+    ///
+    /// assert_eq!(ba.num_offset(42), None);
+    /// ```
+    pub fn num_offset(&self, num: u8) -> Option<u8> {
+        self.contains(num).then(|| {
+            let initial_sections_sum = self.0[0..section(num)]
+                .iter()
+                .map(|x| x.count_ones())
+                .sum::<u32>();
+
+            let section = self.0[section(num)];
+            let mask: u64 = !(u64::MAX << offset(num));
+            let section_ones = (mask & section).count_ones();
+            (initial_sections_sum + section_ones)
+                .try_into()
+                .expect("offset is always 0-255")
+        })
     }
 
     /// Returns whether the number is in the [`BitArray256`]
@@ -97,7 +128,7 @@ impl BitArray256 {
     /// assert!(set.contains(1));
     /// ```
     pub fn contains(&self, num: u8) -> bool {
-        (self.bits[section(num)] & (1_usize << offset(num)) as u64) > 0
+        (self.0[section(num)] & (1_usize << offset(num)) as u64) > 0
     }
 
     /// Adds the number to the set, is a noop if number is already in set
@@ -111,7 +142,7 @@ impl BitArray256 {
     /// assert!(set.contains(1));
     /// ```
     pub fn insert(&mut self, num: u8) {
-        self.bits[section(num)] |= (1_usize << offset(num)) as u64;
+        self.0[section(num)] |= (1_usize << offset(num)) as u64;
     }
 
     /// Remove a number from the set, is a noop if number is not in the set
@@ -126,7 +157,7 @@ impl BitArray256 {
     /// assert!(!set.contains(1));
     /// ```
     pub fn remove(&mut self, num: u8) {
-        self.bits[section(num)] &= !(1_usize << offset(num)) as u64;
+        self.0[section(num)] &= !(1_usize << offset(num)) as u64;
     }
 
     /// The [`BitArray256`] representing the union, i.e. the numbers that are in self, other, or
@@ -257,5 +288,11 @@ impl FromIterator<u8> for BitArray256 {
         }
 
         set
+    }
+}
+
+impl From<u8> for BitArray256 {
+    fn from(n: u8) -> BitArray256 {
+        Some(n).into_iter().collect()
     }
 }

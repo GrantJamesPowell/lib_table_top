@@ -1,11 +1,13 @@
+use super::PlayerIndexedData;
 use crate::common::direction::LeftOrRight::{self, Left, Right};
 use crate::play::{NumberOfPlayers, Player};
+use crate::utilities::BitArray256;
 use core::ops::{Range, RangeInclusive};
+use itertools::{EitherOrBoth, Itertools};
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::iter::FromIterator;
-
-use super::PlayerIndexedData;
 
 /// Helper macro to define [`PlayerSet`] literals
 ///
@@ -27,47 +29,48 @@ use super::PlayerIndexedData;
 macro_rules! player_set {
     ( $( $expr:expr ),* ) => {
         [$($expr,)*].into_iter()
-            .map(::lttcore::play::Player::new)
-            .collect::<::lttcore::utilities::PlayerSet>()
+            .map($crate::play::Player::new)
+            .collect::<$crate::utilities::PlayerSet>()
     };
-}
-
-// [T; N].zip isn't stable yet, so working around
-// https://github.com/rust-lang/rust/issues/80094
-macro_rules! zip_with {
-    ($ps1:expr, $ps2:expr, $func:expr) => {{
-        let PlayerSet([a1, a2, a3, a4]) = $ps1;
-        let PlayerSet([b1, b2, b3, b4]) = $ps2;
-
-        PlayerSet([
-            $func((a1, b1)),
-            $func((a2, b2)),
-            $func((a3, b3)),
-            $func((a4, b4)),
-        ])
-    }};
 }
 
 /// A set of [`Player`](crate::play::Player)
 ///
 /// # Design goals
 ///
-/// * `O(1)` Add/Remove/Lookup
+/// * `O(1)-ish` Add/Remove/Lookup
 /// * Serializes nicely
-/// * Avoids allocating
-///
-/// # Implmentation notes
-///
-/// [`PlayerSet`] stores it's data as 256 bits, one for each potential value of [`Player`]
-#[derive(Debug, Clone, Hash, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct PlayerSet([u64; 4]);
+/// * Avoids allocating if all players are under 256
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct PlayerSet(SmallVec<[(u32, BitArray256); 1]>);
 
-fn section(player: Player) -> usize {
-    usize::from(player).checked_div(64).unwrap()
+fn join_with(
+    PlayerSet(blocks_a): PlayerSet,
+    PlayerSet(blocks_b): PlayerSet,
+    f: impl Fn(BitArray256, BitArray256) -> BitArray256,
+) -> PlayerSet {
+    let mut output = SmallVec::with_capacity(blocks_a.len().max(blocks_b.len()));
+
+    let iter = blocks_a
+        .into_iter()
+        .merge_join_by(blocks_b.into_iter(), |(a, _), (b, _)| a.cmp(b))
+        .map(|x| match x {
+            EitherOrBoth::Left(x) | EitherOrBoth::Right(x) => x,
+            EitherOrBoth::Both((i, x), (_, y)) => (i, f(x, y)),
+        });
+
+    output.extend(iter);
+    PlayerSet(output)
 }
 
-fn offset(player: Player) -> usize {
-    usize::from(player) % 64
+fn block_and_offest_for_player(player: Player) -> (u32, u8) {
+    // Each `BitArray256` holds 245 players, we assign a block based on how far from the start the
+    // player is and then calculate how deep in the 256 bit block the player is
+    let num = u32::from(player);
+    (
+        num / 256,
+        (num % 256).try_into().expect("we just modulo'd by 256"),
+    )
 }
 
 impl PlayerSet {
@@ -104,22 +107,18 @@ impl PlayerSet {
     ///
     /// assert_eq!(ps.player_offset(42), None);
     /// ```
-    pub fn player_offset(&self, player: impl Into<Player>) -> Option<u8> {
-        let player = player.into();
+    pub fn player_offset(&self, player: impl Into<Player>) -> Option<u32> {
+        let (block, offset) = block_and_offest_for_player(player.into());
 
-        self.contains(player).then(|| {
-            let initial_sections_sum = self.0[0..section(player)]
-                .iter()
-                .map(|x| x.count_ones())
-                .sum::<u32>();
+        let (_idx, bit_array) = self.0.get(block as usize)?;
+        let block_offset = bit_array.num_offset(offset).map(u32::from)?;
+        let preceding_count = self
+            .0
+            .iter()
+            .map_while(|(idx, bit_array)| (*idx < block).then(|| bit_array.count() as u32))
+            .sum::<u32>();
 
-            let section = self.0[section(player)];
-            let mask: u64 = !(u64::MAX << offset(player));
-            let section_ones = (mask & section).count_ones();
-            (initial_sections_sum + section_ones)
-                .try_into()
-                .expect("offset is always 0-255")
-        })
+        Some(preceding_count + block_offset)
     }
 
     /// Return the count of players in the set
@@ -136,19 +135,15 @@ impl PlayerSet {
     /// set.insert(1);
     /// assert_eq!(set.count(), 2);
     /// ```
-    pub fn count(&self) -> u16 {
-        // We use a u16 instead of a u8 because there are 257 possible numbers of players 0-256
-        // inclusive on both sides
+    pub fn count(&self) -> u32 {
         self.0
             .iter()
-            .map(|&x| x.count_ones())
+            .map(|(_idx, bit_array)| bit_array.count() as u32)
             .sum::<u32>()
-            .try_into()
-            .expect("there are between 0-256 players")
     }
 
-    /// Alias for `count`
-    pub fn len(&self) -> u16 {
+    /// Alias for [`PlayerSet::count`]
+    pub fn len(&self) -> u32 {
         self.count()
     }
 
@@ -189,8 +184,14 @@ impl PlayerSet {
     /// assert!(set.contains(player));
     /// ```
     pub fn contains(&self, player: impl Into<Player>) -> bool {
-        let player = player.into();
-        (self.0[section(player)] & (1_usize << offset(player)) as u64) > 0
+        let (block, offset) = block_and_offest_for_player(player.into());
+
+        if let Ok(idx) = self.0.binary_search_by_key(&block, |(i, _)| *i) {
+            let (_idx, bit_array) = &self.0[idx];
+            bit_array.contains(offset)
+        } else {
+            false
+        }
     }
 
     /// If a [`PlayerSet`] is empty
@@ -204,7 +205,7 @@ impl PlayerSet {
     /// assert!(!set.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.0 == [0_u64; 4]
+        self.len() == 0
     }
 
     /// Iterator over players in the set
@@ -239,8 +240,16 @@ impl PlayerSet {
     /// assert!(set.contains(1));
     /// ```
     pub fn insert(&mut self, player: impl Into<Player>) {
-        let player = player.into();
-        self.0[section(player)] |= (1_usize << offset(player)) as u64;
+        let (block, offset) = block_and_offest_for_player(player.into());
+        match self.0.binary_search_by_key(&block, |(i, _)| *i) {
+            Ok(idx) => {
+                let (_idx, bit_array) = &mut self.0[idx];
+                bit_array.insert(offset);
+            }
+            Err(idx) => {
+                self.0.insert(idx, (block, BitArray256::from(offset)));
+            }
+        }
     }
 
     /// Remove a [`Player`] from the set, is a noop if [`Player`] is not in the set
@@ -255,8 +264,15 @@ impl PlayerSet {
     /// assert!(!set.contains(1));
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) {
-        let player = player.into();
-        self.0[section(player)] &= !(1_usize << offset(player)) as u64;
+        let (block, offset) = block_and_offest_for_player(player.into());
+
+        if let Ok(idx) = self.0.binary_search_by_key(&block, |(i, _)| *i) {
+            let (_idx, bit_array) = &mut self.0[idx];
+            bit_array.remove(offset);
+            if bit_array.is_empty() {
+                self.0.remove(idx);
+            }
+        }
     }
 
     /// The [`PlayerSet`] representing the union, i.e. the players that are in self, other, or both
@@ -270,7 +286,7 @@ impl PlayerSet {
     /// assert_eq!(set1.union(set2), player_set![1, 2, 3, 4]);
     /// ```
     pub fn union(self, other: Self) -> Self {
-        zip_with!(self, other, |(x, y)| { x | y })
+        join_with(self, other, |x, y| x.union(y))
     }
 
     /// The [`PlayerSet`] representing the intersection, i.e. the players that are in self and also in other
@@ -284,7 +300,7 @@ impl PlayerSet {
     /// assert_eq!(set1.intersection(set2), player_set![2, 3]);
     /// ```
     pub fn intersection(self, other: Self) -> Self {
-        zip_with!(self, other, |(x, y)| { x & y })
+        join_with(self, other, |x, y| x.intersection(y))
     }
 
     /// The [`PlayerSet`] representing the difference, i.e., the players that are in self but not in other.
@@ -298,7 +314,7 @@ impl PlayerSet {
     /// assert_eq!(set1.difference(set2), player_set![1]);
     /// ```
     pub fn difference(self, other: Self) -> Self {
-        zip_with!(self, other, |(x, y): (u64, u64)| { x & !y })
+        join_with(self, other, |x, y| x.difference(y))
     }
 
     /// The [`PlayerSet`] representing the symmetric difference, i.e., the players in self or other but
@@ -313,7 +329,7 @@ impl PlayerSet {
     /// assert_eq!(set1.symmetric_difference(set2), player_set![1, 4])
     /// ```
     pub fn symmetric_difference(self, other: Self) -> Self {
-        zip_with!(self, other, |(x, y)| { x ^ y })
+        join_with(self, other, |x, y| x.symmetric_difference(y))
     }
 
     /// Returns the next [`Player`] to the right of the given [`Player`], wrapping around if required
@@ -504,6 +520,8 @@ impl FromIterator<Player> for PlayerSet {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
 
     #[test]
     fn test_from_iter_for_player_set() {
@@ -518,7 +536,7 @@ mod tests {
         let ps: PlayerSet = (0..=255).map(Player::new).collect();
 
         for player in ps.iter() {
-            assert_eq!(ps.player_offset(player), Some(u8::from(player)))
+            assert_eq!(ps.player_offset(player), Some(u32::from(player)))
         }
     }
 
@@ -577,7 +595,23 @@ mod tests {
 
         for player in (0..=255).map(Player::new) {
             assert!(set.contains(player));
-            assert_eq!(set.player_offset(player), Some(u8::from(player)));
+            assert_eq!(set.player_offset(player), Some(u32::from(player)));
         }
+    }
+
+    #[test]
+    fn adding_and_removing_is_the_same_as_empty() {
+        let mut set = PlayerSet::new();
+        set.insert(1);
+        set.remove(1);
+        assert_eq!(set, PlayerSet::empty());
+
+        let mut hasher = DefaultHasher::new();
+        set.hash(&mut hasher);
+        let roundtrip = hasher.finish();
+        let mut hasher = DefaultHasher::new();
+        PlayerSet::empty().hash(&mut hasher);
+        let from_empty = hasher.finish();
+        assert_eq!(roundtrip, from_empty);
     }
 }

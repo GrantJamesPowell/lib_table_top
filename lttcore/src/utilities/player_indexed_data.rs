@@ -196,7 +196,7 @@ impl<T> PlayerIndexedData<T> {
 
         self.players.player_offset(player).map(|idx| {
             self.players.remove(player);
-            self.data.remove(idx.into())
+            self.data.remove(idx as usize)
         })
     }
 }
