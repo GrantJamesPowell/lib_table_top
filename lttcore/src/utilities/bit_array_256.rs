@@ -84,6 +84,44 @@ impl BitArray256 {
         self.count()
     }
 
+    /// Pops the lowest number in the set, returning [`None`] if empty
+    ///
+    /// ```
+    /// use lttcore::bit_array_256;
+    ///
+    /// let mut ba = bit_array_256![2, 4, 6, 8];
+    /// assert_eq!(ba.pop_lowest(), Some(2));
+    /// assert_eq!(ba.pop_lowest(), Some(4));
+    /// assert_eq!(ba.pop_lowest(), Some(6));
+    /// assert_eq!(ba.pop_lowest(), Some(8));
+    /// assert_eq!(ba.pop_lowest(), None);
+    /// ```
+    pub fn pop_lowest(&mut self) -> Option<u8> {
+        self.iter().next().map(|num| {
+            self.remove(num);
+            num
+        })
+    }
+
+    /// Pops the highest number in the set, returning [`None`] if empty
+    ///
+    /// ```
+    /// use lttcore::bit_array_256;
+    ///
+    /// let mut ba = bit_array_256![2, 4, 6, 8];
+    /// assert_eq!(ba.pop_highest(), Some(8));
+    /// assert_eq!(ba.pop_highest(), Some(6));
+    /// assert_eq!(ba.pop_highest(), Some(4));
+    /// assert_eq!(ba.pop_highest(), Some(2));
+    /// assert_eq!(ba.pop_highest(), None);
+    /// ```
+    pub fn pop_highest(&mut self) -> Option<u8> {
+        self.iter().next_back().map(|num| {
+            self.remove(num);
+            num
+        })
+    }
+
     /// Returns the offset of the number relative to the contents of the [`BitArray256`]
     ///
     /// Note: [`PlayerSet`] is iterated in increasing order starting with [`Player`] `0`
@@ -270,6 +308,24 @@ impl<'a> Iterator for Iter<'a> {
     }
 }
 
+impl<'a> std::iter::DoubleEndedIterator for Iter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        while let Some(num) = self.from_start.next_back() {
+            if self.set.contains(num) {
+                return Some(num);
+            }
+        }
+
+        while let Some(num) = self.to_end.next_back() {
+            if self.set.contains(num) {
+                return Some(num);
+            }
+        }
+
+        None
+    }
+}
+
 impl IntoIterator for BitArray256 {
     type Item = u8;
     type IntoIter = Iter<'static>;
@@ -294,5 +350,52 @@ impl FromIterator<u8> for BitArray256 {
 impl From<u8> for BitArray256 {
     fn from(n: u8) -> BitArray256 {
         Some(n).into_iter().collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic_functionality() {
+        let mut ba = BitArray256::new();
+        assert!(ba.is_empty());
+        ba.insert(4);
+        assert!(!ba.is_empty());
+        ba.remove(4);
+        assert!(ba.is_empty());
+    }
+
+    #[test]
+    fn from_iter() {
+        let mut ba = BitArray256::new();
+        ba.insert(1);
+        ba.insert(2);
+        ba.insert(3);
+
+        let from_iter: BitArray256 = (1..=3).collect();
+        assert_eq!(from_iter, ba);
+    }
+
+    #[test]
+    fn iter_and_into_iter() {
+        let ba = bit_array_256![1, 2, 3, 4];
+        let collected = ba.iter().collect();
+        assert_eq!(ba, collected);
+
+        let mut for_looped = BitArray256::new();
+        for num in collected {
+            for_looped.insert(num);
+        }
+
+        assert_eq!(ba, for_looped);
+
+        let mut backwarded = BitArray256::new();
+        for num in for_looped.iter().rev() {
+            backwarded.insert(num);
+        }
+
+        assert_eq!(ba, backwarded);
     }
 }
