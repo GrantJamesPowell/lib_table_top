@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-mod game_advance;
+mod game_state;
 mod player;
 mod turn_num;
 
@@ -10,7 +10,7 @@ pub mod seed;
 pub mod settings;
 pub mod view;
 
-pub use game_advance::{EnumeratedGameAdvance, GameAdvance};
+pub use game_state::{EnumeratedGameStateUpdate, GameState, GameStateUpdate};
 pub use number_of_players::NumberOfPlayers;
 pub use player::Player;
 pub use score::Score;
@@ -19,7 +19,7 @@ pub use settings::SettingsPtr;
 pub use turn_num::TurnNum;
 pub use view::View;
 
-use crate::utilities::PlayerSet;
+use crate::utilities::PlayerIndexedData as PID;
 use crate::LibTableTopIdentifier;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::fmt::Debug;
@@ -85,28 +85,19 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type PublicInfo: Score + View + RefUnwindSafe;
+    type PublicInfo: View + Score + RefUnwindSafe;
     type PlayerSecretInfo: View + RefUnwindSafe;
+    type GameSecretInfo: View + RefUnwindSafe;
 
-    fn player_secret_info(
-        &self,
+    fn initial_state_for_settings(
         settings: &Self::Settings,
-        player: Player,
-    ) -> Cow<'_, Self::PlayerSecretInfo>;
-    fn public_info(&self, settings: &Self::Settings) -> Cow<'_, Self::PublicInfo>;
-    fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self;
-    fn which_players_input_needed(&self, settings: &Self::Settings) -> Option<PlayerSet>;
-
-    fn advance<'a>(
-        &'a mut self,
-        settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
         rng: &mut impl rand::Rng,
-    ) -> GameAdvance<Self>;
+    ) -> GameState<Self>;
 
-    fn player_should_act(&self, player: Player, settings: &Self::Settings) -> bool {
-        self.which_players_input_needed(settings)
-            .map(|player_set| player_set.contains(player))
-            .unwrap_or(false)
-    }
+    fn resolve(
+        game_state: &GameState<Self>,
+        settings: &Self::Settings,
+        actions: PID<Cow<'_, ActionResponse<Self>>>,
+        rng: &mut impl rand::Rng,
+    ) -> GameStateUpdate<Self>;
 }

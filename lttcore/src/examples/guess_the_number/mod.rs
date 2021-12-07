@@ -9,8 +9,8 @@ pub use public_info::{PublicInfo, PublicInfoUpdate};
 pub use settings::{Settings, SettingsBuilder, SettingsBuilderError};
 
 use crate::{
-    play::{view::NoSecretPlayerInfo, ActionResponse, GameAdvance, Play, Player},
-    utilities::{PlayerIndexedData as PID, PlayerSet},
+    play::{view::NoSecretPlayerInfo, ActionResponse, GameState, GameStateUpdate, Play, View},
+    utilities::PlayerIndexedData as PID,
     LibTableTopIdentifier,
 };
 use serde::{Deserialize, Serialize};
@@ -20,10 +20,7 @@ use std::ops::RangeInclusive;
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub struct GuessTheNumber {
-    secret_number: u64,
-    guesses: Option<PID<Guess>>,
-}
+pub struct GuessTheNumber;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct Guess(pub u64);
@@ -51,50 +48,49 @@ impl LibTableTopIdentifier for GuessTheNumber {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub struct GameSecretInfo {
+    secret_number: u64,
+}
+
+impl View for GameSecretInfo {
+    // The game secret info never changes
+    type Update = ();
+}
+
 impl Play for GuessTheNumber {
     type Action = Guess;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type Settings = Settings;
     type PlayerSecretInfo = NoSecretPlayerInfo;
+    type GameSecretInfo = GameSecretInfo;
 
-    fn player_secret_info(&self, _: &Self::Settings, _: Player) -> Cow<'_, Self::PlayerSecretInfo> {
-        Cow::Owned(NoSecretPlayerInfo)
-    }
-
-    fn public_info(&self, _settings: &Self::Settings) -> Cow<'_, Self::PublicInfo> {
-        Cow::Owned(match self.guesses {
-            None => PublicInfo::InProgress,
-            Some(ref guesses) => PublicInfo::Completed {
-                secret_number: self.secret_number,
-                guesses: guesses.clone(),
-            },
-        })
-    }
-
-    fn initial_state_for_settings(settings: &Self::Settings, rng: &mut impl rand::Rng) -> Self {
-        Self {
-            secret_number: rng.gen_range(settings.range()),
-            guesses: None,
-        }
-    }
-
-    fn which_players_input_needed(&self, settings: &Self::Settings) -> Option<PlayerSet> {
-        match self.guesses {
-            Some(_) => None,
-            None => Some(settings.number_of_players().player_set()),
-        }
-    }
-
-    fn advance<'a>(
-        &'a mut self,
+    fn initial_state_for_settings(
         settings: &Self::Settings,
-        actions: impl Iterator<Item = (Player, Cow<'a, ActionResponse<Self>>)>,
-        _rng: &mut impl rand::Rng,
-    ) -> GameAdvance<Self> {
-        use ActionResponse::Response;
-        let actions: PID<Cow<'a, ActionResponse<Self>>> = actions.collect();
+        rng: &mut impl rand::Rng,
+    ) -> GameState<Self> {
+        let player_secret_info = settings
+            .number_of_players()
+            .player_indexed_data(|_player| NoSecretPlayerInfo::default());
 
+        GameState {
+            player_secret_info,
+            public_info: PublicInfo::InProgress,
+            game_secret_info: GameSecretInfo {
+                secret_number: rng.gen_range(settings.range()),
+            },
+            action_requests: Some(settings.number_of_players().player_set()),
+        }
+    }
+
+    fn resolve(
+        game_state: &GameState<Self>,
+        settings: &Self::Settings,
+        actions: PID<Cow<'_, ActionResponse<Self>>>,
+        _rng: &mut impl rand::Rng,
+    ) -> GameStateUpdate<Self> {
+        use ActionResponse::Response;
         let debug_msgs: PID<ActionError> = actions
             .iter()
             .filter_map(|(player, response)| {
@@ -123,16 +119,15 @@ impl Play for GuessTheNumber {
             })
             .collect();
 
-        self.guesses = Some(guesses.clone());
-
-        GameAdvance {
-            debug_msgs,
-            next_players_input_needed: self.which_players_input_needed(settings),
-            player_secret_info_updates: Default::default(),
+        GameStateUpdate {
+            player_secret_info_updates: PID::empty(),
+            game_secret_info_update: (),
             public_info_update: PublicInfoUpdate {
+                secret_number: game_state.game_secret_info.secret_number,
                 guesses,
-                secret_number: self.secret_number,
             },
+            action_requests: None,
+            debug_msgs,
         }
     }
 }

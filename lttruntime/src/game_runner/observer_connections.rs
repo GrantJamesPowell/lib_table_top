@@ -229,10 +229,11 @@ mod tests {
         let guess: Guess = 4.into();
         let actions = game_progression
             .which_players_input_needed()
-            .expect("game needs actions")
-            .player_indexed_data(|_player| ActionResponse::Response(guess.clone()));
-        let update = game_progression.submit_actions(actions);
+            .map(|player| (player, ActionResponse::Response(guess.clone())))
+            .collect();
+        let update = game_progression.resolve(actions);
         let observer_update = update.observer_update().into_owned();
+        game_progression.update(update);
         let game_observer = game_progression.game_observer();
 
         (game_progression, game_observer, observer_update)

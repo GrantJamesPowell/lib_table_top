@@ -448,29 +448,30 @@ impl Board {
     /// Claims a space for a marker, returns an error if that space is taken
     ///
     /// ```
-    /// use lttcore::examples::tic_tac_toe::{TicTacToe, Marker::*, Position, ActionError::*};
+    /// use lttcore::examples::tic_tac_toe::{Board, Marker::*, Position, ActionError::*};
     ///
-    /// let mut game: TicTacToe = Default::default();
+    /// let board: Board = Default::default();
     /// let pos = Position::new(0, 0);
     ///
-    /// assert_eq!(game.board()[pos], None);
-    /// assert!(game.claim_space(X, pos).is_ok());
-    /// assert_eq!(game.board()[pos], Some(X));
+    /// assert_eq!(board[pos], None);
+    /// let new_board = board.claim_space(X, pos).expect("can claim an open space");
+    /// assert_eq!(new_board[pos], Some(X));
     ///
     /// // Taking an already claimed space returns an error
-    /// assert_eq!(game.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
+    /// assert_eq!(new_board.claim_space(O, pos), Err(SpaceIsTaken { attempted: pos }));
     /// ```
     pub fn claim_space(
-        &mut self,
+        &self,
         marker: Marker,
         position: impl Into<Position>,
-    ) -> Result<(), ActionError> {
+    ) -> Result<Board, ActionError> {
         let position = position.into();
+        let mut new = self.clone();
 
-        match self[position] {
+        match new[position] {
             None => {
-                self[position] = Some(marker);
-                Ok(())
+                new[position] = Some(marker);
+                Ok(new)
             }
             Some(_) => Err(ActionError::SpaceIsTaken {
                 attempted: position,

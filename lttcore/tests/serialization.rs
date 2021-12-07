@@ -208,27 +208,33 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(
         serialized,
         json!({
-            "history":[],
-            "seed":"2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
-            "settings":{
+            "turn_num": 0,
+            "game_state": {
+                "action_requests": [[0,[1,0,0,0]]],
+                "game_secret_info": {
+                    "secret_number": 8
+                },
+                "player_secret_info":{
+                    "data":[Null],
+                    "players":[[0,[1,0,0,0]]]
+                },
+                "public_info": "InProgress"
+            },
+            "history": [],
+            "initial_game_state": Null,
+            "seed": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
+            "settings": {
                 "Custom": {
-                    "name": serde_json::Value::Null,
-                    "settings": {
+                    "name": Null,
+                    "settings":{
+                        "number_of_players": 1,
                         "range": {
-                            "start": 1,
-                            "end":10
-                            },
-                        "number_of_players": 1
+                            "end": 10,
+                            "start": 1
+                        }
                     }
                 }
-            }
-            ,
-            "initial_state": Null,
-            "turn_num": 0,
-            "state":{
-                "secret_number": 8,
-                "guesses": Null
-            }
+            },
         })
     );
 

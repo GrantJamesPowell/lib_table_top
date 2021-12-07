@@ -1,8 +1,8 @@
 use super::id::ConnectionId;
 use crate::messages::{FromPlayerMsg, ToGameHostMsg, ToObserverMsg, ToPlayerMsg};
 use bytes::Bytes;
+use lttcore::play::{Play, Player};
 use lttcore::{encoding::Encoding, utilities::PlayerIndexedData as PID};
-use lttcore::{play::Play, utilities::PlayerSet};
 use serde::Serialize;
 use tokio::sync::mpsc::{
     error::{SendError, TryRecvError},
@@ -102,13 +102,12 @@ pub fn to_observer<T: Play>() -> (ToObserverMsgSender<T>, ToObserverMsgReceiver<
 }
 
 pub fn from_player_msgs<T: Play>(
-    players: PlayerSet,
+    players: impl Iterator<Item = Player>,
 ) -> (
     PID<FromPlayerMsgWithConnectionIdSender<T>>,
     PID<FromPlayerMsgWithConnectionIdReceiver<T>>,
 ) {
     players
-        .into_iter()
         .map(|player| {
             let (sender, receiver) = unbounded_channel();
             ((player, sender), (player, receiver))
@@ -117,10 +116,9 @@ pub fn from_player_msgs<T: Play>(
 }
 
 pub fn add_player_connections(
-    players: PlayerSet,
+    players: impl Iterator<Item = Player>,
 ) -> (PID<AddConnectionSender>, PID<AddConnectionReceiver>) {
     players
-        .into_iter()
         .map(|player| {
             let (sender, receiver) = add_connection();
             ((player, sender), (player, receiver))
@@ -129,10 +127,9 @@ pub fn add_player_connections(
 }
 
 pub fn to_players<T: Play>(
-    players: PlayerSet,
+    players: impl Iterator<Item = Player>,
 ) -> (PID<ToPlayerMsgSender<T>>, PID<ToPlayerMsgReceiver<T>>) {
     players
-        .into_iter()
         .map(|player| {
             let (sender, receiver) = unbounded_channel::<ToPlayerMsg<T>>();
             ((player, sender), (player, receiver))

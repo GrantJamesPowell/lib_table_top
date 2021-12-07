@@ -1,8 +1,8 @@
 use super::channels::{ToGameHostMsgReceiver, ToObserverMsgSender, ToPlayerMsgSender};
 use crate::messages::{ToGameHostMsg::*, ToObserverMsg, ToPlayerMsg};
-use lttcore::play::{ActionResponse, EnumeratedGameAdvance, Play};
+use lttcore::play::{ActionResponse, Play};
 use lttcore::pov::game_progression::GameProgression;
-use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC};
+use lttcore::utilities::{PlayerIndexedData as PID, PlayerItemCollector as PIC, PlayerSet};
 
 pub async fn game_host<T: Play>(
     mut game: GameProgression<T>,
@@ -10,8 +10,11 @@ pub async fn game_host<T: Play>(
     to_players: PID<ToPlayerMsgSender<T>>,
     to_observer: ToObserverMsgSender<T>,
 ) -> GameProgression<T> {
-    while let Some(players_input_needed) = game.which_players_input_needed() {
-        let mut returned_actions: PIC<ActionResponse<T>> = players_input_needed.into();
+    while !game.is_concluded() {
+        let mut returned_actions: PIC<ActionResponse<T>> = game
+            .which_players_input_needed()
+            .collect::<PlayerSet>()
+            .into();
 
         while !returned_actions.are_all_players_accounted_for() {
             match mailbox.recv().await {
@@ -36,25 +39,20 @@ pub async fn game_host<T: Play>(
             }
         }
 
-        let game_advance = game.submit_actions(returned_actions.into_items().collect());
-        send_update(game_advance, &to_players, &to_observer).await;
+        let update = game.resolve(returned_actions.into_items().collect());
+
+        let observer_update = update.observer_update().into_owned();
+        let _maybe_send_error = to_observer.send(ToObserverMsg::Update(observer_update));
+
+        for (player, to_player) in to_players.iter() {
+            let player_update = update.player_update(player).into_owned();
+            let _maybe_send_error = to_player.send(ToPlayerMsg::Update(player_update));
+        }
+
+        game.update(update);
     }
 
     game
-}
-
-async fn send_update<T: Play>(
-    update: EnumeratedGameAdvance<T>,
-    to_players: &PID<ToPlayerMsgSender<T>>,
-    to_observer: &ToObserverMsgSender<T>,
-) {
-    let observer_update = update.observer_update().into_owned();
-    let _maybe_send_error = to_observer.send(ToObserverMsg::Update(observer_update));
-
-    for (player, to_player) in to_players.iter() {
-        let player_update = update.player_update(player).into_owned();
-        let _maybe_send_error = to_player.send(ToPlayerMsg::Update(player_update));
-    }
 }
 
 #[cfg(test)]
@@ -75,10 +73,14 @@ mod tests {
 
         let (to_mailbox, mailbox) = unbounded_channel();
         let (to_observer, _) = unbounded_channel();
-        let to_players = PlayerIndexedData::init_with(game.players(), |_| {
-            let (to_player, _) = unbounded_channel();
-            to_player
-        });
+
+        let to_players: PlayerIndexedData<_> = game
+            .players()
+            .map(|player| {
+                let (to_player, _) = unbounded_channel();
+                (player, to_player)
+            })
+            .collect();
 
         let handle = tokio::spawn(game_host::<GuessTheNumber>(
             game.clone(),
@@ -97,17 +99,21 @@ mod tests {
         let mut game = GameProgression::from_settings(settings);
         let actions = game
             .which_players_input_needed()
-            .expect("game needs inputs")
-            .player_indexed_data(|player| Response(Guess::from(u64::from(player))));
+            .map(|player| (player, Response(Guess::from(u64::from(player)))))
+            .collect();
 
-        game.submit_actions(actions);
+        let update = game.resolve(actions);
+        game.update(update);
 
         let (to_mailbox, mailbox) = unbounded_channel();
         let (to_observer, _) = unbounded_channel();
-        let to_players = PlayerIndexedData::init_with(game.players(), |_| {
-            let (to_player, _) = unbounded_channel();
-            to_player
-        });
+        let to_players = game
+            .players()
+            .map(|player| {
+                let (to_player, _) = unbounded_channel();
+                (player, to_player)
+            })
+            .collect();
 
         let handle = tokio::spawn(game_host::<GuessTheNumber>(
             game.clone(),

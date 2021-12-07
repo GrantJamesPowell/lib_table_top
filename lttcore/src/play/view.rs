@@ -1,9 +1,19 @@
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
+use std::panic::RefUnwindSafe;
 
 pub trait View:
-    Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned + 'static
+    RefUnwindSafe
+    + Clone
+    + Debug
+    + PartialEq
+    + Eq
+    + Sync
+    + Send
+    + Serialize
+    + DeserializeOwned
+    + 'static
 {
     type Update: Clone + Debug + PartialEq + Eq + Sync + Send + Serialize + DeserializeOwned;
 
@@ -18,4 +28,14 @@ pub struct NoSecretPlayerInfoUpdate;
 
 impl View for NoSecretPlayerInfo {
     type Update = NoSecretPlayerInfoUpdate;
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NoGameSecretInfo;
+
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct NoGameSecretInfoUpdate;
+
+impl View for NoGameSecretInfo {
+    type Update = NoGameSecretInfoUpdate;
 }

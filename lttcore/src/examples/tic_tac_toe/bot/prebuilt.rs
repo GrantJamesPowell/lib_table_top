@@ -156,7 +156,7 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(&RandomSelector, board, (1, 0), SEED_42);
+        assert_bot_takes_position(&RandomSelector, &board, (1, 0), SEED_42);
 
         #[rustfmt::skip]
         let board = ttt!([
@@ -165,7 +165,7 @@ mod tests {
             X O X
         ]);
 
-        assert_bot_takes_position(&RandomSelector, board, (2, 1), SEED_42);
+        assert_bot_takes_position(&RandomSelector, &board, (2, 1), SEED_42);
     }
 
     #[test]
@@ -178,8 +178,8 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_0);
-        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, &board, CENTER, SEED_0);
+        assert_bot_takes_position(&IntermediateSkill, &board, CENTER, SEED_42);
 
         // Block opponent from winning
         #[rustfmt::skip]
@@ -189,8 +189,8 @@ mod tests {
             X - O
         ]);
 
-        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_0);
-        assert_bot_takes_position(&IntermediateSkill, board, CENTER, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, &board, CENTER, SEED_0);
+        assert_bot_takes_position(&IntermediateSkill, &board, CENTER, SEED_42);
 
         // Takes win if possible
         #[rustfmt::skip]
@@ -200,8 +200,8 @@ mod tests {
             X - X
         ]);
 
-        assert_bot_wins(&IntermediateSkill, board, SEED_0);
-        assert_bot_wins(&IntermediateSkill, board, SEED_42);
+        assert_bot_wins(&IntermediateSkill, &board, SEED_0);
+        assert_bot_wins(&IntermediateSkill, &board, SEED_42);
 
         // Doesn't freak out if there isn't an obvious move
         #[rustfmt::skip]
@@ -211,7 +211,7 @@ mod tests {
             X - -
         ]);
 
-        assert_bot_takes_position(&IntermediateSkill, board, BOTTOM_RIGHT, SEED_42);
+        assert_bot_takes_position(&IntermediateSkill, &board, BOTTOM_RIGHT, SEED_42);
     }
 
     #[test]
@@ -223,7 +223,7 @@ mod tests {
             - - -
         ]);
 
-        assert_bot_takes_position(&ExpertSkill, board, BOTTOM_LEFT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, &board, BOTTOM_LEFT, SEED_42);
 
         // If we do have the the bottom left, take the bottom right
         let board = ttt!([
@@ -232,7 +232,7 @@ mod tests {
             X - -
         ]);
 
-        assert_bot_takes_position(&ExpertSkill, board, BOTTOM_RIGHT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, &board, BOTTOM_RIGHT, SEED_42);
 
         // If we don't have the bottom left, take the center
         let board = ttt!([
@@ -241,7 +241,7 @@ mod tests {
             O - -
         ]);
 
-        assert_bot_takes_position(&ExpertSkill, board, CENTER, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, &board, CENTER, SEED_42);
 
         // It springs the trap if opponent fell for it
         let board = ttt!([
@@ -250,7 +250,7 @@ mod tests {
             X O X
         ]);
 
-        assert_bot_takes_position(&ExpertSkill, board, CENTER, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, &board, CENTER, SEED_42);
 
         // Blocks opponent win
         let board = ttt!([
@@ -259,11 +259,11 @@ mod tests {
             O X -
         ]);
 
-        assert_bot_takes_position(&ExpertSkill, board, MIDDLE_LEFT, SEED_42);
+        assert_bot_takes_position(&ExpertSkill, &board, MIDDLE_LEFT, SEED_42);
 
         // Take a win over stopping opponents win
         let board = ttt!([X - X - --O - O]);
 
-        assert_bot_wins(&ExpertSkill, board, SEED_42);
+        assert_bot_wins(&ExpertSkill, &board, SEED_42);
     }
 }

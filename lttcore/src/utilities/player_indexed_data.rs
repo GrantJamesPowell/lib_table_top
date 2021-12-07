@@ -23,8 +23,13 @@ impl<T> Default for PlayerIndexedData<T> {
 }
 
 impl<T> PlayerIndexedData<T> {
-    /// Returns a new `PlayerIndexedData`
+    /// Returns a new, empty [`PlayerIndexedData`]
     pub fn new() -> Self {
+        Self::with_capacity(0)
+    }
+
+    /// alias for [`PlayerIndexedData::new`]
+    pub fn empty() -> Self {
         Self::with_capacity(0)
     }
 
@@ -110,12 +115,12 @@ impl<T> PlayerIndexedData<T> {
     /// use lttcore::{player_set, utilities::PlayerIndexedData};
     ///
     /// let mut data: PlayerIndexedData<u64> = Default::default();
-    /// assert_eq!(data.players(), &player_set![]);
+    /// assert!(data.players().eq(player_set![]));
     /// let old = data.insert(1, 42);
-    /// assert_eq!(data.players(), &player_set![1]);
+    /// assert!(data.players().eq(player_set![1]));
     /// ```
-    pub fn players(&self) -> &PlayerSet {
-        &self.players
+    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
+        self.players.iter()
     }
 
     /// Returns a reference to the value corresponding to the Player.
@@ -155,9 +160,9 @@ impl<T> PlayerIndexedData<T> {
     /// use lttcore::{player_set, utilities::PlayerIndexedData};
     ///
     /// let mut data: PlayerIndexedData<u64> = Default::default();
-    /// assert_eq!(data.players(), &player_set![]);
+    /// assert!(data.players().eq(player_set![]));
     /// let old = data.insert(1, 42);
-    /// assert_eq!(data.players(), &player_set![1]);
+    /// assert!(data.players().eq(player_set![1]));
     /// assert_eq!(old, None);
     /// let old = data.insert(1, 69420);
     /// assert_eq!(old, Some(42))
@@ -233,11 +238,11 @@ impl<T> PlayerIndexedData<T> {
     ///
     /// let mut data: PlayerIndexedData<u64> = Default::default();
     /// assert_eq!(data.remove(1), None);
-    /// assert_eq!(data.players(), &player_set![]);
+    /// assert!(data.players().eq(player_set![]));
     /// data.insert(1, 42);
-    /// assert_eq!(data.players(), &player_set![1]);
+    /// assert!(data.players().eq(player_set![1]));
     /// assert_eq!(data.remove(1), Some(42));
-    /// assert_eq!(data.players(), &player_set![]);
+    /// assert!(data.players().eq(player_set![]));
     /// ```
     pub fn remove(&mut self, player: impl Into<Player>) -> Option<T> {
         let player = player.into();

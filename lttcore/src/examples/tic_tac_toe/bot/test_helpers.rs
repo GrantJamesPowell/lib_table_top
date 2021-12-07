@@ -5,7 +5,7 @@ use crate::play::Seed;
 
 /// Test helper that asserts a bot will make a winning move on a certain board
 #[track_caller]
-pub fn assert_bot_wins(bot: &impl TicTacToeBot, mut board: Board, seed: Seed) {
+pub fn assert_bot_wins(bot: &impl TicTacToeBot, board: &Board, seed: Seed) {
     if let Status::InProgress { next_up } = board.status() {
         let pos = bot.claim_space(&board, &seed);
         match board.claim_space(next_up, pos) {
@@ -15,7 +15,7 @@ pub fn assert_bot_wins(bot: &impl TicTacToeBot, mut board: Board, seed: Seed) {
             Err(ActionError::AllSpacesTaken) => {
                 panic!("Test was given a full starting board which is invalid")
             }
-            Ok(_) => {
+            Ok(board) => {
                 match board.status() {
                     Status::Win { .. } => {
                         // Success
@@ -40,7 +40,7 @@ pub fn assert_bot_wins(bot: &impl TicTacToeBot, mut board: Board, seed: Seed) {
 #[track_caller]
 pub fn assert_bot_takes_position(
     bot: &impl TicTacToeBot,
-    mut before: Board,
+    before: &Board,
     expected: impl TryInto<Position>,
     seed: Seed,
 ) {
@@ -55,7 +55,7 @@ pub fn assert_bot_takes_position(
         Err(ActionError::AllSpacesTaken) => {
             panic!("Test was given a full starting board which is invalid");
         }
-        Ok(_) => {
+        Ok(_board) => {
             assert_eq!(
                 pos, expected,
                 "Bot picked {} instead of the expected position {}",

@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-use crate::play::{Play, Seed, SettingsPtr, TurnNum};
+use crate::play::{GameState, Play, Seed, SettingsPtr, TurnNum};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -8,6 +8,6 @@ use std::sync::Arc;
 pub struct Scenario<T: Play> {
     pub(crate) turn_num: TurnNum,
     pub(crate) settings: SettingsPtr<<T as Play>::Settings>,
-    pub(crate) initial_state: Arc<T>,
+    pub(crate) initial_game_state: Arc<GameState<T>>,
     pub(crate) seed: Arc<Seed>,
 }

@@ -63,14 +63,11 @@ fn test_it_shows_the_player_the_correct_things() {
         actions.insert(player.player(), Response(guess));
     }
 
-    let game_advance = game.submit_actions(actions);
-    assert_eq!(game_advance.turn_num, 1.into());
-    assert!(game_advance
-        .game_advance
-        .next_players_input_needed
-        .is_none());
-    assert!(game_advance
-        .game_advance
+    let update = game.resolve(actions);
+    assert_eq!(update.next_turn_num(), 1.into());
+    assert!(update.game_state_update().action_requests.is_none());
+    assert!(update
+        .game_state_update()
         .player_secret_info_updates
         .is_empty());
 
@@ -84,14 +81,16 @@ fn test_it_shows_the_player_the_correct_things() {
     .into_iter()
     .collect();
 
-    assert_eq!(expected_debug_msgs, game_advance.game_advance.debug_msgs);
+    assert_eq!(expected_debug_msgs, update.game_state_update().debug_msgs);
 
-    for player in &mut players {
-        let update = game_advance.player_update(player.player());
-        player.update(update);
+    for game_player in &mut players {
+        let update = update.player_update(game_player.player());
+        game_player.update(update);
     }
 
     for player in &players {
         assert!(!player.player_should_act());
     }
+
+    game.update(update);
 }

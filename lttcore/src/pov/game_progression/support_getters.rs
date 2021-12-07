@@ -1,47 +1,43 @@
-use crate::play::{settings::NumPlayers, NumberOfPlayers, Play, Player, TurnNum};
-use crate::{pov::game_progression::GameProgression, utilities::PlayerSet};
-use std::borrow::Cow;
-
-use super::HistoryEvent;
+use crate::play::{settings::NumPlayers, GameState, NumberOfPlayers, Play, Player, TurnNum};
+use crate::pov::game_progression::GameProgression;
 
 impl<T: Play> GameProgression<T> {
     pub fn is_concluded(&self) -> bool {
-        self.which_players_input_needed().is_none()
+        self.game_state.action_requests.is_none()
     }
 
     pub fn turn_num(&self) -> TurnNum {
         self.turn_num
     }
 
-    pub fn state(&self) -> &T {
-        &self.state
+    pub fn game_state(&self) -> &GameState<T> {
+        &self.game_state
     }
 
     pub fn settings(&self) -> &T::Settings {
         &self.settings
     }
 
-    pub fn history_events(&self) -> impl Iterator<Item = &HistoryEvent<T>> + '_ {
-        self.history.iter()
+    pub fn public_info(&self) -> &T::PublicInfo {
+        &self.game_state.public_info
     }
 
-    pub fn public_info(&self) -> Cow<'_, T::PublicInfo> {
-        self.state.public_info(self.settings())
-    }
-
-    pub fn player_secret_info(&self, player: Player) -> Cow<'_, T::PlayerSecretInfo> {
-        self.state.player_secret_info(self.settings(), player)
+    pub fn player_secret_info(&self, player: Player) -> &T::PlayerSecretInfo {
+        &self.game_state.player_secret_info[player]
     }
 
     pub fn number_of_players(&self) -> NumberOfPlayers {
         self.settings().number_of_players()
     }
 
-    pub fn players(&self) -> PlayerSet {
-        self.number_of_players().player_set()
+    pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
+        self.number_of_players().players()
     }
 
-    pub fn which_players_input_needed(&self) -> Option<PlayerSet> {
-        self.state.which_players_input_needed(self.settings())
+    pub fn which_players_input_needed(&self) -> impl Iterator<Item = Player> + '_ {
+        self.game_state
+            .action_requests
+            .iter()
+            .flat_map(|ps| ps.iter())
     }
 }

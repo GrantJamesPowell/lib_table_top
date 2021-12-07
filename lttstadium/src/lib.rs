@@ -51,28 +51,36 @@ impl<T: Play> FightCard<T> {
                     .number_of_players()
                     .player_indexed_data(|p| game.game_player(p));
 
-                while let Some(player_input_needed) = game.which_players_input_needed() {
-                    let actions = player_input_needed.player_indexed_data(|player| {
-                        let pov = &game_players[player].player_pov();
-                        let seed = &bot_seeds[player];
+                while !game.is_concluded() {
+                    let actions = game
+                        .which_players_input_needed()
+                        .map(|player| {
+                            let pov = &game_players[player].player_pov();
+                            let seed = &bot_seeds[player];
 
-                        // # Safety
-                        //
-                        // It's _probably_ not technically "unsafe" to reuse a bot who's is
-                        // potentially in a weird state after it's panicked. For good measure,
-                        // we resign and don't continue to reuse the bot state.
-                        let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
-                        catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
-                            .map(ActionResponse::Response)
-                            .unwrap_or_else(|_| ActionResponse::Resign)
-                    });
+                            // # Safety
+                            //
+                            // It's _probably_ not technically "unsafe" to reuse a bot who's is
+                            // potentially in a weird state after it's panicked. For good measure,
+                            // we resign and don't continue to reuse the bot state.
+                            let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
+                            let action =
+                                catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
+                                    .map(ActionResponse::Response)
+                                    .unwrap_or_else(|_| ActionResponse::Resign);
 
-                    let game_advance = game.submit_actions(actions);
+                            (player, action)
+                        })
+                        .collect();
+
+                    let update = game.resolve(actions);
 
                     for (player, game_player) in game_players.iter_mut() {
-                        let update = game_advance.player_update(player);
-                        game_player.update(update);
+                        let player_update = update.player_update(player);
+                        game_player.update(player_update);
                     }
+
+                    game.update(update);
                 }
 
                 (i, game, game_players)

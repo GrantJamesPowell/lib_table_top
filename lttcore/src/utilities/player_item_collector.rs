@@ -39,7 +39,7 @@ impl<Item> PlayerItemCollector<Item> {
     /// assert!(pic.players().eq(ps.iter()));
     /// ```
     pub fn players(&self) -> impl Iterator<Item = Player> + '_ {
-        self.data.players().iter()
+        self.data.players()
     }
 
     /// Returns all the players who have submitted items

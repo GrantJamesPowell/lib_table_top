@@ -1,5 +1,8 @@
 use super::GameProgression;
-use crate::{play::Play, pov::scenario::Scenario};
+use crate::{
+    play::{GameState, Play},
+    pov::scenario::Scenario,
+};
 use std::sync::Arc;
 
 impl<T: Play> From<Scenario<T>> for GameProgression<T> {
@@ -7,18 +10,18 @@ impl<T: Play> From<Scenario<T>> for GameProgression<T> {
         Scenario {
             turn_num,
             settings,
-            initial_state,
+            initial_game_state,
             seed,
         }: Scenario<T>,
     ) -> Self {
-        let state: T = initial_state.as_ref().clone();
+        let game_state: GameState<T> = initial_game_state.as_ref().clone();
 
         Self {
             seed,
-            state,
+            game_state,
             settings,
             turn_num,
-            initial_state: Some(initial_state),
+            initial_game_state: Some(initial_game_state),
             history: Default::default(),
         }
     }
@@ -29,7 +32,7 @@ impl<T: Play> GameProgression<T> {
         Scenario {
             turn_num: self.turn_num,
             settings: self.settings.clone(),
-            initial_state: Arc::new(self.state.clone()),
+            initial_game_state: Arc::new(self.game_state.clone()),
             seed: self.seed.clone(),
         }
     }

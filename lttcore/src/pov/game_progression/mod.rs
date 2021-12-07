@@ -4,7 +4,9 @@ mod support_getters;
 mod support_povs;
 mod support_scenarios;
 
-use crate::play::{ActionResponse, EnumeratedGameAdvance, Play, Seed, SettingsPtr, TurnNum};
+use crate::play::{
+    ActionResponse, EnumeratedGameStateUpdate, GameState, Play, Seed, SettingsPtr, TurnNum,
+};
 use crate::utilities::PlayerIndexedData as PID;
 use im::Vector;
 use serde::{Deserialize, Serialize};
@@ -17,10 +19,10 @@ use std::sync::Arc;
 pub struct GameProgression<T: Play> {
     pub(super) seed: Arc<Seed>,
     pub(super) settings: SettingsPtr<T::Settings>,
-    pub(super) initial_state: Option<Arc<T>>,
+    pub(super) initial_game_state: Option<Arc<GameState<T>>>,
     pub(super) turn_num: TurnNum,
     #[builder(setter(skip))]
-    pub(super) state: T,
+    pub(super) game_state: GameState<T>,
     #[builder(setter(skip))]
     pub(super) history: Vector<HistoryEvent<T>>,
 }
@@ -33,25 +35,45 @@ pub struct HistoryEvent<T: Play> {
 }
 
 impl<T: Play> GameProgression<T> {
-    pub fn submit_actions(&mut self, actions: PID<ActionResponse<T>>) -> EnumeratedGameAdvance<T> {
-        let game_advance = self.state.advance(
+    #[must_use = "resolve only figures out the update, but does not apply it"]
+    pub fn resolve(&self, actions: PID<ActionResponse<T>>) -> EnumeratedGameStateUpdate<T> {
+        debug_assert_eq!(
+            Some(actions.players().collect()),
+            self.game_state.action_requests,
+            "correct actions submitted"
+        );
+
+        let game_state_update = T::resolve(
+            &self.game_state,
             &self.settings,
             actions
                 .iter()
-                .map(|(player, action)| (player, Cow::Borrowed(action))),
+                .map(|(player, action)| (player, Cow::Borrowed(action)))
+                .collect(),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 
-        self.history.push_back(HistoryEvent {
-            actions,
+        EnumeratedGameStateUpdate {
+            game_state_update,
+            actions: Some(actions),
             turn_num: self.turn_num,
-        });
-        self.turn_num.increment();
-
-        EnumeratedGameAdvance {
-            game_advance,
-            turn_num: self.turn_num(),
         }
+    }
+
+    pub fn update(&mut self, update: EnumeratedGameStateUpdate<T>) {
+        debug_assert_eq!(
+            self.turn_num,
+            update.current_turn_num(),
+            "tried to apply an update for the wrong turn"
+        );
+        update.actions.map(|actions| {
+            self.history.push_back(HistoryEvent {
+                turn_num: self.turn_num,
+                actions,
+            })
+        });
+        self.game_state.update(update.game_state_update);
+        self.turn_num.increment();
     }
 }
 
@@ -63,10 +85,11 @@ impl<T: Play> GameProgressionBuilder<T> {
             .cloned()
             .unwrap_or_else(|| Arc::new(Seed::random()));
 
-        let initial_state: Option<Arc<T>> = self.initial_state.as_ref().cloned().unwrap_or(None);
+        let initial_game_state: Option<Arc<GameState<T>>> =
+            self.initial_game_state.as_ref().cloned().unwrap_or(None);
         let turn_num = self.turn_num.as_ref().copied().unwrap_or_default();
         let settings = self.settings.as_ref().cloned().unwrap_or_default();
-        let state = initial_state
+        let game_state = initial_game_state
             .as_ref()
             .map(|arc| arc.as_ref())
             .cloned()
@@ -76,9 +99,9 @@ impl<T: Play> GameProgressionBuilder<T> {
         Ok(GameProgression {
             seed,
             settings,
-            initial_state,
+            initial_game_state,
             turn_num,
-            state,
+            game_state,
             history,
         })
     }

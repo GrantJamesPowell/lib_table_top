@@ -42,8 +42,9 @@ impl<T: TicTacToeWithHistoryBot> StatefulBot for TicTacToeWithHistoryBotWrapper<
     type Game = TicTacToe;
 
     fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
-        let board = player_pov.public_info.board();
-        let position = self.bot.claim_space(board, seed, &self.history);
+        let position = self
+            .bot
+            .claim_space(&player_pov.public_info.board, seed, &self.history);
         Action { position }
     }
 
