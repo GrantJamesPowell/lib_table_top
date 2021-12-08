@@ -8,7 +8,15 @@ use crate::{
         NumberOfPlayers,
     },
 };
+use im::HashMap;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Outcome {
+    PlayerWins,
+    DealerWins,
+    Push,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Surrender {
@@ -18,13 +26,13 @@ pub enum Surrender {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum DeckConfig {
+pub(crate) enum DeckConfig {
     Standard(NonZeroU8),
     Custom(Vec<Card>),
 }
 
 impl DeckConfig {
-    pub fn cards(&self) -> Vec<Card> {
+    pub(crate) fn cards(&self) -> Vec<Card> {
         match self {
             DeckConfig::Custom(cards) => cards.clone(),
             DeckConfig::Standard(num) => {
@@ -38,6 +46,28 @@ impl DeckConfig {
             }
         }
     }
+
+    pub(crate) fn cards_without(&self, remove: impl Iterator<Item = Card>) -> Vec<Card> {
+        let mut to_remove: HashMap<Card, usize> = HashMap::new();
+
+        for card in remove {
+            let count = to_remove.entry(card).or_insert(0);
+            *count += 1;
+        }
+
+        let mut cards = self.cards();
+
+        cards.retain(|card| match to_remove.get_mut(card) {
+            None => true,
+            Some(0) => true,
+            Some(n) => {
+                *n -= 1;
+                false
+            }
+        });
+
+        cards
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -48,9 +78,15 @@ pub struct Settings {
     pub(super) maximum_number_of_splits: u8,
     pub(super) dealer_hits_on_hard: RangeInclusive<u8>,
     pub(super) dealer_hits_on_soft: RangeInclusive<u8>,
+    pub(super) both_player_and_dealer_have_black_jack: Outcome,
+    pub(super) black_jack_payout_ratio: (u8, u8),
 }
 
 impl Settings {
+    pub fn dealer_will_hit_on_hard(&self, n: u8) -> bool {
+        self.dealer_hits_on_hard.contains(&n)
+    }
+
     pub fn dealer_will_hit_on_soft(&self, n: u8) -> bool {
         self.dealer_hits_on_soft.contains(&n)
     }
@@ -65,6 +101,8 @@ impl Default for Settings {
             dealer_hits_on_hard: 0..=16,
             dealer_hits_on_soft: 0..=17,
             maximum_number_of_splits: 3,
+            both_player_and_dealer_have_black_jack: Outcome::Push,
+            black_jack_payout_ratio: (2, 1),
         }
     }
 }
