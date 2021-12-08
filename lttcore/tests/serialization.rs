@@ -215,8 +215,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     "secret_number": 8
                 },
                 "player_secret_info":{
-                    "data":[Null],
-                    "players":[[0,[1,0,0,0]]]
+                    "0": Null,
                 },
                 "public_info": "InProgress"
             },

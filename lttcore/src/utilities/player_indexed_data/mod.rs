@@ -1,7 +1,8 @@
 use crate::{play::Player, utilities::PlayerSet};
-use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::hash::Hash;
+
+mod serialize_and_deserialize;
 
 /// A mapping from [`Player`] and some item `T`
 ///
@@ -10,7 +11,7 @@ use std::hash::Hash;
 /// This uses a [`PlayerSet`] and [`SmallVec`] under the hood to represent the mapping, making
 /// lookups an array index and optimizing for the case where the number of items <= 4 by
 /// being able to place 4 items directly on the stack
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlayerIndexedData<T> {
     players: PlayerSet,
     data: SmallVec<[T; 4]>,
