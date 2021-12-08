@@ -8,14 +8,14 @@ use std::borrow::Cow;
 pub enum PublicInfo {
     InProgress,
     Completed {
-        secret_number: u64,
+        secret_number: u32,
         guesses: PID<Guess>,
     },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct PublicInfoUpdate {
-    pub secret_number: u64,
+    pub secret_number: u32,
     pub guesses: PID<Guess>,
 }
 
@@ -47,7 +47,7 @@ impl Score for PublicInfo {
         ScoreInterpertation::LowerIsBetter
     }
 
-    fn score(&self) -> Option<PID<u64>> {
+    fn score(&self) -> Option<PID<i64>> {
         match self {
             PublicInfo::InProgress => None,
             PublicInfo::Completed {
@@ -56,13 +56,8 @@ impl Score for PublicInfo {
             } => Some(
                 guesses
                     .iter()
-                    .map(|(player, guess)| {
-                        let diff = guess
-                            .0
-                            .checked_sub(*secret_number)
-                            .or_else(|| secret_number.checked_sub(guess.0))
-                            .unwrap();
-
+                    .map(|(player, Guess(guess))| {
+                        let diff = ((*guess as i64) - (*secret_number as i64)).abs();
                         (player, diff)
                     })
                     .collect(),

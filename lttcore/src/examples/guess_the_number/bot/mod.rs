@@ -10,7 +10,7 @@ use std::{fmt::Display, ops::RangeInclusive, panic::RefUnwindSafe};
 pub trait GuessTheNumberBot:
     RefUnwindSafe + Serialize + DeserializeOwned + Clone + Sync + Send + 'static
 {
-    fn guess(&self, range: RangeInclusive<u64>, seed: &Seed) -> u64;
+    fn guess(&self, range: RangeInclusive<u32>, seed: &Seed) -> u32;
 
     fn into_bot(self) -> GuessTheNumberBotWrapper<Self> {
         GuessTheNumberBotWrapper(self)

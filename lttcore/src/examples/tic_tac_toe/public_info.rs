@@ -1,6 +1,6 @@
 use super::{Board, Marker, Position, Status};
 use crate::{
-    play::{Player, Score, View},
+    play::{score::ScoreInterpertation, Player, Score, View},
     utilities::PlayerIndexedData as PID,
 };
 use serde::{Deserialize, Serialize};
@@ -23,7 +23,11 @@ impl Score for PublicInfo {
         false
     }
 
-    fn score(&self) -> Option<PID<u64>> {
+    fn score_interpertation() -> ScoreInterpertation {
+        ScoreInterpertation::HigherIsBetter
+    }
+
+    fn score(&self) -> Option<PID<i64>> {
         self.status().winner().map(|winner| {
             [
                 (Player::from(winner), 1),

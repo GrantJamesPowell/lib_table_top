@@ -25,7 +25,7 @@ pub struct AlwaysHighest;
 display_name!(AlwaysHighest);
 
 impl GuessTheNumberBot for AlwaysHighest {
-    fn guess(&self, range: RangeInclusive<u64>, _seed: &Seed) -> u64 {
+    fn guess(&self, range: RangeInclusive<u32>, _seed: &Seed) -> u32 {
         *range.end()
     }
 }
@@ -36,7 +36,7 @@ pub struct AlwaysLowest;
 display_name!(AlwaysLowest);
 
 impl GuessTheNumberBot for AlwaysLowest {
-    fn guess(&self, range: RangeInclusive<u64>, _seed: &Seed) -> u64 {
+    fn guess(&self, range: RangeInclusive<u32>, _seed: &Seed) -> u32 {
         *range.start()
     }
 }
@@ -47,7 +47,7 @@ pub struct PickCenterOfRange;
 display_name!(PickCenterOfRange);
 
 impl GuessTheNumberBot for PickCenterOfRange {
-    fn guess(&self, range: RangeInclusive<u64>, _seed: &Seed) -> u64 {
+    fn guess(&self, range: RangeInclusive<u32>, _seed: &Seed) -> u32 {
         range.start() + ((range.end() - range.start()) / 2)
     }
 }
@@ -58,7 +58,7 @@ pub struct PickRandomly;
 display_name!(PickRandomly);
 
 impl GuessTheNumberBot for PickRandomly {
-    fn guess(&self, range: RangeInclusive<u64>, seed: &Seed) -> u64 {
+    fn guess(&self, range: RangeInclusive<u32>, seed: &Seed) -> u32 {
         seed.rng().gen_range(range)
     }
 }

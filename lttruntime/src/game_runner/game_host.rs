@@ -99,7 +99,7 @@ mod tests {
         let mut game = GameProgression::from_settings(settings);
         let actions = game
             .which_players_input_needed()
-            .map(|player| (player, Response(Guess::from(u64::from(player)))))
+            .map(|player| (player, Response(Guess::from(u32::from(player)))))
             .collect();
 
         let update = game.resolve(actions);

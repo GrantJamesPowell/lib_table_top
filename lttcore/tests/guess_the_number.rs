@@ -15,7 +15,7 @@ use lttcore::{
 #[test]
 fn test_building_default_settings() {
     let settings: Settings = SettingsBuilder::default().build().unwrap();
-    assert_eq!(settings.range(), 0..=u64::MAX);
+    assert_eq!(settings.range(), 0..=u32::MAX);
     assert_eq!(settings.number_of_players(), ONE_PLAYER);
 }
 
@@ -59,7 +59,7 @@ fn test_it_shows_the_player_the_correct_things() {
         assert_eq!(pov.secret_info, &NoSecretPlayerInfo);
 
         // Note: Player(0) produces guess outside of range 1..=10
-        let guess: Guess = u64::from(player.player()).into();
+        let guess: Guess = u32::from(player.player()).into();
         actions.insert(player.player(), Response(guess));
     }
 

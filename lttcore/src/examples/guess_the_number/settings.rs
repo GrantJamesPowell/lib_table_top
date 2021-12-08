@@ -18,16 +18,16 @@ lazy_static! {
 #[derive(Builder, Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[builder(derive(Debug), build_fn(validate = "Self::validate"))]
 pub struct Settings {
-    #[builder(default = "0..=u64::MAX")]
-    range: RangeInclusive<u64>,
+    #[builder(default = "0..=u32::MAX")]
+    range: RangeInclusive<u32>,
     #[builder(default = "ONE_PLAYER")]
     number_of_players: NumberOfPlayers,
 }
 
-impl TryFrom<RangeInclusive<u64>> for Settings {
+impl TryFrom<RangeInclusive<u32>> for Settings {
     type Error = SettingsBuilderError;
 
-    fn try_from(range: RangeInclusive<u64>) -> Result<Self, SettingsBuilderError> {
+    fn try_from(range: RangeInclusive<u32>) -> Result<Self, SettingsBuilderError> {
         SettingsBuilder::default().range(range).build()
     }
 }
@@ -45,7 +45,7 @@ impl SettingsBuilder {
 }
 
 impl Settings {
-    pub fn range(&self) -> RangeInclusive<u64> {
+    pub fn range(&self) -> RangeInclusive<u32> {
         self.range.clone()
     }
 
@@ -75,7 +75,7 @@ impl BuiltinGameModes for Settings {
 fn builtin_game_modes() -> impl Iterator<Item = Builtin<Settings>> {
     (1..=4)
         .flat_map(|number_of_players| {
-            [("1-10", 1..=10), ("u64", 0..=u64::MAX)]
+            [("1-10", 1..=10), ("u32", 0..=u32::MAX)]
                 .into_iter()
                 .map(move |range_config| (number_of_players, range_config))
         })

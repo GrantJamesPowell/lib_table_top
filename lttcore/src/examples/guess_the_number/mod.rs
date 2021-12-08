@@ -23,10 +23,10 @@ use thiserror::Error;
 pub struct GuessTheNumber;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub struct Guess(pub u64);
+pub struct Guess(pub u32);
 
-impl From<u64> for Guess {
-    fn from(n: u64) -> Self {
+impl From<u32> for Guess {
+    fn from(n: u32) -> Self {
         Guess(n)
     }
 }
@@ -35,8 +35,8 @@ impl From<u64> for Guess {
 pub enum ActionError {
     #[error("Guess of {:?} is out of range {:?}", guess, range)]
     GuessOutOfRange {
-        guess: u64,
-        range: RangeInclusive<u64>,
+        guess: u32,
+        range: RangeInclusive<u32>,
     },
 }
 
@@ -50,7 +50,7 @@ impl LibTableTopIdentifier for GuessTheNumber {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct GameSecretInfo {
-    secret_number: u64,
+    secret_number: u32,
 }
 
 impl View for GameSecretInfo {

@@ -37,5 +37,5 @@ pub trait Score {
     /// The score of the game. Maps players to a "score" in whatever way is meaningful to the game.
     /// Players are interperted to be "tied" if they have the same score. If it's too early to
     /// provide a meaningful score or rankings, return `None`
-    fn score(&self) -> Option<PID<u64>>;
+    fn score(&self) -> Option<PID<i64>>;
 }
