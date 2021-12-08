@@ -18,30 +18,21 @@ fn test_serialize_player_set() {
 
     set.insert(0);
 
-    assert_eq!(
-        json!([[0, [1, 0, 0, 0]]]),
-        serde_json::to_value(&set).unwrap()
-    );
+    assert_eq!(json!([0]), serde_json::to_value(&set).unwrap());
 
     set.insert(1);
 
-    assert_eq!(
-        json!([[0, [3, 0, 0, 0]]]),
-        serde_json::to_value(&set).unwrap()
-    );
+    assert_eq!(json!([0, 1]), serde_json::to_value(&set).unwrap());
 
     set.insert(64);
 
-    assert_eq!(
-        json!([[0, [3, 1, 0, 0]]]),
-        serde_json::to_value(&set).unwrap()
-    );
+    assert_eq!(json!([0, 1, 64]), serde_json::to_value(&set).unwrap());
 
     set.insert(128);
     set.insert(192);
 
     assert_eq!(
-        json!([[0, [3, 1, 1, 1]]]),
+        json!([0, 1, 64, 128, 192]),
         serde_json::to_value(&set).unwrap()
     );
 }
@@ -210,7 +201,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
         json!({
             "turn_num": 0,
             "game_state": {
-                "action_requests": [[0,[1,0,0,0]]],
+                "action_requests": [0],
                 "game_secret_info": {
                     "secret_number": 8
                 },

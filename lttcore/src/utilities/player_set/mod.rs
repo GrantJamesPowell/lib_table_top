@@ -2,9 +2,10 @@ use super::PlayerIndexedData;
 use crate::play::{NumberOfPlayers, Player};
 use crate::utilities::BitArray256;
 use itertools::{EitherOrBoth, Itertools};
-use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::iter::FromIterator;
+
+mod serialize_and_deserialize;
 
 /// Helper macro to define [`PlayerSet`] literals
 ///
@@ -38,7 +39,7 @@ macro_rules! player_set {
 /// * `O(1)-ish` Add/Remove/Lookup
 /// * Serializes nicely
 /// * Avoids allocating if all players are under 256
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct PlayerSet(SmallVec<[(u32, BitArray256); 1]>);
 
 fn join_with<'a>(
@@ -217,8 +218,8 @@ impl PlayerSet {
     }
 
     /// Alias for [`PlayerSet::count`]
-    pub fn len(&self) -> u32 {
-        self.count()
+    pub fn len(&self) -> usize {
+        self.count().try_into().unwrap()
     }
 
     /// Returns [`PlayerIndexedData`] using [`PlayerIndexedData::init_with`]
