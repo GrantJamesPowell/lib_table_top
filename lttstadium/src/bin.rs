@@ -23,7 +23,7 @@ fn main() {
         .build()
         .unwrap();
 
-    fight_card.run(|(i, _, _)| {
+    fight_card.run(|(i, _)| {
         if i % 1000 == 0 {
             println!("Done {}", i)
         }

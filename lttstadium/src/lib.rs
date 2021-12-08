@@ -4,7 +4,7 @@
 extern crate derive_builder;
 
 use lttcore::utilities::PlayerIndexedData as PID;
-use lttcore::{bot::Contender, play::ActionResponse, pov::player::GamePlayer};
+use lttcore::{bot::Contender, play::ActionResponse};
 use lttcore::{
     play::{settings::NumPlayers, Play, Seed, SettingsPtr},
     pov::game_progression::GameProgression,
@@ -22,10 +22,7 @@ pub struct FightCard<T: Play> {
 }
 
 impl<T: Play> FightCard<T> {
-    pub fn run(
-        &self,
-        callback: impl Fn((usize, GameProgression<T>, PID<GamePlayer<T>>)) + Send + Sync,
-    ) {
+    pub fn run(&self, callback: impl Fn((usize, GameProgression<T>)) + Send + Sync) {
         (0..self.iterations)
             .into_par_iter()
             .map(|i| {
@@ -46,16 +43,11 @@ impl<T: Play> FightCard<T> {
                 let mut game: GameProgression<T> =
                     GameProgression::from_settings_and_seed(self.settings.clone(), game_seed);
 
-                let mut game_players = self
-                    .settings
-                    .number_of_players()
-                    .player_indexed_data(|p| game.game_player(p));
-
                 while !game.is_concluded() {
                     let actions = game
                         .which_players_input_needed()
                         .map(|player| {
-                            let pov = &game_players[player].player_pov();
+                            let pov = &game.player_pov(player);
                             let seed = &bot_seeds[player];
 
                             // # Safety
@@ -74,16 +66,10 @@ impl<T: Play> FightCard<T> {
                         .collect();
 
                     let update = game.resolve(actions);
-
-                    for (player, game_player) in game_players.iter_mut() {
-                        let player_update = update.player_update(player);
-                        game_player.update(player_update);
-                    }
-
                     game.update(update);
                 }
 
-                (i, game, game_players)
+                (i, game)
             })
             .for_each(callback)
     }
