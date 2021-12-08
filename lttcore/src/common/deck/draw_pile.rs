@@ -7,14 +7,14 @@ use std::sync::Arc;
 /// so it can be used anywhere you need an immutable slice
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct DrawPile<T: Clone> {
-    pile: Arc<Vec<T>>,
+    pile: Arc<[T]>,
     offset: usize,
 }
 
 impl<T: Clone> From<Vec<T>> for DrawPile<T> {
     fn from(pile: Vec<T>) -> Self {
         Self {
-            pile: Arc::new(pile),
+            pile: Arc::from(pile),
             offset: 0,
         }
     }
@@ -42,7 +42,7 @@ mod tests {
 
     #[test]
     fn test_you_can_draw_from_the_draw_pile() {
-        let mut pile: DrawPile<usize> = vec![1, 2, 3].into();
+        let mut pile: DrawPile<usize> = DrawPile::from(vec![1, 2, 3]);
         assert_eq!(&*pile, &[1, 2, 3]);
         assert_eq!(pile.len(), 3);
 
