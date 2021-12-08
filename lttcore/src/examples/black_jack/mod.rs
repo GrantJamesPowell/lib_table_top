@@ -1,8 +1,21 @@
 #![allow(missing_docs)]
 
+use crate::{
+    common::deck::{Card, DrawPile},
+    play::{
+        settings::NumPlayers, view::NoSecretPlayerInfo, ActionResponse, GameState, GameStateUpdate,
+        Play, Score, View,
+    },
+    utilities::{PlayerIndexedData as PID, PlayerSet},
+    LibTableTopIdentifier,
+};
+use rand::prelude::SliceRandom;
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use serde::{Serialize, Deserialize};
-use crate::{play::{Play, GameState, view::NoSecretPlayerInfo, settings::{NumPlayers, BuiltinGameModes, Builtin}, Score, View, NumberOfPlayers, ActionResponse, GameStateUpdate}, LibTableTopIdentifier, utilities::PlayerIndexedData as PID};
+
+pub mod bot;
+pub mod settings;
+pub use settings::Settings;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct BlackJack;
@@ -14,41 +27,16 @@ impl LibTableTopIdentifier for BlackJack {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Action {
-
-}
+pub enum Action {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum ActionError {
-
-}
-
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Settings {
-
-}
-
-impl NumPlayers for Settings {
-    fn number_of_players(&self) -> NumberOfPlayers {
-        todo!()
-    }
-}
-
-impl BuiltinGameModes for Settings {
-    fn builtins() -> &'static [Builtin<Self>] {
-        &[]
-    }
-}
+pub enum ActionError {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PublicInfo {
-
-}
+pub struct PublicInfo {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum PublicInfoUpdate {
-
-}
+pub enum PublicInfoUpdate {}
 
 impl Score for PublicInfo {
     fn score(&self) -> Option<PID<u64>> {
@@ -62,15 +50,13 @@ impl View for PublicInfo {
     fn update(&mut self, _update: Cow<'_, Self::Update>) {}
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameSecretInfo {
-
+    draw_pile: DrawPile<Card>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum GameSecretInfoUpdate {
-
-}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GameSecretInfoUpdate {}
 
 impl View for GameSecretInfo {
     type Update = GameSecretInfoUpdate;
@@ -79,8 +65,6 @@ impl View for GameSecretInfo {
         todo!()
     }
 }
-
-
 
 impl Play for BlackJack {
     type Action = Action;
@@ -91,10 +75,27 @@ impl Play for BlackJack {
     type GameSecretInfo = GameSecretInfo;
 
     fn initial_state_for_settings(
-        _settings: &Self::Settings,
-        _rng: &mut impl rand::Rng,
+        settings: &Self::Settings,
+        rng: &mut impl rand::Rng,
     ) -> GameState<Self> {
-        todo!()
+        let player_secret_info = settings
+            .number_of_players()
+            .players()
+            .map(|player| (player, NoSecretPlayerInfo))
+            .collect();
+
+        let mut cards = settings.deck.cards();
+        cards.shuffle(rng);
+        let game_secret_info = GameSecretInfo {
+            draw_pile: DrawPile::from(cards),
+        };
+
+        GameState {
+            player_secret_info,
+            game_secret_info,
+            public_info: PublicInfo {},
+            action_requests: Some(PlayerSet::empty()),
+        }
     }
 
     fn resolve(
