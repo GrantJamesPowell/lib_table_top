@@ -1,11 +1,12 @@
 use super::PlayerIndexedData;
 use crate::play::{NumberOfPlayers, Player};
 use crate::utilities::BitArray256;
-use itertools::{EitherOrBoth, Itertools};
 use smallvec::SmallVec;
 use std::iter::FromIterator;
 
+mod iter;
 mod serialize_and_deserialize;
+mod set_algebra;
 
 /// Helper macro to define [`PlayerSet`] literals
 ///
@@ -41,24 +42,6 @@ macro_rules! player_set {
 /// * Avoids allocating if all players are under 256
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct PlayerSet(SmallVec<[(u32, BitArray256); 1]>);
-
-fn join_with<'a>(
-    PlayerSet(blocks_a): &'a PlayerSet,
-    PlayerSet(blocks_b): &'a PlayerSet,
-    f: impl Fn(BitArray256, BitArray256) -> BitArray256 + 'static,
-) -> impl Iterator<Item = Player> + 'a {
-    Itertools::merge_join_by(blocks_a.iter(), blocks_b.iter(), |(a, _), (b, _)| a.cmp(b))
-        .map(move |x| match x {
-            EitherOrBoth::Left((i, x)) => (i, f(*x, BitArray256::empty())),
-            EitherOrBoth::Right((i, x)) => (i, f(BitArray256::empty(), *x)),
-            EitherOrBoth::Both((i, x), (_, y)) => (i, f(*x, *y)),
-        })
-        .flat_map(|(block, bit_array)| {
-            bit_array
-                .into_iter()
-                .map(move |num| player_for_block_and_offset(*block, num))
-        })
-}
 
 fn block_and_offest_for_player(player: Player) -> (u32, u8) {
     // Each `BitArray256` holds 256 players, we assign a block based on how far from the start the
@@ -145,15 +128,6 @@ impl PlayerSet {
         self.last().map(|player| {
             self.remove(player);
             player
-        })
-    }
-
-    /// Iterate over the players in the set
-    pub fn iter(&self) -> impl Iterator<Item = Player> + DoubleEndedIterator + '_ {
-        self.0.iter().flat_map(|(block, bit_array)| {
-            bit_array
-                .iter()
-                .map(move |offset| player_for_block_and_offset(*block, offset))
         })
     }
 
@@ -334,142 +308,7 @@ impl PlayerSet {
             }
         }
     }
-
-    /// The [`PlayerSet`] representing the union, i.e. the players that are in self, other, or both
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    ///
-    /// let set1 = player_set![1, 2, 3, 1000, 1001];
-    /// let set2 = player_set![2, 3, 4, 1000, 2000];
-    ///
-    /// assert!(set1.union(&set2).eq(player_set![1, 2, 3, 4, 1000, 1001, 2000]));
-    /// ```
-    pub fn union<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
-        join_with(self, other, |x, y| x.union(y))
-    }
-
-    /// The [`PlayerSet`] representing the intersection, i.e. the players that are in self and also in other
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    ///
-    /// let set1 = player_set![1, 2, 3, 1000, 1001];
-    /// let set2 = player_set![2, 3, 4, 1000, 2000];
-    ///
-    /// assert!(set1.intersection(&set2).eq(player_set![2, 3, 1000]));
-    /// ```
-    pub fn intersection<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
-        join_with(self, other, |x, y| x.intersection(y))
-    }
-
-    /// The [`PlayerSet`] representing the difference, i.e., the players that are in self but not in other.
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    /// use lttcore::utilities::PlayerSet;
-    ///
-    /// let set1 = player_set![1, 2, 3, 1000, 1001];
-    /// let set2 = player_set![2, 3, 4, 1000, 2000];
-    ///
-    /// assert_eq!(set1.difference(&set2).collect::<PlayerSet>(), player_set![1, 1001]);
-    ///
-    /// assert!(set1.difference(&set2).eq(player_set![1, 1001]));
-    /// ```
-    pub fn difference<'a>(&'a self, other: &'a Self) -> impl Iterator<Item = Player> + 'a {
-        join_with(self, other, |x, y| x.difference(y))
-    }
-
-    /// The [`PlayerSet`] representing the symmetric difference, i.e., the players in self or other but
-    /// not both
-    ///
-    /// ```
-    /// use lttcore::player_set;
-    ///
-    /// let set1 = player_set![1, 2, 3, 1000, 1001];
-    /// let set2 = player_set![2, 3, 4, 1000, 2000];
-    ///
-    /// assert!(set1.symmetric_difference(&set2).eq(player_set![1, 4, 1001, 2000]))
-    /// ```
-    pub fn symmetric_difference<'a>(
-        &'a self,
-        other: &'a Self,
-    ) -> impl Iterator<Item = Player> + 'a {
-        join_with(self, other, |x, y| x.symmetric_difference(y))
-    }
 }
-
-#[derive(Clone, Debug)]
-pub struct IntoIter {
-    remaining_blocks: smallvec::IntoIter<[(u32, BitArray256); 1]>,
-    front_cursor: Option<(u32, BitArray256)>,
-    back_cursor: Option<(u32, BitArray256)>,
-}
-
-impl Iterator for IntoIter {
-    type Item = Player;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some((block, bit_array)) = self.front_cursor.as_mut() {
-                if let Some(num) = bit_array.pop_lowest() {
-                    return Some(player_for_block_and_offset(*block, num));
-                }
-            }
-
-            if let Some(next) = self.remaining_blocks.next() {
-                self.front_cursor = Some(next);
-            } else {
-                break;
-            }
-        }
-
-        self.back_cursor.as_mut().and_then(|(block, bit_array)| {
-            bit_array
-                .pop_lowest()
-                .map(|num| player_for_block_and_offset(*block, num))
-        })
-    }
-}
-
-impl std::iter::DoubleEndedIterator for IntoIter {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        loop {
-            if let Some((block, bit_array)) = self.back_cursor.as_mut() {
-                if let Some(num) = bit_array.pop_highest() {
-                    return Some(player_for_block_and_offset(*block, num));
-                }
-            }
-
-            if let Some(next) = self.remaining_blocks.next_back() {
-                self.back_cursor = Some(next);
-            } else {
-                break;
-            }
-        }
-
-        self.front_cursor.as_mut().and_then(|(block, bit_array)| {
-            bit_array
-                .pop_highest()
-                .map(|num| player_for_block_and_offset(*block, num))
-        })
-    }
-}
-
-impl IntoIterator for PlayerSet {
-    type Item = Player;
-    type IntoIter = IntoIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        IntoIter {
-            remaining_blocks: self.0.into_iter(),
-            front_cursor: None,
-            back_cursor: None,
-        }
-    }
-}
-
-impl<'a> std::iter::FusedIterator for IntoIter {}
 
 impl From<Player> for PlayerSet {
     fn from(p: Player) -> Self {
@@ -625,21 +464,5 @@ mod tests {
             let roundtripped_player = player_for_block_and_offset(block, offset);
             assert_eq!(player, roundtripped_player)
         }
-    }
-
-    #[test]
-    fn join_with_works_with_player_set_with_different_numbers_of_blocks() {
-        let ps1 = player_set![1, 2, 3, 1000];
-        let ps2 = player_set![1000, 2000, 3000, 4000];
-
-        assert_eq!(
-            join_with(&ps1, &ps2, |x, y| x.intersection(y)).collect::<PlayerSet>(),
-            player_set![1000]
-        );
-
-        assert_eq!(
-            join_with(&ps1, &ps2, |x, y| x.intersection(y)).collect::<PlayerSet>(),
-            join_with(&ps2, &ps1, |x, y| x.intersection(y)).collect::<PlayerSet>()
-        );
     }
 }
