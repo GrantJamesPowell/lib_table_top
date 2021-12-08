@@ -10,7 +10,7 @@ use std::num::{NonZeroU32, TryFromIntError};
 use std::ops::Deref;
 
 /// Wrapper around [`NonZeroU32`]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct NumberOfPlayers(NonZeroU32);
 
 impl NumberOfPlayers {
