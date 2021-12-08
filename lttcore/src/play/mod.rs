@@ -97,7 +97,7 @@ pub trait Play:
     fn resolve(
         game_state: &GameState<Self>,
         settings: &Self::Settings,
-        actions: PID<Cow<'_, ActionResponse<Self>>>,
+        actions: Cow<'_, PID<ActionResponse<Self>>>,
         rng: &mut impl rand::Rng,
     ) -> GameStateUpdate<Self>;
 }

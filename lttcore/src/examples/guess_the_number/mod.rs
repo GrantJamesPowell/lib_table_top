@@ -87,14 +87,15 @@ impl Play for GuessTheNumber {
     fn resolve(
         game_state: &GameState<Self>,
         settings: &Self::Settings,
-        actions: PID<Cow<'_, ActionResponse<Self>>>,
+        actions: Cow<'_, PID<ActionResponse<Self>>>,
         _rng: &mut impl rand::Rng,
     ) -> GameStateUpdate<Self> {
         use ActionResponse::Response;
         let debug_msgs: PID<ActionError> = actions
+            .as_ref()
             .iter()
             .filter_map(|(player, response)| {
-                if let Response(Guess(guess)) = response.as_ref() {
+                if let Response(Guess(guess)) = response {
                     (!settings.range().contains(guess)).then(|| {
                         let err = GuessOutOfRange {
                             guess: *guess,
@@ -109,9 +110,10 @@ impl Play for GuessTheNumber {
             .collect();
 
         let guesses: PID<Guess> = actions
-            .into_iter()
+            .as_ref()
+            .iter()
             .filter_map(|(player, response)| {
-                if let Response(guess) = response.as_ref() {
+                if let Response(guess) = response {
                     Some((player, *guess))
                 } else {
                     None

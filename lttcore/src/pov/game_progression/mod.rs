@@ -46,10 +46,7 @@ impl<T: Play> GameProgression<T> {
         let game_state_update = T::resolve(
             &self.game_state,
             &self.settings,
-            actions
-                .iter()
-                .map(|(player, action)| (player, Cow::Borrowed(action)))
-                .collect(),
+            Cow::Borrowed(&actions),
             &mut self.seed.rng_for_turn(self.turn_num),
         );
 

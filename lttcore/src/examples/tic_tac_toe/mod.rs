@@ -168,19 +168,21 @@ impl Play for TicTacToe {
     fn resolve(
         game_state: &GameState<Self>,
         _settings: &Self::Settings,
-        mut actions: PID<Cow<'_, ActionResponse<Self>>>,
+        actions: Cow<'_, PID<ActionResponse<Self>>>,
         _rng: &mut impl rand::Rng,
     ) -> GameStateUpdate<Self> {
         use ActionResponse::{Resign, Response, Timeout};
 
         let (player, response) = actions
-            .pop_front()
+            .as_ref()
+            .iter()
+            .next()
             .expect("Tic Tac Toe is single player at a time");
 
         let marker = Marker::try_from(player).expect("only p0 or p1 was passed");
         let mut debug_msgs: PID<ActionError> = Default::default();
 
-        let public_info_update = match response.as_ref() {
+        let public_info_update = match response {
             Resign => PublicInfoUpdate::Resign(marker),
             Timeout => {
                 let available = game_state
