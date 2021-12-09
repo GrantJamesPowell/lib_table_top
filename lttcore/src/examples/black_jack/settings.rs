@@ -80,6 +80,8 @@ pub struct Settings {
     pub(super) dealer_hits_on_soft: RangeInclusive<u8>,
     pub(super) both_player_and_dealer_have_black_jack: Outcome,
     pub(super) black_jack_payout_ratio: (u8, u8),
+    pub(super) starting_number_of_chips: u32,
+    pub(super) bettings_limits: RangeInclusive<u32>,
 }
 
 impl Settings {
@@ -89,6 +91,10 @@ impl Settings {
 
     pub fn dealer_will_hit_on_soft(&self, n: u8) -> bool {
         self.dealer_hits_on_soft.contains(&n)
+    }
+
+    pub fn is_bet_allowed(&self, bet: u32) -> bool {
+        self.bettings_limits.contains(&bet)
     }
 }
 
@@ -103,6 +109,8 @@ impl Default for Settings {
             maximum_number_of_splits: 3,
             both_player_and_dealer_have_black_jack: Outcome::Push,
             black_jack_payout_ratio: (2, 1),
+            starting_number_of_chips: 500,
+            bettings_limits: 10..=100,
         }
     }
 }

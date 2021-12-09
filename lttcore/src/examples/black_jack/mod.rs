@@ -5,15 +5,18 @@ use crate::{
     common::deck::{Card, DrawPile},
     play::{
         settings::NumPlayers, view::NoSecretPlayerInfo, ActionResponse, GameState, GameStateUpdate,
-        Play, Score, View,
+        Play, View,
     },
     utilities::{PlayerIndexedData as PID, PlayerSet},
     LibTableTopIdentifier,
 };
 use rand::prelude::SliceRandom;
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use std::borrow::Cow;
 
+mod public_info;
+pub use public_info::{PlayerStatus, PublicInfo, PublicInfoUpdate};
 pub mod bot;
 pub mod settings;
 pub use settings::Settings;
@@ -27,29 +30,16 @@ impl LibTableTopIdentifier for BlackJack {
     }
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Hand {
+    cards: SmallVec<[Card; 4]>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Action {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActionError {}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct PublicInfo {}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum PublicInfoUpdate {}
-
-impl Score for PublicInfo {
-    fn score(&self) -> Option<PID<u64>> {
-        todo!()
-    }
-}
-
-impl View for PublicInfo {
-    type Update = PublicInfoUpdate;
-
-    fn update(&mut self, _update: Cow<'_, Self::Update>) {}
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameSecretInfo {
@@ -81,9 +71,7 @@ impl Play for BlackJack {
     ) -> GameState<Self> {
         let player_secret_info = settings
             .number_of_players()
-            .players()
-            .map(|player| (player, NoSecretPlayerInfo))
-            .collect();
+            .player_indexed_data(|_player| NoSecretPlayerInfo);
 
         let mut cards = settings.deck.cards();
         cards.shuffle(rng);
@@ -91,10 +79,18 @@ impl Play for BlackJack {
             draw_pile: DrawPile::from(cards),
         };
 
+        let public_info = PublicInfo {
+            statuses: settings.number_of_players().player_indexed_data(|_player| {
+                PlayerStatus::InPlay {
+                    chips: settings.starting_number_of_chips,
+                }
+            }),
+        };
+
         GameState {
-            player_secret_info,
+            public_info,
             game_secret_info,
-            public_info: PublicInfo {},
+            player_secret_info,
             action_requests: Some(PlayerSet::empty()),
         }
     }
