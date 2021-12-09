@@ -34,6 +34,15 @@ impl<T> PlayerIndexedData<T> {
         Self::with_capacity(0)
     }
 
+    /// Map the [`PlayerIndexedData`]
+    ///
+    /// A monad is *just* a burrito https://blog.plover.com/prog/burritos.html
+    pub fn map<U>(&self, mut func: impl FnMut(&T) -> U) -> PlayerIndexedData<U> {
+        self.iter()
+            .map(|(player, item)| (player, func(item)))
+            .collect()
+    }
+
     /// Returns if the `PlayerIndexedData` is empty
     ///
     /// ```
