@@ -119,7 +119,7 @@ use crate::{
         view::{NoGameSecretInfo, NoGameSecretInfoUpdate, NoSecretPlayerInfo},
         ActionResponse, GameState, GameStateUpdate, Play, Player,
     },
-    utilities::{PlayerIndexedData as PID, PlayerSet},
+    utilities::PlayerIndexedData as PID,
     LibTableTopIdentifier,
 };
 use serde::{Deserialize, Serialize};
@@ -137,11 +137,20 @@ impl LibTableTopIdentifier for TicTacToe {
     }
 }
 
+/// The [`Phase`](Play::Phase) for the player. In [`TicTacToe`] there is only one phase,
+/// [`Claim`](Phase::Claim) which consists of a player "claiming" a space
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Phase {
+    /// Claim a space
+    Claim,
+}
+
 impl Play for TicTacToe {
     type Action = Action;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type PlayerSecretInfo = NoSecretPlayerInfo;
+    type Phase = Phase;
     type Settings = Settings;
     type GameSecretInfo = NoGameSecretInfo;
 
@@ -150,8 +159,9 @@ impl Play for TicTacToe {
         _rng: &mut impl rand::Rng,
     ) -> GameState<Self> {
         let public_info = PublicInfo::default();
-        let action_requests = Some(PlayerSet::from(Player::from(
-            public_info.board.whose_turn(),
+        let action_requests = Some(PID::from((
+            Player::from(public_info.board.whose_turn()),
+            Phase::Claim,
         )));
         let player_secret_info = settings
             .number_of_players()
@@ -225,7 +235,9 @@ impl Play for TicTacToe {
                     .expect("we just validated this claim");
 
                 match after_move.status() {
-                    Status::InProgress { next_up } => Some(Player::from(next_up).into()),
+                    Status::InProgress { next_up } => {
+                        Some((Player::from(next_up), Phase::Claim).into())
+                    }
                     Status::Win { .. } | Status::Draw { .. } | Status::WinByResignation { .. } => {
                         None
                     }

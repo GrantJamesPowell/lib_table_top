@@ -1,7 +1,7 @@
-use crate::bot::Bot;
 use crate::examples::tic_tac_toe::{Action, Board, Position, TicTacToe};
 use crate::play::Seed;
 use crate::pov::player::PlayerPov;
+use crate::{bot::Bot, examples::tic_tac_toe::Phase};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, panic::RefUnwindSafe};
 
@@ -38,7 +38,12 @@ impl<T: TicTacToeBot + Display> Display for TicTacToeBotWrapper<T> {
 impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
     type Game = TicTacToe;
 
-    fn on_action_request(&self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
+    fn on_action_request(
+        &self,
+        player_pov: &PlayerPov<'_, TicTacToe>,
+        _phase: &Phase,
+        seed: &Seed,
+    ) -> Action {
         let position = self.0.claim_space(&player_pov.public_info.board, seed);
         Action { position }
     }

@@ -34,10 +34,17 @@ impl<T: Play> GameProgression<T> {
         self.number_of_players().players()
     }
 
-    pub fn which_players_input_needed(&self) -> impl Iterator<Item = Player> + '_ {
+    pub fn player_phases(&self) -> impl Iterator<Item = (Player, &T::Phase)> + '_ {
         self.game_state
             .action_requests
             .iter()
             .flat_map(|ps| ps.iter())
+    }
+
+    pub fn which_players_input_needed(&self) -> impl Iterator<Item = Player> + '_ {
+        self.game_state
+            .action_requests
+            .iter()
+            .flat_map(|ps| ps.players())
     }
 }

@@ -1,6 +1,6 @@
 pub mod prebuilt;
 
-use super::GuessTheNumber;
+use super::{GuessTheNumber, Phase};
 use crate::bot::Bot;
 use crate::play::{Play, Seed};
 use crate::pov::player::PlayerPov;
@@ -34,6 +34,7 @@ impl<T: GuessTheNumberBot> Bot for GuessTheNumberBotWrapper<T> {
     fn on_action_request(
         &self,
         player_pov: &PlayerPov<'_, Self::Game>,
+        _phase: &Phase,
         seed: &Seed,
     ) -> <Self::Game as Play>::Action {
         let guess = self.0.guess(player_pov.settings.range(), seed);

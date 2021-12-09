@@ -1,7 +1,7 @@
 use super::{ActionResponse, Play, Player, TurnNum, View};
 use crate::{
     pov::{observer::ObserverUpdate, player::PlayerUpdate},
-    utilities::{PlayerIndexedData as PID, PlayerSet},
+    utilities::PlayerIndexedData as PID,
 };
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -11,15 +11,14 @@ pub struct GameState<T: Play> {
     pub player_secret_info: PID<T::PlayerSecretInfo>,
     pub game_secret_info: T::GameSecretInfo,
     pub public_info: T::PublicInfo,
-    pub action_requests: Option<PlayerSet>,
+    pub action_requests: Option<PID<T::Phase>>,
 }
 
 impl<T: Play> GameState<T> {
-    pub fn player_should_act(&self, player: impl Into<Player>) -> bool {
+    pub fn phase_for_player(&self, player: impl Into<Player>) -> Option<&T::Phase> {
         self.action_requests
             .as_ref()
-            .map(|set| set.contains(player.into()))
-            .unwrap_or(false)
+            .and_then(|pid| pid.get(player.into()))
     }
 
     pub fn update(&mut self, update: GameStateUpdate<T>) {
@@ -47,22 +46,21 @@ pub struct GameStateUpdate<T: Play> {
     ///
     /// # How to interpret
     ///
-    /// * `None` => This game is over and there will be no more input needed
-    /// * `Some(player_set) if player_set.is_empty()` => this turn requires no players input but
-    /// the game is not over
-    /// * `Some(player_set)` => The players who need to provide input this turn
-    pub action_requests: Option<PlayerSet>,
+    /// * `None` => This game is over and there will be no more input needed *
+    /// `Some(player_indexed_data) if player_indexed_data.is_empty()` => this turn requires no
+    /// players input but the game is not over
+    /// * `Some(player_indexed_data)` => The players who need to provide input this turn
+    pub action_requests: Option<PID<T::Phase>>,
     /// Debug info for players who did something potentially incorrect. See [`Play::ActionError`]
     /// for more details
     pub debug_msgs: PID<T::ActionError>,
 }
 
 impl<T: Play> GameStateUpdate<T> {
-    pub fn player_should_act(&self, player: impl Into<Player>) -> bool {
+    pub fn phase_for_player(&self, player: impl Into<Player>) -> Option<&T::Phase> {
         self.action_requests
             .as_ref()
-            .map(|set| set.contains(player.into()))
-            .unwrap_or(false)
+            .and_then(|phases| phases.get(player.into()))
     }
 }
 
@@ -102,7 +100,10 @@ impl<T: Play> EnumeratedGameStateUpdate<T> {
     pub fn player_update(&self, player: impl Into<Player>) -> PlayerUpdate<'_, T> {
         let player = player.into();
 
-        let player_should_act = self.game_state_update.player_should_act(player);
+        let phase = self
+            .game_state_update
+            .phase_for_player(player)
+            .map(Cow::Borrowed);
 
         let observer_update = self.observer_update();
 
@@ -120,7 +121,7 @@ impl<T: Play> EnumeratedGameStateUpdate<T> {
 
         PlayerUpdate {
             player,
-            player_should_act,
+            phase,
             observer_update,
             secret_info_update,
             debug_msg,

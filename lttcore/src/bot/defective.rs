@@ -15,6 +15,7 @@ macro_rules! panicking_bot {
                 fn on_action_request(
                     &self,
                     _pov: &$crate::pov::player::PlayerPov<'_, Self::Game>,
+                    _phase: &<$game as $crate::play::Play>::Phase,
                     _seed: &$crate::play::Seed
                     ) -> <Self::Game as $crate::play::Play>::Action {
                     panic!("Bot intentionally panicked")

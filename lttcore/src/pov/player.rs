@@ -57,7 +57,7 @@ pub struct PlayerPov<'a, T: Play> {
 #[serde(bound = "")]
 pub struct PlayerUpdate<'a, T: Play> {
     pub(crate) player: Player,
-    pub(crate) player_should_act: bool,
+    pub(crate) phase: Option<Cow<'a, T::Phase>>,
     pub(crate) observer_update: ObserverUpdate<'a, T>,
     pub(crate) secret_info_update: Option<Cow<'a, <T::PlayerSecretInfo as View>::Update>>,
     pub(crate) debug_msg: Option<Cow<'a, T::ActionError>>,
@@ -69,9 +69,14 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
         self.observer_update.turn_num()
     }
 
-    /// Whether the player should act this turn
+    /// The [`Phase`](crate::play::Play::Phase) for this [`Player`] this turn
+    pub fn phase(&self) -> Option<&T::Phase> {
+        self.phase.as_ref().map(|cow| cow.as_ref())
+    }
+
+    /// Return whether this [`Player`] needs to take an action during this turn
     pub fn player_should_act(&self) -> bool {
-        self.player_should_act
+        self.phase.is_some()
     }
 
     /// The secret info update for the player the came from the resolution of the previous turn.
@@ -91,7 +96,7 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
     pub fn into_owned(self) -> PlayerUpdate<'static, T> {
         PlayerUpdate {
             player: self.player,
-            player_should_act: self.player_should_act,
+            phase: self.phase.map(|x| Cow::Owned(x.into_owned())),
             observer_update: self.observer_update.into_owned(),
             secret_info_update: self.secret_info_update.map(|x| Cow::Owned(x.into_owned())),
             debug_msg: self.debug_msg.map(|x| Cow::Owned(x.into_owned())),
@@ -110,7 +115,7 @@ impl<'a, T: Play> PlayerUpdate<'a, T> {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct GamePlayer<T: Play> {
-    pub(crate) player_should_act: bool,
+    pub(crate) phase: Option<T::Phase>,
     pub(crate) game_observer: GameObserver<T>,
     pub(crate) player: Player,
     pub(crate) secret_info: T::PlayerSecretInfo,
@@ -146,7 +151,12 @@ impl<T: Play> GamePlayer<T> {
 
     /// Return whether this [`Player`] needs to take an action during this turn
     pub fn player_should_act(&self) -> bool {
-        self.player_should_act
+        self.phase.is_some()
+    }
+
+    /// Return the [`Phase`](crate::play::Play::Phase) for this [`Player`] for this turn
+    pub fn phase(&self) -> &Option<T::Phase> {
+        &self.phase
     }
 
     /// The [`Settings`](Play::Settings) of the game
@@ -165,7 +175,7 @@ impl<T: Play> GamePlayer<T> {
     ///
     /// This function will panic if an update is skipped or applied twice
     pub fn update(&mut self, update: PlayerUpdate<'_, T>) {
-        self.player_should_act = update.player_should_act();
+        self.phase = update.phase.map(|cow| cow.into_owned());
         self.game_observer.update(update.observer_update);
 
         if let Some(update) = update.secret_info_update {

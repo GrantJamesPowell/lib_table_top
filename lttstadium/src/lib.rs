@@ -45,8 +45,8 @@ impl<T: Play> FightCard<T> {
 
                 while !game.is_concluded() {
                     let actions = game
-                        .which_players_input_needed()
-                        .map(|player| {
+                        .player_phases()
+                        .map(|(player, phase)| {
                             let pov = &game.player_pov(player);
                             let seed = &bot_seeds[player];
 
@@ -56,10 +56,11 @@ impl<T: Play> FightCard<T> {
                             // potentially in a weird state after it's panicked. For good measure,
                             // we resign and don't continue to reuse the bot state.
                             let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
-                            let action =
-                                catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
-                                    .map(ActionResponse::Response)
-                                    .unwrap_or_else(|_| ActionResponse::Resign);
+                            let action = catch_unwind(move || {
+                                bot_wrapper.on_action_request(pov, phase, seed)
+                            })
+                            .map(ActionResponse::Response)
+                            .unwrap_or_else(|_| ActionResponse::Resign);
 
                             (player, action)
                         })
