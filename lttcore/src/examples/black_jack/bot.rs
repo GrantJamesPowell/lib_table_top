@@ -1,8 +1,11 @@
-use std::{ops::RangeInclusive, panic::RefUnwindSafe};
-
 use super::{Action, BlackJack, Hand, Phase, PlayerStatus, Settings};
-use crate::{bot::Bot, common::deck::Card, play::Seed, pov::player::PlayerPov};
+use crate::{
+    bot::{Bot, BotContext, BotError},
+    common::deck::Card,
+    pov::player::PlayerPov,
+};
 use serde::{de::DeserializeOwned, Serialize};
+use std::panic::RefUnwindSafe;
 
 pub trait BlackJackBot:
     RefUnwindSafe + Serialize + DeserializeOwned + Sync + Send + 'static
@@ -29,15 +32,19 @@ pub trait BlackJackBot:
 impl<B: BlackJackBot> Bot for B {
     type Game = BlackJack;
 
-    fn on_action_request(&mut self, player_pov: &PlayerPov<'_, BlackJack>, _rng: &Seed) -> Action {
+    fn on_action_request(
+        &mut self,
+        player_pov: &PlayerPov<'_, BlackJack>,
+        _context: &BotContext<'_, BlackJack>,
+    ) -> Result<Action, BotError<BlackJack>> {
         use PlayerStatus::*;
 
         match player_pov.public_info.phase {
             Phase::Bet => match player_pov.public_info.statuses[player_pov.player] {
-                Resigned { .. } | Busted { .. } => Action::DontBet,
+                Resigned { .. } | Busted { .. } => Ok(Action::DontBet),
                 InPlay { chips } => {
                     let bet = B::bet(chips, player_pov.settings);
-                    Action::Bet(bet)
+                    Ok(Action::Bet(bet))
                 }
             },
             Phase::PlayHand(player, idx) => {
@@ -47,30 +54,26 @@ impl<B: BlackJackBot> Bot for B {
                     .dealer_card_showing()
                     .expect("can only play hand when dealer card is showing");
 
-                if hand.is_able_to_split()
-                    && B::split(hand, dealer_card_showing, player_pov.settings)
-                {
-                    return Action::Split(idx);
+                if hand.can_split && B::split(hand, dealer_card_showing, player_pov.settings) {
+                    return Ok(Action::Split);
                 }
 
-                if hand.is_able_to_double_down()
+                if hand.can_double_down
                     && B::double_down(hand, dealer_card_showing, player_pov.settings)
                 {
-                    return Action::DoubleDown(idx);
+                    return Ok(Action::DoubleDown);
                 }
 
-                if player_pov.settings.is_able_to_surrender()
-                    && idx == 0 // Can only surrender if we have 1 hand
-                    && hand.has_taken_additional_cards()
+                if hand.can_surrender
                     && B::surrender(hand, dealer_card_showing, player_pov.settings)
                 {
-                    return Action::Surrender;
+                    return Ok(Action::Surrender);
                 }
 
                 if B::hit(hand, dealer_card_showing, player_pov.settings) {
-                    Action::Hit(idx)
+                    Ok(Action::Hit)
                 } else {
-                    Action::Stand(idx)
+                    Ok(Action::Stand)
                 }
             }
         }

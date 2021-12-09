@@ -28,6 +28,9 @@ impl PublicInfo {
 pub struct Hand {
     pub bet: u32,
     pub cards: SmallVec<[Card; 4]>,
+    pub can_split: bool,
+    pub can_double_down: bool,
+    pub can_surrender: bool,
 }
 
 impl Hand {

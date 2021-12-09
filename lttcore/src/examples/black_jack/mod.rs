@@ -12,7 +12,6 @@ use crate::{
 };
 use rand::prelude::SliceRandom;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use std::borrow::Cow;
 
 mod public_info;
@@ -35,10 +34,10 @@ pub enum Action {
     DontBet,
     Bet(u32),
     Surrender,
-    Hit(usize),
-    Stand(usize),
-    DoubleDown(usize),
-    Split(usize),
+    Hit,
+    Stand,
+    DoubleDown,
+    Split,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
