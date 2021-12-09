@@ -47,30 +47,26 @@ impl<B: BlackJackBot> Bot for B {
                     .dealer_card_showing()
                     .expect("can only play hand when dealer card is showing");
 
-                if hand.is_able_to_split()
-                    && B::split(hand, dealer_card_showing, player_pov.settings)
-                {
-                    return Action::Split(idx);
+                if hand.can_split && B::split(hand, dealer_card_showing, player_pov.settings) {
+                    return Action::Split;
                 }
 
-                if hand.is_able_to_double_down()
+                if hand.can_double_down
                     && B::double_down(hand, dealer_card_showing, player_pov.settings)
                 {
-                    return Action::DoubleDown(idx);
+                    return Action::DoubleDown;
                 }
 
-                if player_pov.settings.is_able_to_surrender()
-                    && idx == 0 // Can only surrender if we have 1 hand
-                    && hand.has_taken_additional_cards()
+                if hand.can_surrender
                     && B::surrender(hand, dealer_card_showing, player_pov.settings)
                 {
                     return Action::Surrender;
                 }
 
                 if B::hit(hand, dealer_card_showing, player_pov.settings) {
-                    Action::Hit(idx)
+                    Action::Hit
                 } else {
-                    Action::Stand(idx)
+                    Action::Stand
                 }
             }
         }
