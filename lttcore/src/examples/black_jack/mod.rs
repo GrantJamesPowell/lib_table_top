@@ -16,7 +16,7 @@ use smallvec::SmallVec;
 use std::borrow::Cow;
 
 mod public_info;
-pub use public_info::{PlayerStatus, PublicInfo, PublicInfoUpdate};
+pub use public_info::{Hand, Phase, PlayerStatus, PublicInfo, PublicInfoUpdate};
 pub mod bot;
 pub mod settings;
 pub use settings::Settings;
@@ -30,13 +30,16 @@ impl LibTableTopIdentifier for BlackJack {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct Hand {
-    cards: SmallVec<[Card; 4]>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Action {}
+pub enum Action {
+    DontBet,
+    Bet(u32),
+    Surrender,
+    Hit(usize),
+    Stand(usize),
+    DoubleDown(usize),
+    Split(usize),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ActionError {}
@@ -80,6 +83,8 @@ impl Play for BlackJack {
         };
 
         let public_info = PublicInfo {
+            phase: Phase::Bet,
+            hands: PID::empty(),
             statuses: settings.number_of_players().player_indexed_data(|_player| {
                 PlayerStatus::InPlay {
                     chips: settings.starting_number_of_chips,

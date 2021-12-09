@@ -96,6 +96,10 @@ impl Settings {
     pub fn is_bet_allowed(&self, bet: u32) -> bool {
         self.bettings_limits.contains(&bet)
     }
+
+    pub fn is_able_to_surrender(&self) -> bool {
+        self.surrender != Surrender::NoSurrender
+    }
 }
 
 impl Default for Settings {
