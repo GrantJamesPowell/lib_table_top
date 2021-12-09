@@ -154,7 +154,7 @@ impl BitArray256 {
 
     /// Returns the offset of the number relative to the contents of the [`BitArray256`]
     ///
-    /// Note: [`PlayerSet`] is iterated in increasing order starting with [`Player`] `0`
+    /// Note: [`BitArray256`] is iterated in increasing order starting with `0`
     ///
     /// ```
     /// use lttcore::bit_array_256;

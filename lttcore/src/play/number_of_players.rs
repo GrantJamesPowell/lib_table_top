@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::num::{NonZeroU32, TryFromIntError};
 use std::ops::Deref;
 
-/// Wrapper around [`NonZeroU8`]
+/// Wrapper around [`NonZeroU32`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct NumberOfPlayers(NonZeroU32);
 

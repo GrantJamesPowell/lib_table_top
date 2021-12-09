@@ -6,10 +6,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-/// [`PublicInfo`](crate::play::Play::PublicInfo) of the [`TicTacToe`] game
-///
-/// This [`Deref`]s to a [`TicTacToe`] struct so you can use the immutable methods on
-/// [`TicTacToe`] on this struct
+/// [`PublicInfo`](crate::play::Play::PublicInfo) of the [`TicTacToe`](super::TicTacToe) game
 #[derive(Clone, Copy, Default, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicInfo {
     /// The current [`Board`]

@@ -85,12 +85,6 @@ pub enum Status {
     /// All positions have been claimed and there is no winner
     Draw,
     /// Win by resignation.
-    ///
-    /// # Note
-    ///
-    /// This can only be produced by the [`status`](super::TicTacToe::status) method on
-    /// [`TicTacToe`](super::TicTacToe) and not the [`status`](Board::status) method on [`Board`]
-    /// because only [`TicTacToe`](super::TicTacToe) knows about resignations
     WinByResignation {
         /// The marker of the player who has won
         winner: Marker,
