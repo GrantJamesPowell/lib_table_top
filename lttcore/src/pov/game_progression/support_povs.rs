@@ -38,11 +38,11 @@ impl<T: Play> GameProgression<T> {
         let player = player.into();
         let game_observer = self.game_observer();
         let secret_info = self.player_secret_info(player).clone();
-        let phase = self.game_state.phase_for_player(player).cloned();
+        let player_should_act = self.game_state.player_should_act(player);
 
         GamePlayer {
             game_observer,
-            phase,
+            player_should_act,
             player,
             secret_info,
             debug_msgs: Vec::new(),

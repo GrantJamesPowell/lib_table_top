@@ -58,17 +58,11 @@ impl View for GameSecretInfo {
     type Update = ();
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub enum Phase {
-    Guess,
-}
-
 impl Play for GuessTheNumber {
     type Action = Guess;
     type ActionError = ActionError;
     type PublicInfo = PublicInfo;
     type Settings = Settings;
-    type Phase = Phase;
     type PlayerSecretInfo = NoSecretPlayerInfo;
     type GameSecretInfo = GameSecretInfo;
 
@@ -86,11 +80,7 @@ impl Play for GuessTheNumber {
             game_secret_info: GameSecretInfo {
                 secret_number: rng.gen_range(settings.range()),
             },
-            action_requests: Some(
-                settings
-                    .number_of_players()
-                    .player_indexed_data(|_player| Phase::Guess),
-            ),
+            action_requests: Some(settings.number_of_players().player_set()),
         }
     }
 

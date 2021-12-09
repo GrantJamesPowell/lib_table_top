@@ -48,7 +48,6 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     fn on_action_request(
         &self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        phase: &<Self::Game as Play>::Phase,
         rng: &Seed,
     ) -> <Self::Game as Play>::Action;
 
@@ -77,7 +76,6 @@ pub trait StatefulBot: SerializeSelf + Sync + Send + 'static {
     fn on_action_request(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        phase: &<Self::Game as Play>::Phase,
         rng: &Seed,
     ) -> <Self::Game as Play>::Action;
 
@@ -113,10 +111,9 @@ impl<T: Play, B: Bot<Game = T>> StatefulBot for B {
     fn on_action_request(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        phase: &T::Phase,
         rng: &Seed,
     ) -> <Self::Game as Play>::Action {
-        Bot::on_action_request(&*self, player_pov, phase, rng)
+        Bot::on_action_request(&*self, player_pov, rng)
     }
 
     fn on_turn_advance(

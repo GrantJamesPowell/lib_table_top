@@ -85,17 +85,6 @@ pub trait Play:
         + DeserializeOwned
         + 'static;
 
-    type Phase: Clone
-        + RefUnwindSafe
-        + Debug
-        + PartialEq
-        + Eq
-        + Sync
-        + Send
-        + Serialize
-        + DeserializeOwned
-        + 'static;
-
     type PublicInfo: View + Score + RefUnwindSafe;
     type PlayerSecretInfo: View + RefUnwindSafe;
     type GameSecretInfo: View + RefUnwindSafe;

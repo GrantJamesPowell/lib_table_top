@@ -200,7 +200,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
         serialized,
         json!({
             "game_state": {
-                "action_requests": {"0": "Guess"},
+                "action_requests": [0],
                 "game_secret_info": {"secret_number": 5},
                 "player_secret_info": {"0": Null},
                 "public_info": "InProgress"
@@ -230,7 +230,6 @@ fn test_serializing_game_player_and_observer_and_updates() {
         serialized,
         json!({
                 "debug_msgs": [],
-                "phase": "Guess",
                 "game_observer": {
                     "public_info": "InProgress",
                     "settings": {
@@ -247,6 +246,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     },
                     "turn_num": 0
                 },
+                "player_should_act": true,
                 "player": 0,
                 "secret_info": Null
         })

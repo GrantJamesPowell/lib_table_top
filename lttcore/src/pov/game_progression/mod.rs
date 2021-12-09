@@ -37,12 +37,9 @@ pub struct HistoryEvent<T: Play> {
 impl<T: Play> GameProgression<T> {
     #[must_use = "resolve only figures out the update, but does not apply it"]
     pub fn resolve(&self, actions: PID<ActionResponse<T>>) -> EnumeratedGameStateUpdate<T> {
-        debug_assert!(
-            self.game_state
-                .action_requests
-                .iter()
-                .flat_map(|pid| pid.players())
-                .eq(actions.players()),
+        debug_assert_eq!(
+            Some(actions.players().collect()),
+            self.game_state.action_requests,
             "correct actions submitted"
         );
 

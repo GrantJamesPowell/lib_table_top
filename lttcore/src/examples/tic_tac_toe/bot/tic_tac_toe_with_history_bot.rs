@@ -6,7 +6,7 @@ use std::{fmt::Display, panic::RefUnwindSafe};
 use crate::{
     bot::StatefulBot,
     examples::{
-        tic_tac_toe::{Action, Board, Marker, Phase, Position, PublicInfoUpdate},
+        tic_tac_toe::{Action, Board, Marker, Position, PublicInfoUpdate},
         TicTacToe,
     },
     play::{Seed, TurnNum},
@@ -41,12 +41,7 @@ impl<T: TicTacToeWithHistoryBot + Display> Display for TicTacToeWithHistoryBotWr
 impl<T: TicTacToeWithHistoryBot> StatefulBot for TicTacToeWithHistoryBotWrapper<T> {
     type Game = TicTacToe;
 
-    fn on_action_request(
-        &mut self,
-        player_pov: &PlayerPov<'_, TicTacToe>,
-        _phase: &Phase,
-        seed: &Seed,
-    ) -> Action {
+    fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
         let position = self
             .bot
             .claim_space(&player_pov.public_info.board, seed, &self.history);
