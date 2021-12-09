@@ -31,9 +31,7 @@ impl<T: Play> FightCard<T> {
                 let mut bots = self
                     .settings
                     .number_of_players()
-                    .player_indexed_data(|player| {
-                        self.contenders[player].make_stateful_bot_instance()
-                    });
+                    .player_indexed_data(|player| self.contenders[player].make_bot_instance());
 
                 let bot_seeds = self
                     .settings

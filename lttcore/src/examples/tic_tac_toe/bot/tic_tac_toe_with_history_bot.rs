@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, panic::RefUnwindSafe};
 
 use crate::{
-    bot::StatefulBot,
+    bot::Bot,
     examples::{
         tic_tac_toe::{Action, Board, Marker, Position, PublicInfoUpdate},
         TicTacToe,
@@ -38,7 +38,7 @@ impl<T: TicTacToeWithHistoryBot + Display> Display for TicTacToeWithHistoryBotWr
     }
 }
 
-impl<T: TicTacToeWithHistoryBot> StatefulBot for TicTacToeWithHistoryBotWrapper<T> {
+impl<T: TicTacToeWithHistoryBot> Bot for TicTacToeWithHistoryBotWrapper<T> {
     type Game = TicTacToe;
 
     fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {

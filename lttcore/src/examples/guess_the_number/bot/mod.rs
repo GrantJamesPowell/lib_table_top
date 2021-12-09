@@ -32,7 +32,7 @@ impl<T: GuessTheNumberBot> Bot for GuessTheNumberBotWrapper<T> {
     type Game = GuessTheNumber;
 
     fn on_action_request(
-        &self,
+        &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
         seed: &Seed,
     ) -> <Self::Game as Play>::Action {

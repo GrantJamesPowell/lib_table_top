@@ -13,7 +13,7 @@ macro_rules! panicking_bot {
                 type Game = $game;
 
                 fn on_action_request(
-                    &self,
+                    &mut self,
                     _pov: &$crate::pov::player::PlayerPov<'_, Self::Game>,
                     _seed: &$crate::play::Seed
                     ) -> <Self::Game as $crate::play::Play>::Action {

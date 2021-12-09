@@ -38,7 +38,7 @@ impl<T: TicTacToeBot + Display> Display for TicTacToeBotWrapper<T> {
 impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
     type Game = TicTacToe;
 
-    fn on_action_request(&self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
+    fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
         let position = self.0.claim_space(&player_pov.public_info.board, seed);
         Action { position }
     }
