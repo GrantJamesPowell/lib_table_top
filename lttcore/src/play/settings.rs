@@ -187,13 +187,13 @@ mod test {
             serde_json::to_value(&game_modes).unwrap(),
             serde_json::json!([
                 "players-1-range-1-10",
-                "players-1-range-u64",
+                "players-1-range-u32",
                 "players-2-range-1-10",
-                "players-2-range-u64",
+                "players-2-range-u32",
                 "players-3-range-1-10",
-                "players-3-range-u64",
+                "players-3-range-u32",
                 "players-4-range-1-10",
-                "players-4-range-u64",
+                "players-4-range-u32",
                 "default",
             ])
         );
@@ -227,7 +227,7 @@ mod test {
                 "name": serde_json::Value::Null,
                 "settings": {
                     "number_of_players": 1,
-                    "range": {"start": 0, "end": u64::MAX }
+                    "range": {"start": 0, "end": u32::MAX }
                 }
             }})
         );

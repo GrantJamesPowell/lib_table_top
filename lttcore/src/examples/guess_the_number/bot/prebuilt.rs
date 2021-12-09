@@ -89,7 +89,7 @@ mod tests {
 
     #[test]
     fn pick_randomly() {
-        assert_eq!(PickRandomly.guess(1..=10, &SEED_42), 9);
+        assert_eq!(PickRandomly.guess(1..=10, &SEED_42), 2);
         assert_eq!(PickRandomly.guess(1..=1, &SEED_42), 1);
     }
 }

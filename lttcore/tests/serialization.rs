@@ -199,15 +199,10 @@ fn test_serializing_game_player_and_observer_and_updates() {
     assert_eq!(
         serialized,
         json!({
-            "turn_num": 0,
             "game_state": {
-                "action_requests": [0],
-                "game_secret_info": {
-                    "secret_number": 8
-                },
-                "player_secret_info":{
-                    "0": Null,
-                },
+                "action_requests": {"0": "Guess"},
+                "game_secret_info": {"secret_number": 5},
+                "player_secret_info": {"0": Null},
                 "public_info": "InProgress"
             },
             "history": [],
@@ -216,7 +211,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
             "settings": {
                 "Custom": {
                     "name": Null,
-                    "settings":{
+                    "settings": {
                         "number_of_players": 1,
                         "range": {
                             "end": 10,
@@ -225,6 +220,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     }
                 }
             },
+            "turn_num": 0
         })
     );
 
@@ -234,6 +230,7 @@ fn test_serializing_game_player_and_observer_and_updates() {
         serialized,
         json!({
                 "debug_msgs": [],
+                "phase": "Guess",
                 "game_observer": {
                     "public_info": "InProgress",
                     "settings": {
@@ -251,7 +248,6 @@ fn test_serializing_game_player_and_observer_and_updates() {
                     "turn_num": 0
                 },
                 "player": 0,
-                "player_should_act": true,
                 "secret_info": Null
         })
     );
