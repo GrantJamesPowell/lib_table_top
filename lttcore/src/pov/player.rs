@@ -27,8 +27,6 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct PlayerPov<'a, T: Play> {
-    /// The current turn number
-    pub turn_num: TurnNum,
     /// The [`Player`] who this view is for
     pub player: Player,
     /// The [`Settings`](Play::Settings) of the game
@@ -133,7 +131,6 @@ impl<T: Play> GamePlayer<T> {
         PlayerPov {
             player: self.player,
             secret_info: &self.secret_info,
-            turn_num: self.game_observer.turn_num,
             settings: self.game_observer.settings(),
             public_info: &self.game_observer.public_info,
         }

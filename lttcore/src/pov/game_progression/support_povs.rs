@@ -19,7 +19,6 @@ impl<T: Play> GameProgression<T> {
 
         PlayerPov {
             player,
-            turn_num: self.turn_num,
             settings: self.settings(),
             secret_info: self.player_secret_info(player),
             public_info: self.public_info(),
