@@ -25,16 +25,23 @@
 //! TODO:// Explain Contenders
 
 use crate::pov::player::PlayerPov;
-use crate::{
-    encoding::SerializeSelf,
-    play::{Play, Seed},
-    pov::player::PlayerUpdate,
-};
+use crate::{encoding::SerializeSelf, play::Play, pov::player::PlayerUpdate};
 use std::panic::RefUnwindSafe;
 
 mod contender;
+mod context;
 pub(crate) mod defective;
 pub use contender::Contender;
+pub use context::{BotContext, BotContextBuilder};
+
+/// Various errors associated with [`Bot`] execution
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BotError<T: Play> {
+    /// Triggered from the [`BotContext::checkpoint`] method
+    TimeExceeded(Option<T::Action>),
+    /// Any other error
+    Custom(String),
+}
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
 pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
@@ -45,8 +52,8 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     fn on_action_request(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        rng: &Seed,
-    ) -> <Self::Game as Play>::Action;
+        bot_context: &BotContext<'_, Self::Game>,
+    ) -> Result<<Self::Game as Play>::Action, BotError<Self::Game>>;
 
     /// Callback for when the turn advances and the [`Player`](crate::play::Player) gets an update. By default, this is
     /// a noop. Use this if you want to update your bot's state outside of times it is called to

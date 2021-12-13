@@ -3,14 +3,20 @@
 #[macro_use]
 extern crate derive_builder;
 
-use lttcore::utilities::PlayerIndexedData as PID;
 use lttcore::{bot::Contender, play::ActionResponse};
+use lttcore::{
+    bot::{BotContextBuilder, BotError},
+    utilities::PlayerIndexedData as PID,
+};
 use lttcore::{
     play::{settings::NumPlayers, Play, Seed, SettingsPtr},
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::{
+    panic::{catch_unwind, AssertUnwindSafe},
+    time::Duration,
+};
 
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
@@ -19,6 +25,8 @@ pub struct FightCard<T: Play> {
     settings: SettingsPtr<T::Settings>,
     #[builder(default = "500")]
     iterations: usize,
+    #[builder(default = "Duration::from_millis(500)")]
+    bot_action_duration: Duration,
 }
 
 impl<T: Play> FightCard<T> {
@@ -42,26 +50,43 @@ impl<T: Play> FightCard<T> {
                     GameProgression::from_settings_and_seed(self.settings.clone(), game_seed);
 
                 while !game.is_concluded() {
-                    let actions = game
-                        .which_players_input_needed()
-                        .map(|player| {
-                            let pov = &game.player_pov(player);
-                            let seed = &bot_seeds[player];
+                    let actions =
+                        game.which_players_input_needed()
+                            .map(|player| {
+                                let pov = &game.player_pov(player);
 
-                            // # Safety
-                            //
-                            // It's _probably_ not technically "unsafe" to reuse a bot who's is
-                            // potentially in a weird state after it's panicked. For good measure,
-                            // we resign and don't continue to reuse the bot state.
-                            let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
-                            let action =
-                                catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
-                                    .map(ActionResponse::Response)
-                                    .unwrap_or_else(|_| ActionResponse::Resign);
+                                let context = BotContextBuilder::default()
+                                    .seed(&bot_seeds[player])
+                                    .time_budget(self.bot_action_duration)
+                                    .turn_num(game.turn_num())
+                                    .build()
+                                    .unwrap();
 
-                            (player, action)
-                        })
-                        .collect();
+                                // # Safety
+                                //
+                                // It's _probably_ not technically "unsafe" to reuse a bot who's is
+                                // potentially in a weird state after it's panicked. For good measure,
+                                // we resign and don't continue to reuse the bot state.
+                                let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
+                                let action = catch_unwind(move || {
+                                    bot_wrapper.on_action_request(pov, &context)
+                                })
+                                .map(|result| match result {
+                                    // bot completed successfully, or checkpointed out
+                                    Ok(action) | Err(BotError::TimeExceeded(Some(action))) => {
+                                        ActionResponse::Response(action)
+                                    }
+                                    // Bot exceeded time without providing an intermediate
+                                    Err(BotError::TimeExceeded(None)) => ActionResponse::Timeout,
+                                    // Other errors
+                                    Err(_) => ActionResponse::Timeout,
+                                })
+                                // If the bot panics while executing
+                                .unwrap_or_else(|_| ActionResponse::Resign);
+
+                                (player, action)
+                            })
+                            .collect();
 
                     let update = game.resolve(actions);
                     game.update(update);

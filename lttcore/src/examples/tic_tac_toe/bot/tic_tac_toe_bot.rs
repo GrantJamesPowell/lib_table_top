@@ -1,6 +1,6 @@
-use crate::bot::Bot;
+use crate::bot::{Bot, BotContext, BotError};
 use crate::examples::tic_tac_toe::{Action, Board, Position, TicTacToe};
-use crate::play::Seed;
+
 use crate::pov::player::PlayerPov;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, panic::RefUnwindSafe};
@@ -9,10 +9,11 @@ use std::{fmt::Display, panic::RefUnwindSafe};
 pub trait TicTacToeBot:
     RefUnwindSafe + Clone + Sync + Send + 'static + Serialize + DeserializeOwned
 {
-    /// Method to choose which [`Position`] to claim given a [`Board`] and a [`Seed`]. Your bot will only be
-    /// called when it's your turn to make a move, so [`Board::whose_turn`] will be the marker that
-    /// represents your bots. For examples checkout the [`prebuilt`](super::prebuilt) module
-    fn claim_space(&self, board: &Board, seed: &Seed) -> Position;
+    /// Method to choose which [`Position`] to claim given a [`Board`] and a [`BotContext`]. Your
+    /// bot will only be called when it's your turn to make a move, so [`Board::whose_turn`] will
+    /// be the marker that represents your bots. For examples checkout the
+    /// [`prebuilt`](super::prebuilt) module
+    fn claim_space(&self, board: &Board, context: &BotContext<'_, TicTacToe>) -> Position;
 
     /// Turn the type that implements [`TicTacToeBot`] into one that implements [`Bot`] for
     /// `Bot<Game = TicTacToe>`
@@ -38,8 +39,14 @@ impl<T: TicTacToeBot + Display> Display for TicTacToeBotWrapper<T> {
 impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
     type Game = TicTacToe;
 
-    fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
-        let position = self.0.claim_space(&player_pov.public_info.board, seed);
-        Action { position }
+    fn on_action_request(
+        &mut self,
+        player_pov: &PlayerPov<'_, TicTacToe>,
+        bot_context: &BotContext<'_, TicTacToe>,
+    ) -> Result<Action, BotError<TicTacToe>> {
+        let position = self
+            .0
+            .claim_space(&player_pov.public_info.board, bot_context);
+        Ok(Action { position })
     }
 }

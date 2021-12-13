@@ -50,7 +50,8 @@
 //!
 //! ```
 //! use serde::{Serialize, Deserialize};
-//! use lttcore::{play::Seed, ttt};
+//! use lttcore::{play::Seed, bot::BotContext, ttt};
+//! use lttcore::examples::TicTacToe;
 //! use lttcore::examples::tic_tac_toe::{Position, Board, TicTacToeBot};
 //! use lttcore::examples::tic_tac_toe::bot::{
 //!   prebuilt::RandomSelector,
@@ -63,10 +64,10 @@
 //! }
 //!
 //! impl TicTacToeBot for MySuperCoolBot {
-//!     fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
+//!     fn claim_space(&self, board: &Board, context: &BotContext<'_, TicTacToe>) -> Position {
 //!         match board.at((self.favorite_number, self.favorite_number)) {
 //!             Ok(None) => Position::new(self.favorite_number, self.favorite_number),
-//!             _ => RandomSelector.claim_space(board, seed)
+//!             _ => RandomSelector.claim_space(board, context)
 //!         }
 //!     }
 //! }

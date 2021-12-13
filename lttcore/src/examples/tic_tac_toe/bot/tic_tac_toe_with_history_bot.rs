@@ -4,12 +4,12 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, panic::RefUnwindSafe};
 
 use crate::{
-    bot::Bot,
+    bot::{Bot, BotContext, BotError},
     examples::{
         tic_tac_toe::{Action, Board, Marker, Position, PublicInfoUpdate},
         TicTacToe,
     },
-    play::{Seed, TurnNum},
+    play::TurnNum,
     pov::player::{PlayerPov, PlayerUpdate},
 };
 
@@ -19,7 +19,7 @@ pub trait TicTacToeWithHistoryBot:
     fn claim_space(
         &self,
         board: &Board,
-        seed: &Seed,
+        context: &BotContext<'_, TicTacToe>,
         history: &[(TurnNum, Marker, Position)],
     ) -> Position;
 }
@@ -41,11 +41,15 @@ impl<T: TicTacToeWithHistoryBot + Display> Display for TicTacToeWithHistoryBotWr
 impl<T: TicTacToeWithHistoryBot> Bot for TicTacToeWithHistoryBotWrapper<T> {
     type Game = TicTacToe;
 
-    fn on_action_request(&mut self, player_pov: &PlayerPov<'_, TicTacToe>, seed: &Seed) -> Action {
-        let position = self
-            .bot
-            .claim_space(&player_pov.public_info.board, seed, &self.history);
-        Action { position }
+    fn on_action_request(
+        &mut self,
+        player_pov: &PlayerPov<'_, TicTacToe>,
+        bot_context: &BotContext<'_, TicTacToe>,
+    ) -> Result<Action, BotError<TicTacToe>> {
+        let position =
+            self.bot
+                .claim_space(&player_pov.public_info.board, bot_context, &self.history);
+        Ok(Action { position })
     }
 
     fn on_turn_advance(
