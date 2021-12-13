@@ -3,14 +3,17 @@
 #[macro_use]
 extern crate derive_builder;
 
-use lttcore::utilities::PlayerIndexedData as PID;
+use lttcore::{bot::BotContextBuilder, utilities::PlayerIndexedData as PID};
 use lttcore::{bot::Contender, play::ActionResponse};
 use lttcore::{
     play::{settings::NumPlayers, Play, Seed, SettingsPtr},
     pov::game_progression::GameProgression,
 };
 use rayon::prelude::*;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::{
+    panic::{catch_unwind, AssertUnwindSafe},
+    time::Duration,
+};
 
 #[derive(Builder, Clone)]
 pub struct FightCard<T: Play> {
@@ -19,6 +22,8 @@ pub struct FightCard<T: Play> {
     settings: SettingsPtr<T::Settings>,
     #[builder(default = "500")]
     iterations: usize,
+    #[builder(default = "Duration::from_millis(500)")]
+    bot_action_duration: Duration,
 }
 
 impl<T: Play> FightCard<T> {
@@ -46,7 +51,13 @@ impl<T: Play> FightCard<T> {
                         .which_players_input_needed()
                         .map(|player| {
                             let pov = &game.player_pov(player);
-                            let seed = &bot_seeds[player];
+
+                            let context = BotContextBuilder::default()
+                                .seed(&bot_seeds[player])
+                                .time_budget(self.bot_action_duration)
+                                .turn_num(game.turn_num())
+                                .build()
+                                .unwrap();
 
                             // # Safety
                             //
@@ -55,7 +66,7 @@ impl<T: Play> FightCard<T> {
                             // we resign and don't continue to reuse the bot state.
                             let mut bot_wrapper = AssertUnwindSafe(&mut bots[player]);
                             let action =
-                                catch_unwind(move || bot_wrapper.on_action_request(pov, seed))
+                                catch_unwind(move || bot_wrapper.on_action_request(pov, &context))
                                     .map(ActionResponse::Response)
                                     .unwrap_or_else(|_| ActionResponse::Resign);
 

@@ -1,8 +1,8 @@
 pub mod prebuilt;
 
 use super::GuessTheNumber;
-use crate::bot::Bot;
-use crate::play::{Play, Seed};
+use crate::bot::{Bot, BotContext};
+use crate::play::Play;
 use crate::pov::player::PlayerPov;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, ops::RangeInclusive, panic::RefUnwindSafe};
@@ -10,7 +10,7 @@ use std::{fmt::Display, ops::RangeInclusive, panic::RefUnwindSafe};
 pub trait GuessTheNumberBot:
     RefUnwindSafe + Serialize + DeserializeOwned + Clone + Sync + Send + 'static
 {
-    fn guess(&self, range: RangeInclusive<u32>, seed: &Seed) -> u32;
+    fn guess(&self, range: RangeInclusive<u32>, context: &BotContext<'_, GuessTheNumber>) -> u32;
 
     fn into_bot(self) -> GuessTheNumberBotWrapper<Self> {
         GuessTheNumberBotWrapper(self)
@@ -34,9 +34,9 @@ impl<T: GuessTheNumberBot> Bot for GuessTheNumberBotWrapper<T> {
     fn on_action_request(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        seed: &Seed,
+        context: &BotContext<'_, Self::Game>,
     ) -> <Self::Game as Play>::Action {
-        let guess = self.0.guess(player_pov.settings.range(), seed);
+        let guess = self.0.guess(player_pov.settings.range(), context);
         guess.into()
     }
 }

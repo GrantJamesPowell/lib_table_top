@@ -7,7 +7,7 @@ use crate::play::Seed;
 #[track_caller]
 pub fn assert_bot_wins(bot: &impl TicTacToeBot, board: &Board, seed: Seed) {
     if let Status::InProgress { next_up } = board.status() {
-        let pos = bot.claim_space(&board, &seed);
+        let pos = bot.claim_space(&board, &(&seed).into());
         match board.claim_space(next_up, pos) {
             Err(ActionError::SpaceIsTaken { .. }) => {
                 panic!("Bot tried to claim space {} but it was already taken", pos)
@@ -47,7 +47,7 @@ pub fn assert_bot_takes_position(
     let expected = expected
         .try_into()
         .unwrap_or_else(|_| panic!("expected was not within the bounds of the board"));
-    let pos = bot.claim_space(&before, &seed);
+    let pos = bot.claim_space(&before, &(&seed).into());
     match before.claim_space(before.whose_turn(), pos) {
         Err(ActionError::SpaceIsTaken { .. }) => {
             panic!("Bot tried to claim space {} but it was already taken", pos);

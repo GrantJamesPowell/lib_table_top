@@ -4,10 +4,10 @@ use crate::{
     play::{Play, Seed, TurnNum},
 };
 use std::time::Duration;
+use std::time::Instant;
 
 /// Struct representing the "context" that the [`Bot`](super::Bot) is executing in
 #[allow(missing_debug_implementations)]
-#[non_exhaustive]
 #[derive(Builder)]
 pub struct BotContext<'a, T: Play> {
     /// The seed for the [`Bot`](super::Bot) instance
@@ -17,8 +17,10 @@ pub struct BotContext<'a, T: Play> {
     /// * Each [`Bot`](super::Bot) within a game should have a different [`Seed`]
     /// * The [`BotContext::rng_for_turn`] method uses the [`TurnNum`] to give a different `Rng`
     /// per turn, so the same seed can be reused for the same bot within the same game
+    #[builder(setter(into))]
     seed: &'a Seed,
     /// The turn number of the game
+    #[builder(setter(into))]
     turn_num: TurnNum,
     /// The [`GameId`] for the current Game.
     ///
@@ -29,7 +31,7 @@ pub struct BotContext<'a, T: Play> {
     /// possible, because who are we to ruin the fun
     #[builder(setter(strip_option), default = "None")]
     game_id: Option<&'a GameId>,
-    /// A function that calculates the "amount of time remaining."
+    /// Time Budget for the bot to execute
     ///
     /// If you're building a networked client, this should roughly coincide with the amount of time
     /// the server has given for the action minus the network latency plus a safety factor.
@@ -37,8 +39,13 @@ pub struct BotContext<'a, T: Play> {
     /// This is more a _hint_ to the [`Bot`](super::Bot) as we don't have a good way to preempt the
     /// bot in the case it's using too much time. In a language like `Erlang` we would be able to
     /// do it, but not with cooperative green threads.
-    #[builder(default = "&time_remaining_default")]
-    time_remaining: &'a dyn Fn() -> Option<Duration>,
+    #[builder(setter(strip_option), default = "None")]
+    time_budget: Option<Duration>,
+    /// The starting instant. This defaults to the current time
+    #[builder(default = "Instant::now()")]
+    starting_instant: Instant,
+    // Eventually this struct may contain Game specific stuff, this phantom data makes the type
+    // signature forwards compatible
     #[builder(default, setter(skip))]
     _marker: std::marker::PhantomData<fn() -> T>,
 }
@@ -97,10 +104,17 @@ impl<'a, T: Play> BotContext<'a, T> {
     /// * `Some(duration) when duration.is_zero()` => Bot's time is up
     /// * `Some(duration)` => bot has `duration` left to complete it's work
     pub fn time_remaining(&self) -> Option<Duration> {
-        (self.time_remaining)()
+        self.time_budget
+            .map(|budget| budget.saturating_sub(self.starting_instant.elapsed()))
     }
 }
 
-fn time_remaining_default() -> Option<Duration> {
-    None
+impl<'a, T: Play> From<&'a Seed> for BotContext<'a, T> {
+    fn from(seed: &'a Seed) -> Self {
+        BotContextBuilder::default()
+            .seed(seed)
+            .turn_num(0)
+            .build()
+            .unwrap()
+    }
 }

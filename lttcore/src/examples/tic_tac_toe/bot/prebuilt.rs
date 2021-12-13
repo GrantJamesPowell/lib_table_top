@@ -8,12 +8,11 @@ use std::fmt::Display;
 
 use super::super::{Board, Position, TicTacToe, TicTacToeBot};
 use crate::{
-    bot::defective::panicking_bot,
+    bot::{defective::panicking_bot, BotContext},
     examples::tic_tac_toe::{
         board::consts::{BOTTOM_LEFT, BOTTOM_RIGHT, CENTER},
         Marker,
     },
-    play::Seed,
 };
 use rand::prelude::IteratorRandom;
 use serde::{Deserialize, Serialize};
@@ -40,10 +39,10 @@ pub struct RandomSelector;
 display_name!(RandomSelector);
 
 impl TicTacToeBot for RandomSelector {
-    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
+    fn claim_space(&self, board: &Board, context: &BotContext<'_, TicTacToe>) -> Position {
         board
             .empty_spaces()
-            .choose_stable(&mut seed.rng())
+            .choose_stable(&mut context.rng_for_turn())
             .expect("the bot won't be called if the board is full")
     }
 }
@@ -59,7 +58,7 @@ pub struct IntermediateSkill;
 display_name!(IntermediateSkill);
 
 impl TicTacToeBot for IntermediateSkill {
-    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
+    fn claim_space(&self, board: &Board, context: &BotContext<'_, TicTacToe>) -> Position {
         // Pick the center space if we're starting
         if board.is_empty() {
             return CENTER;
@@ -80,7 +79,7 @@ impl TicTacToeBot for IntermediateSkill {
         }
 
         // Else, choose randomly
-        RandomSelector.claim_space(board, seed)
+        RandomSelector.claim_space(board, context)
     }
 }
 
@@ -93,7 +92,7 @@ pub struct ExpertSkill;
 display_name!(ExpertSkill);
 
 impl TicTacToeBot for ExpertSkill {
-    fn claim_space(&self, board: &Board, seed: &Seed) -> Position {
+    fn claim_space(&self, board: &Board, context: &BotContext<'_, TicTacToe>) -> Position {
         // Take a corner if we're the first move
         if board.is_empty() {
             return BOTTOM_LEFT;
@@ -132,7 +131,7 @@ impl TicTacToeBot for ExpertSkill {
         }
 
         // We will never get here because one of the above conditions must have been ture
-        RandomSelector.claim_space(board, seed)
+        RandomSelector.claim_space(board, context)
     }
 }
 

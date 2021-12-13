@@ -25,11 +25,7 @@
 //! TODO:// Explain Contenders
 
 use crate::pov::player::PlayerPov;
-use crate::{
-    encoding::SerializeSelf,
-    play::{Play, Seed},
-    pov::player::PlayerUpdate,
-};
+use crate::{encoding::SerializeSelf, play::Play, pov::player::PlayerUpdate};
 use std::panic::RefUnwindSafe;
 
 mod contender;
@@ -56,7 +52,7 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
     fn on_action_request(
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
-        rng: &Seed,
+        bot_context: &BotContext<'_, Self::Game>,
     ) -> <Self::Game as Play>::Action;
 
     /// Callback for when the turn advances and the [`Player`](crate::play::Player) gets an update. By default, this is
