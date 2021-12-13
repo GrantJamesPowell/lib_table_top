@@ -33,8 +33,19 @@ use crate::{
 use std::panic::RefUnwindSafe;
 
 mod contender;
+mod context;
 pub(crate) mod defective;
 pub use contender::Contender;
+pub use context::{BotContext, BotContextBuilder};
+
+/// Various errors associated with [`Bot`] execution
+#[derive(Debug)]
+pub enum BotError<T: Play> {
+    /// Triggered from the [`BotContext::checkpoint`] method
+    TimeExceeded(Option<T::Action>),
+    /// Any other error
+    Custom(Box<dyn std::error::Error>),
+}
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
 pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
