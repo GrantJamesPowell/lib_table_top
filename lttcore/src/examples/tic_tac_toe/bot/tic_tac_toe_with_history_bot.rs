@@ -4,7 +4,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{fmt::Display, panic::RefUnwindSafe};
 
 use crate::{
-    bot::{Bot, BotContext},
+    bot::{Bot, BotContext, BotError},
     examples::{
         tic_tac_toe::{Action, Board, Marker, Position, PublicInfoUpdate},
         TicTacToe,
@@ -45,11 +45,11 @@ impl<T: TicTacToeWithHistoryBot> Bot for TicTacToeWithHistoryBotWrapper<T> {
         &mut self,
         player_pov: &PlayerPov<'_, TicTacToe>,
         bot_context: &BotContext<'_, TicTacToe>,
-    ) -> Action {
+    ) -> Result<Action, BotError<TicTacToe>> {
         let position =
             self.bot
                 .claim_space(&player_pov.public_info.board, bot_context, &self.history);
-        Action { position }
+        Ok(Action { position })
     }
 
     fn on_turn_advance(

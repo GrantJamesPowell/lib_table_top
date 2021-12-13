@@ -1,4 +1,4 @@
-use crate::bot::{Bot, BotContext};
+use crate::bot::{Bot, BotContext, BotError};
 use crate::examples::tic_tac_toe::{Action, Board, Position, TicTacToe};
 
 use crate::pov::player::PlayerPov;
@@ -43,10 +43,10 @@ impl<T: TicTacToeBot> Bot for TicTacToeBotWrapper<T> {
         &mut self,
         player_pov: &PlayerPov<'_, TicTacToe>,
         bot_context: &BotContext<'_, TicTacToe>,
-    ) -> Action {
+    ) -> Result<Action, BotError<TicTacToe>> {
         let position = self
             .0
             .claim_space(&player_pov.public_info.board, bot_context);
-        Action { position }
+        Ok(Action { position })
     }
 }

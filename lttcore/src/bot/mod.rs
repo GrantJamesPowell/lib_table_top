@@ -35,12 +35,12 @@ pub use contender::Contender;
 pub use context::{BotContext, BotContextBuilder};
 
 /// Various errors associated with [`Bot`] execution
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BotError<T: Play> {
     /// Triggered from the [`BotContext::checkpoint`] method
     TimeExceeded(Option<T::Action>),
     /// Any other error
-    Custom(Box<dyn std::error::Error>),
+    Custom(String),
 }
 
 /// Trait to interact with [`Play`] compatible games as a [`Player`](crate::play::Player)
@@ -53,7 +53,7 @@ pub trait Bot: SerializeSelf + RefUnwindSafe + Sync + Send + 'static {
         &mut self,
         player_pov: &PlayerPov<'_, Self::Game>,
         bot_context: &BotContext<'_, Self::Game>,
-    ) -> <Self::Game as Play>::Action;
+    ) -> Result<<Self::Game as Play>::Action, BotError<Self::Game>>;
 
     /// Callback for when the turn advances and the [`Player`](crate::play::Player) gets an update. By default, this is
     /// a noop. Use this if you want to update your bot's state outside of times it is called to
