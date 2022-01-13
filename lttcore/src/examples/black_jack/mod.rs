@@ -7,7 +7,7 @@ use crate::{
         settings::NumPlayers, view::NoSecretPlayerInfo, ActionResponse, GameState, GameStateUpdate,
         Play, View,
     },
-    utilities::{PlayerIndexedData as PID, PlayerSet},
+    utilities::PlayerIndexedData as PID,
     LibTableTopIdentifier,
 };
 use rand::prelude::SliceRandom;
@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
 mod public_info;
-pub use public_info::{Hand, Phase, PlayerStatus, PublicInfo, PublicInfoUpdate};
+pub use public_info::{GamePhase, Hand, PlayerStatus, PublicInfo, PublicInfoUpdate};
 pub mod bot;
 pub mod settings;
 pub use settings::Settings;
@@ -82,8 +82,7 @@ impl Play for BlackJack {
         };
 
         let public_info = PublicInfo {
-            phase: Phase::Bet,
-            hands: PID::empty(),
+            game_info: GamePhase::Bet,
             statuses: settings.number_of_players().player_indexed_data(|_player| {
                 PlayerStatus::InPlay {
                     chips: settings.starting_number_of_chips,
@@ -95,7 +94,7 @@ impl Play for BlackJack {
             public_info,
             game_secret_info,
             player_secret_info,
-            action_requests: Some(PlayerSet::empty()),
+            action_requests: Some(settings.number_of_players().player_set()),
         }
     }
 

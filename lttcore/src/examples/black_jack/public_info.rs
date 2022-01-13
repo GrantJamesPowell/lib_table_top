@@ -6,16 +6,18 @@ use smallvec::SmallVec;
 use std::borrow::Cow;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Phase {
-    Bet,
-    PlayHand(Player, usize),
+pub struct PublicInfo {
+    pub statuses: PID<PlayerStatus>,
+    pub game_info: GamePhase,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PublicInfo {
-    pub statuses: PID<PlayerStatus>,
-    pub phase: Phase,
-    pub hands: PID<SmallVec<[Hand; 1]>>,
+pub enum GamePhase {
+    Bet,
+    Play {
+        hands: PID<SmallVec<[Hand; 1]>>,
+        dealer_card_showing: Card,
+    },
 }
 
 impl PublicInfo {
@@ -79,25 +81,27 @@ impl Score for PublicInfo {
 impl View for PublicInfo {
     type Update = PublicInfoUpdate;
 
-    fn update(&mut self, update: Cow<'_, Self::Update>) {
-        use PublicInfoUpdate::*;
+    fn update(&mut self, _update: Cow<'_, Self::Update>) {
+        // use PublicInfoUpdate::*;
 
-        match update.into_owned() {
-            EndHand {
-                dealer_hand: _,
-                status_updates,
-            } => {
-                self.statuses.extend(status_updates);
-            }
-            AddHand(player, hand) => {
-                self.hands[player].push(hand);
-            }
-            UpdateHand(player, idx, hand) => {
-                self.hands[player][idx] = hand;
-            }
-            UpdateStatus(status_updates) => {
-                self.statuses.extend(status_updates);
-            }
-        }
+        todo!()
+
+        // match update.into_owned() {
+        //     EndHand {
+        //         dealer_hand: _,
+        //         status_updates,
+        //     } => {
+        //         self.statuses.extend(status_updates);
+        //     }
+        //     AddHand(player, hand) => {
+        //         self.hands[player].push(hand);
+        //     }
+        //     UpdateHand(player, idx, hand) => {
+        //         self.hands[player][idx] = hand;
+        //     }
+        //     UpdateStatus(status_updates) => {
+        //         self.statuses.extend(status_updates);
+        //     }
+        // }
     }
 }
