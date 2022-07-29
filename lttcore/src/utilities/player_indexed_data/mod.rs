@@ -2,6 +2,8 @@ use crate::{play::Player, utilities::PlayerSet};
 use smallvec::SmallVec;
 use std::hash::Hash;
 
+use super::PlayerItemCollector;
+
 mod serialize_and_deserialize;
 
 /// A mapping from [`Player`] and some item `T`
@@ -283,6 +285,15 @@ impl<T> IntoIterator for PlayerIndexedData<T> {
     }
 }
 
+impl<T> From<PlayerItemCollector<T>> for PlayerIndexedData<T> {
+    fn from(pic: PlayerItemCollector<T>) -> Self {
+        pic.data
+            .into_iter()
+            .filter_map(|(player, item)| item.map(|x| (player, x)))
+            .collect()
+    }
+}
+
 impl<T> From<(Player, T)> for PlayerIndexedData<T> {
     fn from(value: (Player, T)) -> Self {
         Some(value).into_iter().collect()
@@ -336,11 +347,13 @@ impl<T> std::ops::IndexMut<Player> for PlayerIndexedData<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::play::Player;
+    use crate::{play::Player, player_set};
+    use PlayerIndexedData as PID;
+    use PlayerItemCollector as PIC;
 
     #[test]
     fn test_player_indexing() {
-        let mut data: PlayerIndexedData<String> = Default::default();
+        let mut data: PID<String> = Default::default();
 
         let p1: Player = 1.into();
         let p2: Player = 2.into();
@@ -354,6 +367,20 @@ mod tests {
         let old = std::mem::replace(&mut data[p1], String::from("baz"));
         assert_eq!(old, "foo");
         assert_eq!(data[p1], "baz");
+    }
+
+    #[test]
+    fn test_player_item_collector_to_player_indexed_data() {
+        let data: PIC<usize> = PIC::from(player_set![1, 2, 3]);
+        let pid: PID<usize> = data.into();
+        assert!(pid.is_empty());
+
+        let mut data: PIC<usize> = PIC::from(player_set![1, 2, 3]);
+        data.add(1, 100);
+        let pid: PID<usize> = data.into();
+        assert!(!pid.is_empty());
+        assert!(pid.players().eq([1].map(Player::from).into_iter()));
+        assert!(pid.into_iter().eq([(Player::from(1), 100)]))
     }
 
     #[test]

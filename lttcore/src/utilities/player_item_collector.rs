@@ -5,7 +5,7 @@ use crate::utilities::{PlayerIndexedData, PlayerSet};
 /// them
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PlayerItemCollector<Item> {
-    data: PlayerIndexedData<Option<Item>>,
+    pub(super) data: PlayerIndexedData<Option<Item>>,
 }
 
 impl<Item> From<PlayerSet> for PlayerItemCollector<Item> {
