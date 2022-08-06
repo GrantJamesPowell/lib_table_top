@@ -141,6 +141,24 @@ impl From<NonZeroU32> for NumberOfPlayers {
     }
 }
 
+impl From<NumberOfPlayers> for u32 {
+    fn from(num_players: NumberOfPlayers) -> Self {
+        num_players.get()
+    }
+}
+
+impl From<NumberOfPlayers> for u64 {
+    fn from(num_players: NumberOfPlayers) -> Self {
+        num_players.get() as u64
+    }
+}
+
+impl From<NumberOfPlayers> for usize {
+    fn from(num_players: NumberOfPlayers) -> Self {
+        num_players.get() as usize
+    }
+}
+
 impl Deref for NumberOfPlayers {
     type Target = NonZeroU32;
 
