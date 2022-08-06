@@ -26,6 +26,7 @@ pub trait TicTacToeWithHistoryBot:
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(bound = "")]
+#[doc(hidden)]
 pub struct TicTacToeWithHistoryBotWrapper<T: TicTacToeWithHistoryBot> {
     bot: T,
     history: Vec<(TurnNum, Marker, Position)>,

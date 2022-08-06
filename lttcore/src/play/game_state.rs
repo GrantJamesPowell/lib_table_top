@@ -18,7 +18,7 @@ impl<T: Play> GameState<T> {
     pub fn player_should_act(&self, player: impl Into<Player>) -> bool {
         self.action_requests
             .as_ref()
-            .map(|set| set.contains(player.into()))
+            .map(|set| set.contains(player))
             .unwrap_or(false)
     }
 

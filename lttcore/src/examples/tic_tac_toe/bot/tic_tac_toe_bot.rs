@@ -27,6 +27,7 @@ pub trait TicTacToeBot:
 /// You likely will only interact with this type through [`TicTacToeBot::into_bot`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(bound = "")]
+#[doc(hidden)]
 pub struct TicTacToeBotWrapper<T: TicTacToeBot>(T);
 
 impl<T: TicTacToeBot + Display> Display for TicTacToeBotWrapper<T> {

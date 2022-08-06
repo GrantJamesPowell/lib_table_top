@@ -23,6 +23,7 @@ pub trait GuessTheNumberBot:
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(bound = "")]
+#[doc(hidden)]
 pub struct GuessTheNumberBotWrapper<T: GuessTheNumberBot>(T);
 
 impl<T: GuessTheNumberBot + Display> Display for GuessTheNumberBotWrapper<T> {
