@@ -117,7 +117,7 @@ pub use settings::Settings;
 use crate::{
     play::{
         settings::NumPlayers,
-        view::{NoGameSecretInfo, NoGameSecretInfoUpdate, NoSecretPlayerInfo},
+        view::{NoSecretGameInfo, NoSecretGameInfoUpdate, NoSecretPlayerInfo},
         ActionResponse, GameState, GameStateUpdate, Play, Player,
     },
     utilities::{PlayerIndexedData as PID, PlayerSet},
@@ -144,7 +144,7 @@ impl Play for TicTacToe {
     type PublicInfo = PublicInfo;
     type PlayerSecretInfo = NoSecretPlayerInfo;
     type Settings = Settings;
-    type GameSecretInfo = NoGameSecretInfo;
+    type GameSecretInfo = NoSecretGameInfo;
 
     fn initial_state_for_settings(
         settings: &Self::Settings,
@@ -160,7 +160,7 @@ impl Play for TicTacToe {
 
         GameState {
             player_secret_info,
-            game_secret_info: NoGameSecretInfo,
+            game_secret_info: NoSecretGameInfo,
             public_info,
             action_requests,
         }
@@ -240,7 +240,7 @@ impl Play for TicTacToe {
             public_info_update,
             action_requests,
             player_secret_info_updates: PID::empty(),
-            game_secret_info_update: NoGameSecretInfoUpdate,
+            game_secret_info_update: NoSecretGameInfoUpdate,
         }
     }
 }

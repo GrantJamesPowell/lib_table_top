@@ -31,11 +31,11 @@ impl View for NoSecretPlayerInfo {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NoGameSecretInfo;
+pub struct NoSecretGameInfo;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct NoGameSecretInfoUpdate;
+pub struct NoSecretGameInfoUpdate;
 
-impl View for NoGameSecretInfo {
-    type Update = NoGameSecretInfoUpdate;
+impl View for NoSecretGameInfo {
+    type Update = NoSecretGameInfoUpdate;
 }
