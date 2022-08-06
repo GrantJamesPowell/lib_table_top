@@ -5,7 +5,8 @@ mod support_povs;
 mod support_scenarios;
 
 use crate::play::{
-    ActionResponse, EnumeratedGameStateUpdate, GameState, Play, Seed, SettingsPtr, TurnNum,
+    settings::NumPlayers, ActionResponse, EnumeratedGameStateUpdate, GameState, Play, Seed,
+    SettingsPtr, TurnNum,
 };
 use crate::utilities::PlayerIndexedData as PID;
 use im::Vector;
@@ -91,6 +92,14 @@ impl<T: Play> GameProgressionBuilder<T> {
             .map(|arc| arc.as_ref())
             .cloned()
             .unwrap_or_else(|| T::initial_state_for_settings(&settings, &mut seed.rng_for_init()));
+
+        debug_assert!(
+            game_state.player_secret_info.iter()
+                .map(|(player, _)| player)
+                .eq(settings.number_of_players().players()),
+            "The underlying game returned the correct number of player secret info for the number of players"
+        );
+
         let history = Vector::new();
 
         Ok(GameProgression {
