@@ -1,13 +1,13 @@
-use serde::{Deserialize, Serialize};
 use crate::utilities::PlayerIndexedData as PID;
+use serde::{Deserialize, Serialize};
 
-use crate::play::{View, Score};
+use crate::play::{Score, View};
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PublicInfoUpdate;
 
-#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct PublicInfo;
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PublicInfo {}
 
 impl View for PublicInfo {
     type Update = PublicInfoUpdate;
