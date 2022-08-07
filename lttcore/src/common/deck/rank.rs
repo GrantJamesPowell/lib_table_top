@@ -1,9 +1,8 @@
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::cmp::Ordering::{self, *};
 
 /// The pips of a standard deck. Important note that the Ace is represented by 1 and not 14
-#[derive(
-    Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Hash, Ord, Serialize_repr, Deserialize_repr,
-)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr)]
 #[repr(u8)]
 pub enum Rank {
     Ace = 1,
@@ -25,6 +24,41 @@ pub enum Rank {
 use Rank::*;
 
 impl Rank {
+    /// Compares using Ace High
+    /// ```
+    /// use lttcore::common::deck::Rank::*;
+    /// use std::cmp::Ordering::{*, self};
+    ///
+    /// assert_eq!(Ace.cmp_with_ace_high(&King), Greater);
+    /// assert_eq!(Ace.cmp_with_ace_high(&Two), Greater);
+    /// assert_eq!(Seven.cmp_with_ace_high(&Four), Greater);
+    /// assert_eq!(Ace.cmp_with_ace_high(&Ace), Equal);
+    /// assert_eq!(King.cmp_with_ace_high(&Ace), Less);
+    /// ```
+    pub fn cmp_with_ace_high(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (x, y) if x == y => Equal,
+            (Ace, _) => Greater,
+            (_, Ace) => Less,
+            (x, y) => x.cmp_with_ace_low(y),
+        }
+    }
+
+    /// Compares using Ace Low
+    /// ```
+    /// use lttcore::common::deck::Rank::*;
+    /// use std::cmp::Ordering::{*, self};
+    ///
+    /// assert_eq!(Ace.cmp_with_ace_low(&King), Less);
+    /// assert_eq!(Ace.cmp_with_ace_low(&Two), Less);
+    /// assert_eq!(Seven.cmp_with_ace_low(&Four), Greater);
+    /// assert_eq!(Ace.cmp_with_ace_low(&Ace), Equal);
+    /// assert_eq!(King.cmp_with_ace_low(&Ace), Greater);
+    /// ```
+    pub fn cmp_with_ace_low(&self, other: &Self) -> Ordering {
+        (*self as u8).cmp(&(*other as u8))
+    }
+
     /// Returns the next rank, with Ace being high
     /// ```
     /// use lttcore::common::deck::Rank::*;
