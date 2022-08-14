@@ -26,12 +26,17 @@ pub enum Error {
 }
 
 impl Trick {
-    pub fn from_players_and_plays(plays: [(impl Into<Player>, impl Into<Card>); 4]) -> Self {
-        let [x1, x2, x3, x4] = plays.map(|(p, c)| (p.into(), c.into()));
-        Trick {
-            lead: x1,
-            followed: ArrayVec::from([x2, x3, x4]),
+   fn from_players_and_plays(
+        plays: [(impl Into<Player>, impl Into<Card>); 4],
+    ) -> Result<Self, Error> {
+        let [(player, card), rest @ ..] = plays.map(|(p, c)| (p.into(), c.into()));
+        let mut trick = Trick::from_lead(player, card);
+
+        for (player, card) in rest {
+            trick.play(player, card)?
         }
+
+        Ok(trick)
     }
 
     pub fn from_lead(player: impl Into<Player>, card: impl Into<Card>) -> Self {
@@ -136,6 +141,7 @@ impl Round {
 mod tests {
     use super::*;
     use crate::c;
+    use Error::*;
 
     #[test]
     fn test_trick_complete() {
@@ -178,7 +184,8 @@ mod tests {
             (2, c!(5, s)),
             (3, c!(7, s)),
             (4, c!(k, s)),
-        ]);
+        ])
+        .expect("valid game");
 
         let expected_winner: Player = 4.into();
         let winner = trick.winner().expect("round is over");
@@ -192,10 +199,37 @@ mod tests {
             (2, c!(5, s)),
             (3, c!(7, h)),
             (4, c!(k, d)),
-        ]);
+        ])
+        .expect("valid game");
 
         let expected_winner: Player = 1.into();
         let winner = trick.winner().expect("round is over");
         assert_eq!(winner, expected_winner);
+    }
+
+    #[test]
+    fn test_error_card_already_played() {
+        let card_lead = c!(8, s);
+        let mut trick = Trick::from_lead(1, card_lead);
+        assert_eq!(trick.play(2, card_lead), Err(CardAlreadyPlayed));
+    }
+
+    #[test]
+    fn test_error_player_already_played() {
+        let mut trick = Trick::from_lead(1, c!(9, s));
+        assert_eq!(trick.play(1, c!(10, s)), Err(PlayerAlreadyPlayed));
+    }
+
+    #[test]
+    fn test_error_trick_already_finished() {
+        let mut trick = Trick::from_players_and_plays([
+            (1, c!(8, s)),
+            (2, c!(5, s)),
+            (3, c!(7, h)),
+            (4, c!(k, d)),
+        ])
+        .expect("valid game");
+
+        assert_eq!(trick.play(5, c!(k, s)), Err(TrickAlreadyFinished))
     }
 }
