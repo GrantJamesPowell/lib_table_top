@@ -31,6 +31,35 @@ impl<T> PlayerIndexedData<T> {
         Self::with_capacity(0)
     }
 
+    /// Map a function across the items in [`PlayerIndexedData`]
+    ///
+    /// ```
+    /// use lttcore::{player_set, utilities::PlayerIndexedData};
+    ///
+    /// let ps = player_set![1, 2, 3];
+    ///
+    /// let data = PlayerIndexedData::init_with(ps, |player| u8::from(player));
+    /// assert_eq!(data.len(), 3);
+    ///
+    /// assert_eq!(data.get(1), Some(&1));
+    /// assert_eq!(data.get(2), Some(&2));
+    /// assert_eq!(data.get(3), Some(&3));
+    ///
+    /// let mapped = data.map(|value| value * 2);
+    ///
+    /// assert_eq!(mapped.get(1), Some(&2));
+    /// assert_eq!(mapped.get(2), Some(&4));
+    /// assert_eq!(mapped.get(3), Some(&6));
+    /// ```
+    pub fn map<U>(self, mut func: impl FnMut(T) -> U) -> PlayerIndexedData<U> {
+        let data: SmallVec<[U; 4]> = self.data.into_iter().map(|item| func(item)).collect();
+
+        PlayerIndexedData {
+            data,
+            players: self.players,
+        }
+    }
+
     /// alias for [`PlayerIndexedData::new`]
     pub fn empty() -> Self {
         Self::with_capacity(0)
@@ -46,8 +75,6 @@ impl<T> PlayerIndexedData<T> {
     ///
     /// pid.insert(1, "foo");
     /// assert!(!pid.is_empty());
-    ///
-    ///
     /// ```
     pub fn is_empty(&self) -> bool {
         self.len() == 0
